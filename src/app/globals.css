@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  /* Definiowanie kolorów */
+  --color-primary: #0c493e;
+  --color-accent: #c5e96b;
+
+  /* Definiowanie tła i tekstu (foreground) */
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  --spacing-container-max: 1200px;
+  /* Fonty i typografia */
+  --font-montserrat: "Montserrat", sans-serif;
+
+  /* Rozmiary tekstów z line-height */
+  --font-size-h1: 48px;
+  --line-height-h1: 135%;
+
+  --font-size-p-std: 12px;
+  --font-size-p-lg: 14px;
+}
+@layer components {
+  .custom-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .heading {
+    font-size: 48px;
+    line-height: 135%;
+    font-weight: 700;
+    @media (max-width: 600px) {
+      font-size: 42px;
+      line-height: 125%;
+    }
+    @media (max-width: 450px) {
+      font-size: 38px;
+      line-height: 125%;
+    }
+    @media (max-width: 370px) {
+      font-size: 34px;
+      line-height: 125%;
+    }
+  }
+  .paragraph {
+    font-size: 12px;
+    line-height: 160%;
+    color: #000;
+  }
+}
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-montserrat);
+  }
+
+  .p-highlight {
+    font-size: var(--font-size-p-lg);
+    line-height: 1.5;
+  }
+}
