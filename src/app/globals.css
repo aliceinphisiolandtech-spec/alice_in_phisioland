@@ -20,6 +20,13 @@
   --font-size-p-lg: 14px;
 }
 @layer components {
+  .text-highlight {
+    @apply relative z-10 text-primary;
+
+    &::after {
+      @apply content-[''] absolute bottom-[5px] left-0 -z-10 h-3 w-full bg-accent/50;
+    }
+  }
   .custom-container {
     max-width: 1200px;
     margin: 0 auto;

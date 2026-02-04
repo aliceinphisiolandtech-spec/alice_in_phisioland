@@ -23,16 +23,8 @@ export const Hero = () => {
           <h1 className="heading mb-[-12px] max-w-[80%] max-[1070px]:max-w-[90%] max-[960px]:max-w-[110%] max-[860px]:self-center max-[860px]:text-center">
             Od Teorii Do Diagnozy <br />
             <span
-              className="
-  relative z-10 text-primary                 
-  after:content-[''] 
-  after:absolute 
-  after:bottom-2 
-  after:left-0                              
-  after:-z-10                              
-  after:h-3 
-  after:w-full                              
-  after:bg-accent/50
+              className=" text-hi
+ text-highlight
 "
             >
               {" Fizjoterapia"}
