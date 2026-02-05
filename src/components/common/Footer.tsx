@@ -11,7 +11,7 @@ export const Footer = () => {
         <div className="flex items-center justify-between pb-12 max-[768px]:flex-col max-[768px]:gap-8">
           {/* Lewa strona: Małe logo i nazwa */}
           <div className="flex items-center gap-4 max-[768px]:flex-col max-[768px]:text-center">
-            <Image src={"/AW-logo-negatyw.svg"} height={35} width={45} />
+            <Image src={"/AW-logo-negatyw.svg"} height={35} width={45} alt="" />
 
             <div className="flex flex-col ">
               <span className="text-[12px] font-bold uppercase  text-white font-montserrat">
@@ -25,7 +25,7 @@ export const Footer = () => {
 
           {/* Środek: Duże Logo */}
           <div className="absolute left-1/2 -translate-x-1/2 transform max-[768px]:hidden [768px]:transform-none">
-            <Image src={"/AW-logo-negatyw.svg"} height={75} width={58} />
+            <Image src={"/AW-logo-negatyw.svg"} height={75} width={58} alt="" />
           </div>
 
           {/* Prawa strona: Sociadasdl Media */}
