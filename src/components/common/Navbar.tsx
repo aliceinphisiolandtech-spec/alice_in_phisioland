@@ -9,6 +9,7 @@ import { Button } from "../ui/Button";
 import { usePathname } from "next/navigation";
 
 const navLinks = [
+  { name: "Strona głowna", href: "/" },
   { name: "O e-booku", href: "/" },
   { name: "Strefa pacjenta", href: "/" },
   { name: "Strefa fizjoterapeuty", href: "/" },

@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -76,7 +76,7 @@ const LogoAW = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Przycisk logowania
+// Przycisk logowania / rejestracji
 const SocialButton = ({
   icon: Icon,
   label,
@@ -100,19 +100,32 @@ const SocialButton = ({
 );
 
 export default function LoginPage() {
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [isLoginMode]);
+
   return (
     <motion.div
+      ref={containerRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      // GŁÓWNY KONTENER - 100% Containera, Flex Row (Bez mobile first)
+      // GŁÓWNY KONTENER
       className="flex w-full h-[80%] overflow-hidden rounded-[30px] bg-white shadow-2xl justify-self-center max-[980px]:w-fit "
     >
       {/* --- LEWA KOLUMNA (40% szerokości) --- */}
       <div className="w-[40%]  flex flex-col p-16 bg-white relative max-[1080px]:px-8 max-[980px]:w-full  max-[980px]:p-0 ">
-        {/* Nagłówek z Logo (Badge Style) */}
-        <div className="relative overflow-hidden flex items-center gap-4 max-[768px]:flex-col max-[768px]:text-center max-[980px]:bg-primary max-[980px]:py-8 max-[980px]:justify-center  ">
-          {/* Tło Dekoracyjne AW dla Mobile (widoczne tylko poniżej 980px) */}
+        {/* Nagłówek z Logo */}
+        <div className="relative overflow-hidden flex items-center gap-4 max-[768px]:flex-col max-[768px]:text-center max-[980px]:bg-primary max-[980px]:py-3 max-[980px]:justify-center  ">
+          {/* Tło Dekoracyjne AW dla Mobile */}
           <div className="absolute top-0 right-0 h-full w-full pointer-events-none opacity-[0.1] hidden max-[980px]:block">
             <svg
               className="h-full w-full object-cover"
@@ -170,43 +183,63 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Sekcja Logowania */}
-        <div className="flex h-full">
-          <div className="flex flex-col justify-center text-center  max-[980px]:px-8 max-[390px]:px-4">
-            <h1 className="mb-4 text-4xl font-extrabold text-[#0c493e]">
-              Zaloguj się
-            </h1>
-            <p className="mb-10 text-gray-500 font-medium">
-              Wybierz metodę logowania, aby przejść do panelu.
-            </p>
+        {/* Sekcja Logowania / Rejestracji z Animacją */}
+        <div className="flex h-full w-full">
+          <div className="flex flex-col w-full justify-center text-center max-[980px]:px-8 max-[390px]:px-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isLoginMode ? "login" : "register"}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="w-full flex flex-col items-center"
+              >
+                <h1 className="mb-4 text-4xl font-extrabold text-[#0c493e]">
+                  {isLoginMode ? "Zaloguj się" : "Zarejestruj się"}
+                </h1>
+                <p className="mb-10 text-gray-500 font-medium">
+                  {isLoginMode
+                    ? "Wybierz metodę logowania, aby przejść do panelu."
+                    : "Dołącz do społeczności i zacznij korzystać z platformy."}
+                </p>
 
-            <div className="flex flex-col gap-4 ">
-              <SocialButton
-                provider="google"
-                label="Google"
-                icon={GoogleIcon}
-              />
-              <SocialButton provider="apple" label="Apple" icon={AppleIcon} />
-            </div>
+                <div className="flex flex-col gap-4 w-full">
+                  <SocialButton
+                    provider="google"
+                    label="Google"
+                    icon={GoogleIcon}
+                  />
+                  <SocialButton
+                    provider="apple"
+                    label="Apple"
+                    icon={AppleIcon}
+                  />
+                </div>
 
-            <div className="mt-8 flex items-center flex-col gap-3 justify-center text-md font-medium text-gray-500">
-              <label className="flex items-center gap-2 cursor-pointer hover:text-[#0c493e] transition-colors">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300 text-[#0c493e] focus:ring-[#c5e96b]"
-                />
-                Zapamiętaj mnie
-              </label>
-              <div className="text-md text-gray-400">
-                Nie masz konta?{" "}
-                <Link
-                  href="/register"
-                  className="font-bold text-[#0c493e] hover:underline decoration-[#c5e96b]"
-                >
-                  Zarejestruj się
-                </Link>
-              </div>
-            </div>
+                <div className="mt-8 flex items-center flex-col gap-3 justify-center text-md font-medium text-gray-500 w-full">
+                  <label className="flex items-center gap-2 cursor-pointer hover:text-[#0c493e] transition-colors">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 text-[#0c493e] focus:ring-[#c5e96b]"
+                    />
+                    {isLoginMode
+                      ? "Zapamiętaj mnie"
+                      : "Akceptuję regulamin serwisu"}
+                  </label>
+
+                  <div className="text-md text-gray-400">
+                    {isLoginMode ? "Nie masz konta? " : "Masz już konto? "}
+                    <button
+                      onClick={() => setIsLoginMode(!isLoginMode)}
+                      className="font-bold text-[#0c493e] hover:underline decoration-[#c5e96b] bg-transparent border-none cursor-pointer p-0"
+                    >
+                      {isLoginMode ? "Zarejestruj się" : "Zaloguj się"}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
         {/* Stopka lewej kolumny */}
