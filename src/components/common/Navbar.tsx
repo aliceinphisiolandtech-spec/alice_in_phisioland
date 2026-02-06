@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "../ui/Button";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
   { name: "O e-booku", href: "/" },
@@ -61,11 +62,16 @@ export const Navbar = () => {
       transition: { duration: 0.2, ease: "easeOut" },
     },
   };
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+  console.log(isHome);
 
   return (
     <>
       {/* --- NAVBAR (z-100) --- */}
-      <nav className="absolute top-0 z-[100] w-full pt-4 transition-all duration-300">
+      <nav
+        className={`${isHome && "absolute"}  top-0 z-[100] w-full pt-4 transition-all duration-300`}
+      >
         <div className="mx-auto flex h-20 w-full custom-container items-center justify-between max-[1200px]:px-3">
           {/* --- LOGO --- */}
           <Link
@@ -121,7 +127,7 @@ export const Navbar = () => {
 
           {/* --- DESKTOP BUTTON --- */}
           <div className="flex shrink-0 items-center gap-4 max-[890px]:hidden">
-            <Button href="/ebook">Zaloguj</Button>
+            <Button href="/logowanie">Zaloguj</Button>
           </div>
         </div>
       </nav>
@@ -236,7 +242,7 @@ export const Navbar = () => {
                 className="flex w-full justify-end pr-6 pointer-events-auto mt-2"
               >
                 <Link
-                  href="/"
+                  href="/logowanie"
                   onClick={() => setIsMobileMenuOpen(false)}
                   style={{ WebkitTapHighlightColor: "transparent" }}
                   className={cn(
