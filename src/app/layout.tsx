@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/common/Navbar";
-import { Footer } from "@/components/common/Footer";
-
-// Konfiguracja czcionki Montserrat zgodnie z Twoim setupem
+import { Toaster } from "@/components/ui/sonner";
+// Konfiguracja czcionki - ładuje się raz dla całej aplikacji
 const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-montserrat",
 });
 
-// Metadata przygotowana pod Twój Landing Page
 export const metadata: Metadata = {
   title: "Alice in Phisioland | Profesjonalna Fizjoterapia",
-  description:
-    "Zaawansowana i bezpieczna opieka fizjoterapeutyczna. Odzyskaj sprawność z Alice in Phisioland.",
+  description: "Zaawansowana i bezpieczna opieka fizjoterapeutyczna.",
   keywords: ["fizjoterapia", "rehabilitacja", "zdrowie", "Alice in Phisioland"],
 };
 
@@ -26,12 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl" className="scroll-smooth">
-      <body
-        className={`${montserrat.variable} font-montserrat antialiased bg-`}
-      >
-        <Navbar />
+      <body className={`${montserrat.variable} font-montserrat antialiased`}>
         {children}
-        <Footer />
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

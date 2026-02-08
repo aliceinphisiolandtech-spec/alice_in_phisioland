@@ -10,87 +10,60 @@ import {
   CircleQuestionMark,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { useState } from "react";
+import React, { useState } from "react";
+import { ContentPreviewData } from "@/lib/types/landing";
 
-const checklistItems = [
-  "Fundamenty Diagnoz",
-  "Czerwone Flagi",
-  "Fazy Gojenia",
-  "Dekalog Wywiadu",
-  "Fenotypy Bólu",
-  "Klastery Testów",
-];
+const FEATURE_ICONS = [Network, Microscope, Brain, ShieldCheck];
 
-const transformationData = [
-  {
-    id: 1,
-    problemTitle: "Paraliż decyzyjny",
-    problemDesc: ", przy trudnym pacjencie i obawa przed błędem.",
-    solution: "Gotowe algorytmy postępowania dające pewność w gabinecie.",
-  },
-  {
-    id: 2,
-    problemTitle: "Chaos w testach",
-    problemDesc: ", wykonywanie dziesiątek prób bez rzetelnego wniosku.",
-    solution: "Kliniczne „mięso”, które od razu wdrażasz do pracy z pacjentem.",
-  },
-  {
-    id: 3,
-    problemTitle: "Błądzenie w diagnozie",
-    problemDesc: ", niepewność, czy ból to tkanka, czy układ nerwowy.",
-    solution:
-      "Precyzyjna diagnostyka różnicowa i zrozumienie mechanizmów bólu.",
-  },
-  {
-    id: 4,
-    problemTitle: "Strach przed patologią",
-    problemDesc: ", lęk, że przeoczysz nowotwór lub infekcję.",
-    solution: "Znajomość Czerwonych Flag i bezpieczne prowadzenie pacjenta.",
-  },
-  {
-    id: 5,
-    problemTitle: "Niespójny wywiad",
-    problemDesc: ", poczucie, że ważne informacje uciekają w rozmowie.",
-    solution: "Dekalog wywiadu i celowane pytania, które budują pełny obraz.",
-  },
-];
+interface ContentPreviewProps {
+  data: ContentPreviewData;
+}
 
-const features = [
-  {
-    title: "Logika wnioskowania",
-    description:
-      "Schematy eliminacji błędnych hipotez, które uporządkują Twoje badanie w gabinecie.",
-    icon: Network,
-  },
-  {
-    title: "Wskaźniki EBM",
-    description:
-      "Zastosowanie czułości i swoistości testów klinicznych do zawężenia obszaru poszukiwań.",
-    icon: Microscope,
-  },
-  {
-    title: "Analiza Uwrażliwienia",
-    description:
-      "Przewodnik po mechanizmach neuroplastyczności i pracy z bólem chronicznym.",
-    icon: Brain,
-  },
-  {
-    title: "Bezpieczny Panel",
-    description:
-      "Dostęp do treści online w zabezpieczonym viewerze wraz z linkiem do wysokiej jakości infografik.",
-    icon: ShieldCheck,
-  },
-];
+export const ContentPreview = ({ data }: ContentPreviewProps) => {
+  const [activeId, setActiveId] = useState<string | null>(null);
 
-export const ContentPreview = () => {
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const renderHeadline = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const headlineAny = data.headline as any;
+
+    if (typeof headlineAny === "object" && headlineAny !== null) {
+      return (
+        <>
+          {headlineAny.line1} <br />
+          <span className="text-highlight">{headlineAny.line2}</span>
+        </>
+      );
+    }
+
+    const { headline, highlight } = data;
+    if (typeof headline !== "string") return null;
+
+    if (!highlight || !headline.includes(highlight)) {
+      return headline;
+    }
+
+    const parts = headline.split(highlight);
+    return (
+      <>
+        {parts.map((part, index) => (
+          <React.Fragment key={index}>
+            {part}
+            {index < parts.length - 1 && (
+              <span className="text-highlight relative inline-block">
+                {highlight}
+                <span className="absolute bottom-2 left-0 -z-10 h-3 w-full bg-[#D4F0C8]" />
+              </span>
+            )}
+          </React.Fragment>
+        ))}
+      </>
+    );
+  };
 
   return (
     <>
       <section className="custom-container bg-white py-24 max-[1024px]:py-16 px-4">
-        {/* --- MAIN CONTAINER --- */}
         <div className="flex flex-row items-center justify-between gap-16 max-[1024px]:flex-col max-[1024px]:gap-20">
-          {/* --- LEFT COLUMN (TEXT) --- */}
           <div className="flex w-[45%] flex-col gap-12 max-[1024px]:w-full max-[1024px]:text-center max-[1024px]:items-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -99,24 +72,12 @@ export const ContentPreview = () => {
               transition={{ duration: 0.5 }}
               className="flex flex-col gap-12"
             >
-              <h2 className="heading ">
-                Co znajdziesz <br />
-                <span className="text-highlight">
-                  w środku?
-                  <span className="absolute bottom-2 left-0 -z-10 h-3 w-full bg-[#D4F0C8]" />
-                </span>
-              </h2>
+              <h2 className="heading">{renderHeadline()}</h2>
 
-              <p className="paragraph text-gray-600">
-                To praktyczne uzupełnienie studiów, które wypełnia lukę między
-                dyplomem a pierwszym pacjentem. Poznasz proces diagnostyki
-                różnicowej, nauczysz się stawiać trafne hipotezy kliniczne i
-                zarządzać bólem w oparciu o rzetelne dowody naukowe (EBM).
-              </p>
+              <p className="paragraph text-gray-600">{data.description}</p>
 
-              {/* Checklist */}
               <div className="flex flex-wrap gap-y-4 max-[1024px]:max-w-[500px] max-[1024px]:mx-auto max-[1024px]:pl-15  max-[500px]:pl-32 max-[450px]:pl-24  max-[380px]:pl-16">
-                {checklistItems.map((item, index) => (
+                {data.checklist.map((item, index) => (
                   <div
                     key={index}
                     className="flex w-1/2 items-center gap-3 max-[500px]:w-full max-[1024px]:justify-start"
@@ -133,41 +94,40 @@ export const ContentPreview = () => {
             </motion.div>
           </div>
 
-          {/* --- RIGHT COLUMN (CARDS) --- */}
           <div className="flex w-[50%] flex-col gap-6 max-[1024px]:w-full">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group flex flex-row items-start gap-6 rounded-2xl bg-[#F6F8F7] p-6 transition-all hover:shadow-lg max-[600px]:flex-col max-[600px]:items-center max-[600px]:text-center"
-              >
-                {/* Icon Box */}
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#103830] text-[#D4F0C8] shadow-sm transition-transform group-hover:scale-105">
-                  <feature.icon size={28} strokeWidth={1.5} />
-                </div>
+            {data.features.map((feature, index) => {
+              const Icon = FEATURE_ICONS[index % FEATURE_ICONS.length];
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="group flex flex-row items-start gap-6 rounded-2xl bg-[#F6F8F7] p-6 transition-all hover:shadow-lg max-[600px]:flex-col max-[600px]:items-center max-[600px]:text-center"
+                >
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#103830] text-[#D4F0C8] shadow-sm transition-transform group-hover:scale-105">
+                    <Icon size={28} strokeWidth={1.5} />
+                  </div>
 
-                {/* Text Content */}
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-lg font-bold text-[#103830]">
-                    {feature.title}
-                  </h3>
-                  <p className="text-[14px] leading-relaxed text-gray-600">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                  <div className="flex flex-col gap-2">
+                    <h3 className="text-lg font-bold text-[#103830]">
+                      {feature.title}
+                    </h3>
+                    <p className="text-[14px] leading-relaxed text-gray-600">
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* --- PROBLEM / SOLUTION SECTION --- */}
       <section className="custom-container bg-white py-24 px-4">
         <div className="mx-auto flex w-full max-w-[800px] flex-col gap-4">
-          {transformationData.map((item) => {
+          {data.transformation.map((item) => {
             const isActive = activeId === item.id;
 
             return (
@@ -183,18 +143,16 @@ export const ContentPreview = () => {
                 }}
                 className={cn(
                   "relative flex min-h-[80px] cursor-pointer items-center justify-between overflow-hidden rounded-full px-8 py-4 shadow-md transition-shadow duration-300",
-
                   "max-[640px]:h-[130px] max-[640px]:rounded-2xl max-[640px]:px-6 max-[640px]:flex-col max-[640px]:justify-center max-[640px]:items-center max-[640px]:gap-4",
                 )}
               >
-                {/* --- IKONA (PRZESUWA SIĘ) --- */}
                 <motion.div
                   layout
                   className={cn(
                     "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors duration-300 max-[640px]:h-8 max-[640px]:w-8",
                     isActive
-                      ? "bg-transparent border border-white/30 text-white order-first mr-4 max-[640px]:order-last max-[640px]:mr-0" // Active: Ikona po lewej
-                      : "bg-[#103830] text-white order-last ml-4 max-[640px]:ml-0", // Inactive: Ikona po prawej
+                      ? "bg-transparent border border-white/30 text-white order-first mr-4 max-[640px]:order-last max-[640px]:mr-0"
+                      : "bg-[#103830] text-white order-last ml-4 max-[640px]:ml-0",
                   )}
                 >
                   <AnimatePresence mode="wait">
@@ -222,7 +180,6 @@ export const ContentPreview = () => {
                   </AnimatePresence>
                 </motion.div>
 
-                {/* --- TEKST --- */}
                 <motion.div
                   layout
                   className="flex-1 text-left max-[640px]:text-center"
