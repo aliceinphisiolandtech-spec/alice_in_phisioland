@@ -79,8 +79,6 @@ export const Navbar = ({ session }: NavbarProps) => {
   const isHome = pathname === "/";
 
   // --- LOGIKA RESPONSYWNOŚCI ---
-  // Jeśli jest sesja -> mobile menu włącza się poniżej 1080px
-  // Jeśli brak sesji -> mobile menu włącza się poniżej 890px
   const desktopMenuClass = session ? "min-[1080px]:flex" : "min-[890px]:flex";
   const mobileToggleClass = session
     ? "min-[1080px]:hidden"
@@ -91,7 +89,6 @@ export const Navbar = ({ session }: NavbarProps) => {
 
   return (
     <>
-      {/* --- NAVBAR (z-100) --- */}
       <nav
         className={`${
           isHome && "absolute"
@@ -104,8 +101,9 @@ export const Navbar = ({ session }: NavbarProps) => {
             className="relative shrink-0 ml-24 max-[1110px]:ml-12 max-[920px]:ml-6 max-[860px]:ml-0 pointer-cursor"
             onClick={() => setIsMobileMenuOpen(false)}
           >
+            {/* ZMIANA: AW-Logo.svg -> AW-logo.svg (małe 'l') */}
             <Image
-              src="/AW-Logo.svg"
+              src="/AW-logo.svg"
               height={50}
               width={50}
               alt="Logo"
@@ -118,7 +116,7 @@ export const Navbar = ({ session }: NavbarProps) => {
           <div
             className={cn(
               "hidden items-center rounded-full border border-white/5 bg-white/5 p-1 backdrop-blur-sm",
-              desktopMenuClass, // Dynamiczna klasa responsywności
+              desktopMenuClass,
             )}
             onMouseLeave={() => setHoveredIndex(null)}
           >
@@ -243,7 +241,7 @@ export const Navbar = ({ session }: NavbarProps) => {
               onClick={() => setIsMobileMenuOpen(false)}
               className={cn(
                 "fixed inset-0 z-[110] backdrop-blur-md bg-black/20 pointer-cursor",
-                mobileToggleClass, // Używamy tej samej klasy hidden co toggle button
+                mobileToggleClass,
               )}
             />
 
@@ -254,7 +252,7 @@ export const Navbar = ({ session }: NavbarProps) => {
               variants={containerVariants}
               className={cn(
                 "fixed inset-0 z-[120] flex flex-col justify-center pointer-events-none",
-                mobileToggleClass, // Używamy tej samej klasy hidden co toggle button
+                mobileToggleClass,
               )}
             >
               {navLinks.map((link, idx) => (
