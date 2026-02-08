@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ComingSoonToaster } from "@/features/landing-page/components/CommingSoonToaster";
 // Konfiguracja czcionki - ładuje się raz dla całej aplikacji
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body className={`${montserrat.variable} font-montserrat antialiased`}>
         {children}
         <Toaster position="top-right" richColors />
+        <ComingSoonToaster />
       </body>
     </html>
   );

@@ -7,26 +7,29 @@ import { toast } from "sonner";
 export function ComingSoonToaster() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  // Ref zapobiega podwójnemu odpaleniu w React Strict Mode
   const hasShownToast = useRef(false);
 
   useEffect(() => {
-    // Sprawdzamy czy w URL jest parametr 'coming-soon'
-    if (searchParams.get("coming-soon") && !hasShownToast.current) {
+    const comingSoon = searchParams.get("coming-soon");
+
+    if (comingSoon && !hasShownToast.current) {
       hasShownToast.current = true;
 
-      // 1. Wyświetl powiadomienie
-      toast.info("Panel kursanta w budowie 🚧", {
-        description: "Zostaniesz poinformowany o dostępności materiałów!",
-        duration: 8000, // Dłuższy czas wyświetlania
-        position: "top-right", // Opcjonalnie: na środku góry
-      });
+      // FIX: Dodajemy setTimeout, aby przesunąć to na koniec kolejki zdarzeń
+      // To daje czas bibliotece Sonner na zainicjowanie się w DOM
+      setTimeout(() => {
+        toast.info("Panel kursanta w budowie 🚧", {
+          description: "Zostaniesz poinformowany o dostępności materiałów!",
+          duration: 8000,
+          position: "top-center", // Lepiej widoczne na mobile
+        });
 
-      // 2. Wyczyść URL (żeby po odświeżeniu strony toster nie wyskoczył znowu)
-      const newUrl = window.location.pathname;
-      router.replace(newUrl, { scroll: false });
+        // Czyszczenie URL
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, { scroll: false });
+      }, 100); // 100ms opóźnienia wystarczy
     }
   }, [searchParams, router]);
 
-  return null; // Ten komponent jest niewidzialny
+  return null;
 }
