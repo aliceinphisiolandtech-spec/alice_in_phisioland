@@ -8,7 +8,7 @@ import { ComingSoonToaster } from "@/features/landing-page/components/CommingSoo
 // Konfiguracja czcionki - ładuje się raz dla całej aplikacji
 const montserrat = Montserrat({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "600", "700", "900"], // 400=Regular, 600=SemiBold, 700=Bold, 900=Black
   variable: "--font-montserrat",
 });
 

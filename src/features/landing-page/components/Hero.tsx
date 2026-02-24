@@ -57,7 +57,10 @@ export const Hero = ({ data }: HeroProps) => {
   };
 
   return (
-    <section className="custom-container relative bg-white pt-[172px] pb-55">
+    <section
+      id="hero"
+      className="custom-container relative bg-white pt-[172px] pb-55 "
+    >
       <div className="flex flex-row ml-24 max-w-[70%] max-[1110px]:ml-12 max-[920px]:ml-6 max-[920px]:max-w-[75%] max-[860px]:flex-col max-[860px]:max-w-full max-[860px]:ml-0 max-[860px]:px-3 max-[550px]:overflow-hidden">
         <motion.div
           initial={{ opacity: 0, x: -20 }}

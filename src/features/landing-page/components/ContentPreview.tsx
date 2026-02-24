@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
+/* eslint-disable */
 "use client";
-
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
@@ -62,7 +64,7 @@ export const ContentPreview = ({ data }: ContentPreviewProps) => {
 
   return (
     <>
-      <section className="custom-container bg-white py-24 max-[1024px]:py-16 px-4">
+      <section className="custom-container bg-white pt-40 px-4">
         <div className="flex flex-row items-center justify-between gap-16 max-[1024px]:flex-col max-[1024px]:gap-20">
           <div className="flex w-[45%] flex-col gap-12 max-[1024px]:w-full max-[1024px]:text-center max-[1024px]:items-center">
             <motion.div
@@ -125,7 +127,7 @@ export const ContentPreview = ({ data }: ContentPreviewProps) => {
         </div>
       </section>
 
-      <section className="custom-container bg-white py-24 px-4">
+      <section className="custom-container bg-white pt-24 pb-40 px-4">
         <div className="mx-auto flex w-full max-w-[800px] flex-col gap-4">
           {data.transformation.map((item) => {
             const isActive = activeId === item.id;

@@ -95,7 +95,31 @@ async function transformDataBeforeSave(key: string, data: any) {
       // image jest w kodzie
     };
   }
+  if (key === "patientHero") {
+    // Jeśli potrzebujesz coś tu zmienić (np. zahardcodować link), zrób to tu.
+    // Obecnie zwracamy 1:1.
+    return data;
+  }
 
+  if (key === "patientReviews") {
+    return data;
+  }
+
+  if (key === "patientPreparation") {
+    return data;
+  }
+
+  if (key === "patientFaq") {
+    // Upewniamy się, że ID są spójne
+    return {
+      ...data,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      items: data.items.map((item: any, index: number) => ({
+        ...item,
+        id: item.id || index + 1, // Fallback ID jeśli brak
+      })),
+    };
+  }
   return data;
 }
 

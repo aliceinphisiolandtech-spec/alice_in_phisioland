@@ -11,7 +11,7 @@ import { SecurePanel } from "@/features/landing-page/components/SecurePanel";
 import { Testimonials } from "@/features/landing-page/components/Testimonials";
 
 import { prisma } from "@/lib/prisma";
-import { ComingSoonToaster } from "@/features/landing-page/components/CommingSoonToaster";
+
 import { Navbar } from "@/components/common/Navbar";
 
 // Helper do pobrania danych
@@ -47,7 +47,6 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Navbar z sesją */}
-      <Navbar session={session} />
 
       <main className="flex-grow">
         {/* Przekazujemy dane dynamiczne prosto z bazy. 
@@ -55,10 +54,11 @@ export default async function Home() {
 
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <Hero data={landingData.hero} />
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <EbookFeatures data={landingData.ebookFeatures} />
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <ContentPreview data={landingData.contentPreview} />
+        <div id="o-ebooku">
+          <EbookFeatures data={landingData.ebookFeatures} />
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <ContentPreview data={landingData.contentPreview} />
+        </div>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <Testimonials data={landingData.testimonials} />
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -67,8 +67,6 @@ export default async function Home() {
         <About data={landingData.about} />
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <PracticalTraining data={landingData.practicalTraining} />
-
-        <ComingSoonToaster />
       </main>
 
       <ContactFooter />

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -28,6 +28,7 @@ import { LoadingButton } from "@/components/ui/LoadingButton";
 import { contentPreviewSchema } from "@/lib/validators/landing";
 import { ContentPreviewData } from "@/lib/types/landing";
 
+// 1. Definiujemy typ formularza na podstawie schematu Zod
 type ContentPreviewFormValues = z.infer<typeof contentPreviewSchema>;
 
 interface Props {
@@ -35,6 +36,8 @@ interface Props {
 }
 
 export function ContentPreviewForm({ data }: Props) {
+  // 2. Przekazujemy typ generyczny <ContentPreviewFormValues> do useForm
+  // To naprawia błąd "Argument of type 'SubmitHandler...' is not assignable..."
   const {
     register,
     control,
@@ -50,11 +53,23 @@ export function ContentPreviewForm({ data }: Props) {
           : (data.headline as any).line1 + " " + (data.headline as any).line2,
       highlight: data.highlight || "",
       description: data.description,
-      checklist: data.checklist.map((item) => ({ text: item })),
+
+      // 3. NAPRAWA BŁĘDU CHECKLIST:
+      // data.checklist jest już typu { text: string }[] (zgodnie z definicją typu ContentPreviewData).
+      // Jeśli jednak w bazie masz "gołe" stringi (stary format), musimy to sprawdzić.
+      checklist: Array.isArray(data.checklist)
+        ? data.checklist.map((item: any) =>
+            // Jeśli item jest stringiem, owijamy go w obiekt. Jeśli obiektem - zostawiamy.
+            typeof item === "string" ? { text: item } : item,
+          )
+        : [],
+
       features: data.features,
       transformation: data.transformation,
     },
   });
+
+  // --- FIELD ARRAYS ---
 
   // 1. Checklist Array (Max 6)
   const {
@@ -121,7 +136,8 @@ export function ContentPreviewForm({ data }: Props) {
     appendTrans({ problemTitle: "", problemDesc: "", solution: "" });
   };
 
-  const onSubmit = async (values: ContentPreviewFormValues) => {
+  // 4. Jawne typowanie SubmitHandler
+  const onSubmit: SubmitHandler<ContentPreviewFormValues> = async (values) => {
     const toastId = toast.loading("Zapisywanie zmian...");
     try {
       const response = await fetch("/api/admin/cms/contentPreview", {
@@ -138,6 +154,7 @@ export function ContentPreviewForm({ data }: Props) {
       });
       reset(values);
     } catch (error) {
+      console.error(error);
       toast.error("Wystąpił błąd", {
         id: toastId,
         icon: <AlertCircle className="text-red-500" size={20} />,
@@ -238,8 +255,8 @@ export function ContentPreviewForm({ data }: Props) {
                 className={cn(
                   "flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-2 text-sm font-medium text-gray-500 transition-colors",
                   checklistFields.length >= 6
-                    ? "opacity-50 cursor-default" // Blokada hover
-                    : "hover:border-gray-300 hover:text-gray-700 cursor-pointer", // Normalny stan
+                    ? "opacity-50 cursor-default"
+                    : "hover:border-gray-300 hover:text-gray-700 cursor-pointer",
                 )}
               >
                 <Plus size={16} /> Dodaj punkt
@@ -301,8 +318,8 @@ export function ContentPreviewForm({ data }: Props) {
                 className={cn(
                   "flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-3 text-sm font-medium text-gray-500 transition-colors",
                   featureFields.length >= 4
-                    ? "opacity-50 cursor-default" // Blokada hover
-                    : "hover:border-gray-300 hover:text-gray-700 cursor-pointer", // Normalny stan
+                    ? "opacity-50 cursor-default"
+                    : "hover:border-gray-300 hover:text-gray-700 cursor-pointer",
                 )}
               >
                 <Plus size={16} /> Dodaj Funkcję
@@ -390,8 +407,8 @@ export function ContentPreviewForm({ data }: Props) {
                 className={cn(
                   "flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-3 text-sm font-medium text-gray-500 transition-colors",
                   transFields.length >= 5
-                    ? "opacity-50 cursor-default" // Blokada hover
-                    : "hover:border-gray-300 hover:text-gray-700 cursor-pointer", // Normalny stan
+                    ? "opacity-50 cursor-default"
+                    : "hover:border-gray-300 hover:text-gray-700 cursor-pointer",
                 )}
               >
                 <Plus size={16} /> Dodaj Transformację

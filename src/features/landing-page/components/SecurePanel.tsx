@@ -62,7 +62,7 @@ export const SecurePanel = ({ data }: SecurePanelProps) => {
   };
 
   return (
-    <section className="bg-[#103830] py-24 text-white max-[1024px]:py-16">
+    <section className="bg-[#103830] py-40 text-white max-[1024px]:py-16">
       <div className="custom-container px-4">
         <div className="flex flex-row items-center gap-16 max-[1024px]:flex-col-reverse max-[1024px]:gap-12">
           {/* LEWA STRONA: GRAFIKA (STATYCZNA) */}

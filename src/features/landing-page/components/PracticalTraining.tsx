@@ -57,7 +57,7 @@ export const PracticalTraining = ({ data }: PracticalTrainingProps) => {
   };
 
   return (
-    <section className="w-full py-24 max-[1024px]:py-16">
+    <section id="kursy" className="w-full py-40 pb-80 max-[1024px]:py-16">
       <div className="mx-auto grid max-w-[1200px] grid-cols-[0.9fr_1.1fr] gap-16 px-4 max-[1024px]:grid-cols-1 max-[1024px]:gap-20">
         <div className="relative flex items-center justify-center">
           <div className="relative w-full max-w-[500px]">

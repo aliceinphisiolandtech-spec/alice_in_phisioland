@@ -57,10 +57,10 @@ export const LoadingButton = React.forwardRef<
         }}
         className={cn(
           // BAZA:
-          "relative inline-flex cursor-pointer items-center justify-center font-medium overflow-hidden rounded-lg",
+          "relative inline-flex cursor-pointer text-[12px] items-center justify-center font-medium overflow-hidden rounded-lg",
 
           // WYMIARY:
-          "h-11", // Stała wysokość (44px)
+          "h-10", // Stała wysokość (44px)
           "min-w-[44px]", // Blokuje zwężanie poniżej kwadratu
 
           // ZACHOWANIE TEKSTU:

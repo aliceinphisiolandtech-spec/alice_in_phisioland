@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,12 +17,12 @@ import {
   LogOut,
 } from "lucide-react";
 
+/* Sekcja: Linki nawigacyjne */
 const navLinks = [
   { name: "Strona główna", href: "/" },
-  { name: "O e-booku", href: "/" },
-  { name: "Strefa pacjenta", href: "/" },
-  { name: "Strefa fizjoterapeuty", href: "/" },
-  { name: "Kursy", href: "/" },
+  { name: "O e-booku", href: "#o-ebooku" },
+  { name: "Kursy", href: "#kursy" },
+  { name: "Strefa pacjenta", href: "/strefa-pacjenta" },
 ];
 
 interface NavbarProps {
@@ -31,6 +32,71 @@ interface NavbarProps {
 export const Navbar = ({ session }: NavbarProps) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("/");
+  const pathname = usePathname();
+  const isZakupPage = pathname === "/zakup";
+  /* Sekcja: Logika Scroll Spy (Active Link) */
+  useEffect(() => {
+    if (pathname !== "/") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveSection(pathname);
+      return;
+    }
+
+    const observerOptions = {
+      root: null,
+      /* Zmniejszamy ujemny margines górny, aby szybciej wykrywać wejście sekcji */
+      rootMargin: "-20% 0px -70% 0px",
+      threshold: 0,
+    };
+
+    const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        /* Logika: aktywujemy tylko tę sekcję, która właśnie weszła w interakcję i jest widoczna */
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute("id");
+          if (id === "hero") {
+            setActiveSection("/");
+          } else if (id) {
+            setActiveSection(`#${id}`);
+          }
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(handleIntersect, observerOptions);
+
+    const sectionIds = ["hero", "o-ebooku", "kursy"];
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    /* Bezpiecznik dla powrotu na samą górę */
+    const handleManualScroll = () => {
+      if (window.scrollY < 50) {
+        setActiveSection("/");
+      }
+    };
+
+    window.addEventListener("scroll", handleManualScroll);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", handleManualScroll);
+    };
+  }, [pathname]);
+
+  /* Sekcja: Logika Sticky i Scrolla */
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -40,15 +106,18 @@ export const Navbar = ({ session }: NavbarProps) => {
     }
   }, [isMobileMenuOpen]);
 
-  // --- VARIANTS ---
+  const isAbsolutePosition =
+    (pathname === "/" || pathname === "/strefa-pacjenta") && !isScrolled;
+
+  const isLightVersion = pathname === "/strefa-pacjenta" && !isScrolled;
+  const isDarkVersion = !isLightVersion;
+
+  /* Sekcja: Animacje Framer Motion */
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1,
-      },
+      transition: { staggerChildren: 0.1, delayChildren: 0.1 },
     },
     exit: {
       opacity: 0,
@@ -75,10 +144,8 @@ export const Navbar = ({ session }: NavbarProps) => {
       transition: { duration: 0.2, ease: "easeOut" },
     },
   };
-  const pathname = usePathname();
-  const isHome = pathname === "/";
 
-  // --- LOGIKA RESPONSYWNOŚCI ---
+  /* Sekcja: Responsywność */
   const desktopMenuClass = session ? "min-[1080px]:flex" : "min-[890px]:flex";
   const mobileToggleClass = session
     ? "min-[1080px]:hidden"
@@ -90,68 +157,101 @@ export const Navbar = ({ session }: NavbarProps) => {
   return (
     <>
       <nav
-        className={`${
-          isHome && "absolute"
-        } top-0 z-[100] w-full pt-4 transition-all duration-300`}
+        className={cn(
+          "top-0 z-[100] w-full transition-all duration-500 ease-in-out",
+          isScrolled && !isZakupPage
+            ? "fixed bg-white/80 backdrop-blur-md shadow-sm py-2"
+            : "py-4",
+          isAbsolutePosition
+            ? "absolute"
+            : !isScrolled && "relative bg-white border-b border-gray-100 pb-4",
+        )}
       >
-        <div className="mx-auto flex h-20 w-full custom-container items-center justify-between max-[1200px]:px-3">
+        <div
+          className={cn(
+            "mx-auto flex w-full custom-container items-center justify-between transition-all duration-500",
+            isScrolled ? "h-14" : "h-20",
+            "max-[1200px]:px-3",
+          )}
+        >
           {/* --- LOGO --- */}
           <Link
             href="/"
-            className="relative shrink-0 ml-24 max-[1110px]:ml-12 max-[920px]:ml-6 max-[860px]:ml-0 pointer-cursor"
+            className="relative shrink-0 pointer-cursor"
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            {/* ZMIANA: AW-Logo.svg -> AW-logo.svg (małe 'l') */}
             <Image
-              src="/AW-logo.svg"
-              height={50}
-              width={50}
+              src={isLightVersion ? "/AW-logo-negatyw.svg" : "/AW-logo.svg"}
+              height={isScrolled ? 40 : 50}
+              width={isScrolled ? 40 : 50}
               alt="Logo"
               priority
-              className="opacity-100 transition-opacity duration-300 hover:opacity-80"
+              className="opacity-100 transition-all duration-300 hover:opacity-80"
             />
           </Link>
 
           {/* --- DESKTOP MENU --- */}
           <div
             className={cn(
-              "hidden items-center rounded-full border border-white/5 bg-white/5 p-1 backdrop-blur-sm",
+              "hidden items-center rounded-full border p-1 backdrop-blur-sm transition-colors duration-300",
+              isLightVersion
+                ? "border-white/10 bg-white/5"
+                : isScrolled
+                  ? "border-gray-100 bg-gray-50/50"
+                  : "border-gray-200 bg-white/60",
               desktopMenuClass,
             )}
             onMouseLeave={() => setHoveredIndex(null)}
           >
-            {navLinks.map((link, idx) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                onMouseEnter={() => setHoveredIndex(idx)}
-                className="relative z-10 px-6 py-2.5 text-[14px] font-medium transition-colors duration-300 pointer-cursor"
-              >
-                <span
-                  className={cn(
-                    "relative z-20 transition-colors duration-300",
-                    hoveredIndex === idx ? "text-white" : "text-foreground/70",
-                  )}
-                >
-                  {link.name}
-                </span>
+            {navLinks.map((link, idx) => {
+              const isActive = activeSection === link.href;
+              const showPill =
+                hoveredIndex === idx || (isActive && hoveredIndex === null);
 
-                {hoveredIndex === idx && (
-                  <motion.div
-                    layoutId="nav-pill"
-                    className="absolute inset-0 z-10 rounded-full bg-primary shadow-lg shadow-primary/20"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 180,
-                      damping: 30,
-                    }}
-                  />
-                )}
-              </Link>
-            ))}
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  className="relative z-10 px-6 py-2.5 text-[14px] font-medium transition-colors duration-300 pointer-cursor"
+                >
+                  <span
+                    className={cn(
+                      "relative z-20 transition-colors duration-300",
+                      isLightVersion
+                        ? showPill
+                          ? "text-white"
+                          : "text-white/80"
+                        : showPill
+                          ? "text-white"
+                          : "text-gray-600",
+                    )}
+                  >
+                    {link.name}
+                  </span>
+
+                  {showPill && (
+                    <motion.div
+                      layoutId="nav-pill"
+                      className={cn(
+                        "absolute inset-0 z-10 rounded-full shadow-lg",
+                        isDarkVersion
+                          ? "bg-[#0c493e] shadow-[#0c493e]/20"
+                          : "bg-white/10 shadow-none",
+                      )}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 180,
+                        damping: 30,
+                      }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           {/* --- DESKTOP BUTTON / PROFILE --- */}
@@ -162,9 +262,22 @@ export const Navbar = ({ session }: NavbarProps) => {
             )}
           >
             {session ? (
-              <NavbarProfile session={session} />
+              <NavbarProfile
+                session={session}
+                isLightVersion={isLightVersion}
+                isScrolled={isScrolled}
+              />
             ) : (
-              <Button href="/logowanie" className="pointer-cursor">
+              <Button
+                href="/logowanie"
+                textColor="text-primary"
+                className={cn(
+                  "pointer-cursor",
+                  isLightVersion &&
+                    "bg-contrast hover:bg-contrast/90 border-transparent",
+                  isScrolled && "scale-90",
+                )}
+              >
                 Zaloguj
               </Button>
             )}
@@ -175,32 +288,37 @@ export const Navbar = ({ session }: NavbarProps) => {
       {/* --- TOGGLE BUTTON (Mobile) --- */}
       <div
         className={cn(
-          "absolute top-0 z-[150] w-full pt-4 pointer-events-none",
+          "z-[150] w-full pt-4 pointer-events-none transition-all duration-500",
+          isScrolled ? "fixed top-0" : "absolute top-0",
           mobileToggleClass,
         )}
       >
-        <div className="mx-auto flex h-20 w-full max-w-[1200px] items-center justify-end px-2">
+        <div
+          className={cn(
+            "mx-auto flex h-20 w-full max-w-[1200px] items-center justify-end px-2 transition-all duration-500",
+            isScrolled ? "h-14" : "h-20",
+          )}
+        >
           <motion.button
             layout
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            style={{ WebkitTapHighlightColor: "transparent" }}
             className={cn(
               "pointer-events-auto flex items-center justify-center transition-colors outline-none focus:outline-none ring-0 pointer-cursor",
               isMobileMenuOpen
                 ? "bg-black text-white rounded-full p-0 shadow-2xl border border-white/10"
-                : "p-0 bg-transparent text-black",
+                : cn(
+                    "p-0 bg-transparent",
+                    isLightVersion ? "text-white" : "text-black",
+                  ),
             )}
-            aria-label="Toggle menu"
           >
             <svg
-              width="40"
-              height="40"
+              width={isScrolled ? "32" : "40"}
+              height={isScrolled ? "32" : "40"}
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
             >
               <motion.line
                 x1="4"
@@ -210,7 +328,6 @@ export const Navbar = ({ session }: NavbarProps) => {
                 animate={{
                   rotate: isMobileMenuOpen ? 45 : 0,
                   y: isMobileMenuOpen ? 4 : 0,
-                  stroke: isMobileMenuOpen ? "#ffffff" : "currentColor",
                 }}
               />
               <motion.line
@@ -222,7 +339,6 @@ export const Navbar = ({ session }: NavbarProps) => {
                   rotate: isMobileMenuOpen ? -45 : 0,
                   y: isMobileMenuOpen ? -4 : 0,
                   x1: isMobileMenuOpen ? 4 : 10,
-                  stroke: isMobileMenuOpen ? "#ffffff" : "currentColor",
                 }}
               />
             </svg>
@@ -244,7 +360,6 @@ export const Navbar = ({ session }: NavbarProps) => {
                 mobileToggleClass,
               )}
             />
-
             <motion.div
               initial="hidden"
               animate="show"
@@ -255,67 +370,21 @@ export const Navbar = ({ session }: NavbarProps) => {
                 mobileToggleClass,
               )}
             >
-              {navLinks.map((link, idx) => (
+              {navLinks.map((link) => (
                 <motion.div
                   key={link.name}
                   variants={itemVariants}
-                  className={cn(
-                    "flex w-full justify-end pointer-events-auto",
-                    "pr-6",
-                  )}
+                  className="flex w-full justify-end pointer-events-auto pr-6"
                 >
                   <Link
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    style={{ WebkitTapHighlightColor: "transparent" }}
-                    className={cn(
-                      "inline-block rounded-full bg-black px-8 py-4 text-lg font-medium text-white shadow-2xl transition-transform outline-none focus:outline-none pointer-cursor",
-                      "hover:scale-105 active:scale-95 border border-white/10 mb-4",
-                    )}
+                    className="inline-block rounded-full bg-black px-8 py-4 text-lg font-medium text-white shadow-2xl transition-transform pointer-cursor border border-white/10 mb-4"
                   >
                     {link.name}
                   </Link>
                 </motion.div>
               ))}
-
-              <motion.div
-                variants={itemVariants}
-                className="flex w-full justify-end pr-6 pointer-events-auto mt-2"
-              >
-                {session ? (
-                  <Link
-                    href={
-                      session.user.role === "admin"
-                        ? "/admin"
-                        : "/?coming-soon=true"
-                    }
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center justify-center gap-2 rounded-full px-12 py-4 transition-transform active:scale-95 outline-none focus:outline-none pointer-cursor",
-                      "bg-[#0c493e] shadow-2xl shadow-[#0c493e]/20 border border-white/10",
-                      "text-lg font-medium text-white",
-                      "hover:bg-[#0c493e]/90",
-                    )}
-                  >
-                    <LayoutDashboard className="h-5 w-5" />
-                    Twój Panel
-                  </Link>
-                ) : (
-                  <Link
-                    href="/logowanie"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    style={{ WebkitTapHighlightColor: "transparent" }}
-                    className={cn(
-                      "flex items-center justify-center rounded-full px-12 py-4 transition-transform active:scale-95 outline-none focus:outline-none pointer-cursor",
-                      "bg-primary shadow-2xl shadow-primary/20",
-                      "text-lg font-medium text-white",
-                      "hover:bg-primary/90",
-                    )}
-                  >
-                    Zaloguj się
-                  </Link>
-                )}
-              </motion.div>
             </motion.div>
           </>
         )}
@@ -324,34 +393,32 @@ export const Navbar = ({ session }: NavbarProps) => {
   );
 };
 
-// --- KOMPONENT PROFILU ---
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const NavbarProfile = ({ session }: { session: any }) => {
+/* Sekcja: Komponent Profilu */
+const NavbarProfile = ({ session, isLightVersion, isScrolled }: any) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const user = session.user;
-
-  const dashboardLink = user.role === "admin" ? "/admin" : "/?coming-soon=true";
-
-  const getInitials = (name?: string | null) => {
-    if (!name) return "AW";
-    return name
-      .split(" ")
+  const getInitials = (name?: string | null) =>
+    name
+      ?.split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2);
-  };
+      .slice(0, 2) || "AW";
 
   return (
     <div
       onClick={() => setIsExpanded(!isExpanded)}
-      className="group relative flex items-center gap-3 cursor-pointer p-1 pr-3 rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 select-none pointer-cursor z-50"
+      className={cn(
+        "group relative flex items-center gap-3 cursor-pointer p-1 pr-3 rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 pointer-cursor z-50",
+        isLightVersion && "!bg-contrast !text-primary border-0",
+        isScrolled && "scale-90",
+      )}
     >
-      {/* Avatar */}
       <div
-        className={`h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-md transition-transform duration-300 relative ${
-          isExpanded ? "scale-90 ring-2 ring-[#0c493e]/20" : ""
-        }`}
+        className={cn(
+          "h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-md relative",
+          isExpanded && "scale-90 ring-2 ring-[#0c493e]/20",
+        )}
       >
         {user.image ? (
           <Image src={user.image} alt="Avatar" fill className="object-cover" />
@@ -361,77 +428,55 @@ const NavbarProfile = ({ session }: { session: any }) => {
           </div>
         )}
       </div>
-
-      {/* Kontener na Teksty */}
       <div className="relative w-[130px] h-[38px] overflow-hidden">
-        {/* WARSTWA 1: Dane Użytkownika */}
         <div
-          className={`absolute inset-0 flex flex-col justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+          className={cn(
+            "absolute inset-0 flex flex-col justify-center transition-all duration-500",
             isExpanded
-              ? "opacity-0 -translate-y-full pointer-events-none"
-              : "opacity-100 translate-y-0"
-          }`}
+              ? "opacity-0 -translate-y-full"
+              : "opacity-100 translate-y-0",
+          )}
         >
-          <span className="text-sm font-bold text-gray-800 leading-tight truncate px-1">
+          <span className="text-sm font-bold text-gray-800 truncate px-1">
             {user.name || "Użytkownik"}
           </span>
           <span className="text-[10px] text-gray-500 truncate px-1">
             {user.email}
           </span>
         </div>
-
-        {/* WARSTWA 2: Przyciski Akcji */}
         <div
-          className={`absolute inset-0 flex items-center justify-between gap-1 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+          className={cn(
+            "absolute inset-0 flex items-center justify-between gap-1 transition-all duration-500",
             isExpanded
               ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-full pointer-events-none"
-          }`}
+              : "opacity-0 translate-y-full",
+          )}
         >
-          {/* Link do Panelu */}
           <Link
-            href={dashboardLink}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[#0c493e] hover:bg-[#0c493e]/10 transition-colors pointer-cursor"
+            href="/admin"
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[#0c493e] hover:bg-[#0c493e]/10 pointer-cursor"
             onClick={(e) => e.stopPropagation()}
-            title="Przejdź do panelu"
           >
-            <LayoutDashboard className="h-4 w-4" />
-            <span className="text-xs font-bold uppercase tracking-wide">
-              Panel
-            </span>
+            <LayoutDashboard className="h-4 w-4" />{" "}
+            <span className="text-xs font-bold uppercase">Panel</span>
           </Link>
-
-          {/* Wyloguj */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               signOut({ callbackUrl: "/" });
             }}
-            className="flex items-center justify-center p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors pointer-cursor"
-            title="Wyloguj"
+            className="p-1.5 rounded-md text-red-500 hover:bg-red-50 pointer-cursor"
           >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
       </div>
-
-      {/* Ikona Chevron */}
-      <div className="relative h-5 w-5 flex items-center justify-center">
-        <ChevronDown
-          className={`absolute h-4 w-4 text-gray-400 transition-all duration-300 ${
-            isExpanded
-              ? "rotate-180 opacity-0 scale-50"
-              : "rotate-0 opacity-100 scale-100"
-          }`}
-        />
-        <ChevronLeft
-          className={`absolute h-4 w-4 text-[#0c493e] transition-all duration-300 ${
-            isExpanded
-              ? "rotate-0 opacity-100 scale-100"
-              : "-rotate-90 opacity-0 scale-50"
-          }`}
-        />
-      </div>
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-gray-400 transition-all duration-300",
+          isExpanded && "rotate-180",
+        )}
+      />
     </div>
   );
 };

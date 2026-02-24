@@ -10,6 +10,7 @@ import {
   User,
   GraduationCap,
   Lock,
+  Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -24,6 +25,7 @@ import { SecurePanelForm } from "./forms/SecurePanelForm";
 import { AboutForm } from "./forms/AboutForm";
 import { PracticalTrainingForm } from "./forms/PracticalTrainingForm";
 import { AuthPageForm } from "./forms/AuthPageForm";
+import { PatientZoneForm } from "./forms/PatientZoneForm";
 
 // ZMIANA 2: Używamy poprawnego typu w Propsach
 interface CmsFormsProps {
@@ -39,6 +41,7 @@ const TABS = [
   { id: "practicalTraining", label: "Szkolenie", icon: GraduationCap },
   { id: "about", label: "O mnie", icon: User },
   { id: "authPage", label: "Logowanie", icon: Lock },
+  { id: "patientZone", label: "Strefa Pacjenta", icon: Stethoscope },
 ];
 
 export default function CmsForms({ initialData }: CmsFormsProps) {
@@ -61,8 +64,19 @@ export default function CmsForms({ initialData }: CmsFormsProps) {
       case "about":
         return <AboutForm data={initialData.about} />;
       case "authPage":
-        // Teraz TypeScript nie zgłosi błędu, bo LandingPageData zawiera authPage
         return <AuthPageForm data={initialData.authPage} />;
+      case "patientZone":
+        // Przekazujemy zbiorczy obiekt data
+        return (
+          <PatientZoneForm
+            data={{
+              hero: initialData.patientHero,
+              reviews: initialData.patientReviews,
+              preparation: initialData.patientPreparation,
+              faq: initialData.patientFaq,
+            }}
+          />
+        );
       default:
         return (
           <div className="p-8 text-center text-gray-500">

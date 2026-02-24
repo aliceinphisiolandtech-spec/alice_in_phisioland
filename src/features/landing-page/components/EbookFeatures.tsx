@@ -13,7 +13,7 @@ import { EbookFeaturesData, FaqItem } from "@/lib/types/landing";
 const DECORATIVE_ARROW = "/landing-assets/E-book-presentation-arrow.svg";
 const STATIC_IMAGE_SRC = "/landing-assets/E-book-presentation.webp"; // Twoja grafika ebooka
 const STATIC_IMAGE_ALT = "Okładka E-booka o diagnostyce"; // Stały tekst alternatywny
-const STATIC_BUTTON_URL = "/ebook-landing-page"; // Stały link
+const STATIC_BUTTON_URL = "/zakup"; // Stały link
 
 interface EbookFeaturesProps {
   data: EbookFeaturesData;
@@ -110,7 +110,7 @@ export const EbookFeatures = ({ data }: EbookFeaturesProps) => {
   };
 
   return (
-    <section className="custom-container relative bg-white py-24 px-4 max-[1130px]:flex max-[1130px]:flex-col">
+    <section className="custom-container relative bg-white pt-24 pb-40 px-4 max-[1130px]:flex max-[1130px]:flex-col">
       <div className="flex flex-row items-start justify-between gap-8 max-[1130px]:justify-center max-[1130px]:gap-24 max-[750px]:flex-col">
         {/* LEWA KOLUMNA: TREŚĆ */}
         <div className="flex w-[33%] flex-col gap-6 max-[1130px]:w-[395px] max-[750px]:text-center max-[750px]:w-[80%] max-[750px]:self-center max-[415px]:w-full">

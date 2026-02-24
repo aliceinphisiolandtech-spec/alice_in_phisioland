@@ -67,12 +67,13 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
       </>
     );
   };
+  console.log("DATA FROM REVIEWS", data);
 
   // Jeśli nie ma recenzji, nie renderujemy nic (lub placeholder)
   if (!activeTestimonial) return null;
 
   return (
-    <section className="bg-[#F9FAFB] py-24 max-[1024px]:py-16">
+    <section className="bg-white py-40 ">
       <div className="custom-container px-4">
         <div className="mb-16 text-center">
           <h2 className="heading text-[#103830]">{renderHeadline()}</h2>

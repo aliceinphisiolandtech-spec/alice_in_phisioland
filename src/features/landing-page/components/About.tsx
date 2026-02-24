@@ -58,7 +58,7 @@ export const About = ({ data }: AboutProps) => {
   };
 
   return (
-    <section className="flex flex-col mt-52 gap-14 max-[1024px]:mt-20">
+    <section className="flex flex-col mt-86  mb-40 gap-14 max-[1024px]:mt-20">
       <div className="grid grid-cols-[2fr_4fr] custom-container w-full max-[1170px]:grid-cols-[2fr_5fr] max-[1024px]:flex max-[1024px]:justify-center">
         <div className="max-[1024px]:hidden"></div>
         <div className="flex flex-col gap-2.5 max-[1024px]:items-center max-[1024px]:text-center max-[1024px]:max-w-[70%] max-[1024px]:justify-center max-[1024px]:gap-6 max-[790px]:max-w-[90%]">

@@ -7,7 +7,7 @@
   /* Definiowanie kolorów */
   --color-primary: #0c493e;
   --color-accent: #c5e96b;
-
+  --color-contrast: #d4f0c8;
   /* Definiowanie tła i tekstu (foreground) */
   --color-background: #ffffff;
   --color-foreground: #000000;
@@ -33,6 +33,9 @@
   .custom-container {
     max-width: 1200px;
     margin: 0 auto;
+  }
+  .montserrat {
+    font-family: "Montserrat", sans-serif;
   }
   .heading {
     font-size: 48px;
