@@ -74,37 +74,35 @@ export const PurchaseSuccessModal = () => {
 
   const handleEnable = async () => {
     setIsLoading(true);
-    console.log("🚀 Rozpoczynamy procedurę OneSignal...");
 
     try {
-      // 1. Zabezpieczenie: Czy skrypt w ogóle jest?
+      // 1. Sprawdź czy OneSignal istnieje
       if (!OneSignal.Notifications) {
-        throw new Error("OneSignal nie załadowany (AdBlock?)");
+        alert("Błąd: OneSignal nie załadowany. Odśwież stronę.");
+        return;
       }
 
-      console.log("⏳ Wywołuję requestPermission...");
+      // 2. Po prostu czekamy na decyzję użytkownika.
+      // USUNĘLIŚMY Promise.race i timeout. Niech czeka nawet godzinę.
+      const accepted = await OneSignal.Notifications.requestPermission();
 
-      // 2. TIMEOUT: Jeśli OneSignal nie odpowie w 3 sekundy, wyrzuć błąd
-      // To zapobiega wiecznemu kręceniu się kółeczka
-      await Promise.race([
-        OneSignal.Notifications.requestPermission(),
-        new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Timeout: OneSignal nie odpowiada")),
-            3000,
-          ),
-        ),
-      ]);
+      console.log("Decyzja użytkownika:", accepted);
 
-      console.log("✅ Proces zakończony sukcesem!");
-      handleClose();
+      // 3. Zamykamy modal TYLKO jeśli użytkownik się zgodził
+      if (accepted) {
+        handleClose();
+        // Opcjonalnie: Pokaż toast sukcesu
+        // toast.success("Super! Powiadomienia włączone.");
+      } else {
+        // Jeśli kliknął "Blokuj" lub zamknął okno
+        console.warn("Użytkownik odmówił zgody.");
+        // Tutaj MOŻESZ zostawić modal otwarty, żeby spróbował jeszcze raz,
+        // albo zamknąć. Zazwyczaj lepiej nie zamykać, żeby widział przycisk.
+      }
     } catch (error) {
-      console.error("❌ Błąd:", error);
-      // Opcjonalnie: Pokaż alert, żebyś wiedziała co się stało
-      // alert("Błąd: Sprawdź czy nie masz włączonego AdBlocka.");
-
-      // Mimo błędu zamykamy modal, żeby nie blokować usera
-      handleClose();
+      console.error("❌ Błąd krytyczny:", error);
+      // Nie zamykamy modala przy błędzie, żeby użytkownik mógł spróbować ponownie
+      alert("Wystąpił błąd podczas łączenia z OneSignal. Spróbuj ponownie.");
     } finally {
       setIsLoading(false);
     }
