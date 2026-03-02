@@ -16,7 +16,7 @@ export const OneSignalInit = () => {
           allowLocalhostAsSecureOrigin: true,
           // TUTAJ JEST ZMIANA:
           notifyButton: {
-            enable: true,
+            enable: false,
           } as any, // <--- Dodaj 'as any', żeby oszukać TypeScript
         });
 
