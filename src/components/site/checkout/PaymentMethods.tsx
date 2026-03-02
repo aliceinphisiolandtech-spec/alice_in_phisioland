@@ -1,10 +1,9 @@
 import { Smartphone, Landmark, CreditCard, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { PaymentMethodType } from "./CheckoutSection";
 
 interface PaymentMethodsProps {
-  selected: PaymentMethodType;
-  onSelect: (method: PaymentMethodType) => void;
+  selected: any;
+  onSelect: (method: any) => void;
 }
 
 export const PaymentMethods = ({ selected, onSelect }: PaymentMethodsProps) => {
@@ -43,11 +42,11 @@ const PaymentCard = ({
   selected,
   onSelect,
 }: {
-  id: PaymentMethodType;
+  id: any;
   label: string;
   icon: any;
-  selected: PaymentMethodType;
-  onSelect: (id: PaymentMethodType) => void;
+  selected: any;
+  onSelect: (id: any) => void;
 }) => {
   const isActive = selected === id;
   return (

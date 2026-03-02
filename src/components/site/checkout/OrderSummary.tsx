@@ -21,17 +21,17 @@ export const OrderSummary = () => {
           />
 
           <div>
-            <h4 className="font-bold text-[#103830] text-sm leading-tight mb-1">
+            <h4 className="font-bold text-[#103830] text-md leading-tight mb-1">
               Fizjoterapeutyczna Diagnostyka Różnicowa
             </h4>
-            <p className="text-xs text-gray-500 mb-2">Tom 1 • Aplikacja PWA</p>
+            <p className="text-sm text-gray-500 mb-2">Tom 1 • Aplikacja PWA</p>
             <span className="font-bold text-[#103830]">149,00 zł</span>
           </div>
         </div>
 
         <div className="bg-[#F9FAFB] p-4 rounded-xl mt-6">
-          <p className="text-xs text-gray-500 mb-2 font-medium">W pakiecie:</p>
-          <ul className="text-xs text-gray-600 space-y-2">
+          <p className="text-sm text-gray-500 mb-2 font-medium">W pakiecie:</p>
+          <ul className="text-sm text-gray-600 space-y-2">
             <FeatureItem text="Dożywotni dostęp do Aplikacji" />
             <FeatureItem text="Panel Wiedzy (Secure Viewer)" />
             <FeatureItem text="Dostęp natychmiastowy" />

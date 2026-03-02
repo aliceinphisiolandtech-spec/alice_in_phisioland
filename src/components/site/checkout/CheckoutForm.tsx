@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { Session } from "next-auth";
@@ -10,7 +9,6 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { Button } from "@/components/ui/Button";
 import { LoadingButton } from "@/components/ui/LoadingButton";
 import { toast } from "sonner";
 
@@ -25,18 +23,12 @@ export const CheckoutForm = ({ session }: CheckoutFormProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
 
-  /* SAFE GUARD: Jeśli brak sesji, nie renderuj nic (zabezpieczenie) */
-  if (!session || !session.user) {
-    return null;
-  }
+  if (!session || !session.user) return null;
 
-  /* Obsługa płatności Stripe */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!stripe || !elements) {
-      return;
-    }
+    if (!stripe || !elements) return;
 
     if (!acceptTerms) {
       toast.error("Proszę zaakceptować regulamin.");
@@ -48,54 +40,45 @@ export const CheckoutForm = ({ session }: CheckoutFormProps) => {
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        // Tutaj wraca użytkownik po sukcesie
-        return_url: `${window.location.origin}/panel-wiedzy?payment_success=true`,
+        return_url: `${window.location.origin}/panel-kursanta?payment_success=true`,
       },
     });
 
-    if (error.type === "card_error" || error.type === "validation_error") {
-      toast.error(error.message || "Wystąpił błąd.");
-    } else {
-      toast.error("Wystąpił nieoczekiwany błąd.");
+    if (error) {
+      toast.error(error.message || "Wystąpił błąd płatności.");
     }
 
     setIsProcessing(false);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      {/* 1. KONTO UŻYTKOWNIKA */}
-
-      {/* 2. STRIPE PAYMENT ELEMENT */}
-      <div className="">
-        <h2 className="text-lg font-bold text-[#103830] mb-4 flex items-center gap-2">
-          2. Metoda płatności
-        </h2>
-
-        {/* Kontener Stripe - ładuje BLIK, Karty, P24 automatycznie */}
-        <div className="min-h-[300px]">
-          <PaymentElement
-            options={{
-              layout: "tabs",
-            }}
-          />
-        </div>
+    <form
+      onSubmit={handleSubmit}
+      className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+    >
+      {/* Kontener Stripe - tylko metoda płatności */}
+      <div className="min-h-[300px]">
+        <PaymentElement
+          options={{
+            layout: "tabs",
+          }}
+        />
       </div>
 
-      {/* 3. ZGODY */}
-      <div className="mb-8  p-4 bg-gray-50 rounded-lg">
-        <label className="flex items-start gap-3 pointer-cursor select-none">
+      {/* ZGODY */}
+      <div className="mb-8 mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+        <label className="flex items-start gap-3 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={acceptTerms}
             onChange={(e) => setAcceptTerms(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-gray-300 cursor-pointer text-[#103830] focus:ring-[#103830] pointer-cursor"
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-[#103830] focus:ring-[#103830]"
           />
-          <span className="text-[12px] text-gray-600 leading-relaxed">
+          <span className="text-xs text-gray-600 leading-relaxed">
             Akceptuję{" "}
             <Link
               href="/regulamin"
-              className="underline font-medium text-[#103830] pointer-cursor"
+              className="underline font-medium text-[#103830]"
             >
               Regulamin
             </Link>
@@ -107,8 +90,10 @@ export const CheckoutForm = ({ session }: CheckoutFormProps) => {
 
       <div className="flex w-full items-center justify-center">
         <LoadingButton
+          type="submit"
           isLoading={isProcessing}
-          className="self-center justify-self-center"
+          disabled={!stripe || !elements || !acceptTerms}
+          className="w-full py-6 text-lg font-semibold rounded-xl"
         >
           Kupuję i płacę
         </LoadingButton>

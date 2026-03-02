@@ -6,8 +6,6 @@ description: "Spis literatury naukowej oraz link do materiałów dodatkowych (in
 
 import Link from "next/link";
 
-# Bibliografia
-
 Poniżej znajduje się wykaz literatury naukowej oraz źródeł, na podstawie których powstało niniejsze opracowanie.
 
 <ol className="list-decimal list-outside ml-5 space-y-4 text-sm text-gray-700">
@@ -235,20 +233,30 @@ Poniżej znajduje się wykaz literatury naukowej oraz źródeł, na podstawie kt
   </li>
 </ol>
 
-<div className="bg-green-50 border-l-4 border-green-500 p-6 my-10 rounded-r-lg shadow-md">
-  <h3 className="text-xl font-bold text-green-800 mb-4 flex items-center gap-2">
-    <span>📥</span> Materiały dodatkowe
-  </h3>
-  <p className="mb-4 text-gray-800">
-    Poniżej znajduje się link do dysku z dostępem do infografik w wyższej
-    jakości:
-  </p>
-  <Link
-    href="https://drive.google.com/drive/folders/1EQF382YTv6LztO-g4qXPuqApRLH9E6FJ?usp=drive_link"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="inline-block bg-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors pointer-cursor shadow"
-  >
-    Przejdź do Dysku Google (Infografiki)
-  </Link>
+<div className="bg-gray/50 border border-l-4 border-contrast border-l-contrast p-6 sm:p-8 my-10 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+  <div className="flex flex-col text-center items-start md:items-center justify-between gap-6">
+    
+    {/* Sekcja Tekstowa */}
+    <div className="flex-1">
+      <span className="text-xl font-bold text-green-900  flex text-center items-center gap-2 !text-center self-center justify-self-center -mt-6">
+       
+       # Materiały dodatkowe
+      </span>
+      <p className="text-gray-700 text-base leading-relaxed">
+        Poniżej znajduje się link do dysku z dostępem do wszystkich infografik w wyższej jakości.
+      </p>
+    </div>
+
+    {/* Sekcja Przycisku */}
+    <Link
+      href="https://drive.google.com/drive/folders/1EQF382YTv6LztO-g4qXPuqApRLH9E6FJ?usp=drive_link"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group shrink-0 flex items-center gap-2 bg-primary text-contrast font-semibold py-3 px-6 rounded-lg hover:bg-contrast  hover:text-primary transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0"
+    >
+      <span>Otwórz Dysk Google</span>
+
+    </Link>
+
+  </div>
 </div>

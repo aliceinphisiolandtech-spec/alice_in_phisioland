@@ -17,10 +17,27 @@ const STATIC_BUTTON_URL = "/zakup"; // Stały link
 
 interface EbookFeaturesProps {
   data: EbookFeaturesData;
+  hasAccess: boolean; // Nowy prop
 }
 
-export const EbookFeatures = ({ data }: EbookFeaturesProps) => {
+export const EbookFeatures = ({ data, hasAccess }: EbookFeaturesProps) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const getButtonConfig = () => {
+    if (hasAccess) {
+      return {
+        label: "Przejdź do panelu kursanta", // Zgodnie z Twoją prośbą
+        href: "/panel-kursanta",
+      };
+    }
+
+    return {
+      label: data.button.label, // Z CMS
+      href: "/zakup", // Stały link zakupowy
+    };
+  };
+
+  const ctaButton = getButtonConfig();
 
   // 1. Funkcja renderująca nagłówek z kolorem (tak jak w Hero)
   const renderHeadline = () => {
@@ -143,8 +160,8 @@ export const EbookFeatures = ({ data }: EbookFeaturesProps) => {
 
           <div className="mt-16">
             {/* STATIC_BUTTON_URL - Link na sztywno, Label z CMS */}
-            <Button bgColor="bg-primary" href={STATIC_BUTTON_URL}>
-              {data.button.label}
+            <Button bgColor="bg-primary" href={ctaButton.href}>
+              {ctaButton.label}
             </Button>
           </div>
         </div>

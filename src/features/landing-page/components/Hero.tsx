@@ -6,6 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { HeroData } from "@/lib/types/landing";
 import React from "react";
+import { Session } from "next-auth";
 
 // ... (Twoje stałe STATIC_AVATARS, STATIC_HERO_IMAGES, STATIC_BLOB bez zmian) ...
 const STATIC_AVATARS = [
@@ -23,10 +24,30 @@ const STATIC_BLOB = "/landing-assets/hero-blob.svg";
 
 interface HeroProps {
   data: HeroData;
+  hasAccess: boolean; // Nowy prop
+  session: Session | null; // Nowy prop
 }
 
-export const Hero = ({ data }: HeroProps) => {
-  // FUNKCJA POMOCNICZA DO RENDEROWANIA NAGŁÓWKA
+export const Hero = ({ data, hasAccess, session }: HeroProps) => {
+  const getButtonConfig = () => {
+    // Jeśli user ma dostęp (kupił ebooka) -> Panel Kursanta
+    if (hasAccess) {
+      return {
+        label: "Panel Kursanta",
+        href: "/panel-kursanta",
+      };
+    }
+
+    // W przeciwnym razie (niezalogowany lub nie kupił) -> Zakup (Label z CMS)
+    return {
+      label: data.buttons.secondary.label,
+      href: "/zakup",
+    };
+  };
+
+  const primaryButton = getButtonConfig();
+  console.log(primaryButton);
+
   const renderHeadline = () => {
     const { headline, highlight } = data;
 
@@ -80,12 +101,12 @@ export const Hero = ({ data }: HeroProps) => {
           {/* ... Reszta przycisków i avatarów bez zmian ... */}
           <div className="flex flex-row gap-4 max-[860px]:justify-center flex-wrap">
             <Button
-              href={"/"}
+              href={primaryButton.href}
               icon={<ArrowUpRight size={14} strokeWidth={1} />}
             >
-              {data.buttons.secondary.label}
+              {primaryButton.label}
             </Button>
-            <Button bgColor="bg-primary" href={"/"}>
+            <Button bgColor="bg-primary" href={"#kursy"}>
               {data.buttons.primary.label}
             </Button>
           </div>

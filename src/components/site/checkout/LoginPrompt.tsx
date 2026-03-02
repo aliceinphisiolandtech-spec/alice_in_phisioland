@@ -22,20 +22,20 @@ export const LoginPrompt = ({ onGoogleLogin }: LoginPromptProps) => {
 
       <button
         onClick={onGoogleLogin}
-        className="group relative flex w-full max-w-sm items-center justify-center gap-3 rounded-xl border border-[#e5e7eb] bg-white px-6 py-4 text-[15px] font-semibold text-[#1f2937] transition-all hover:bg-[#f9fafb] hover:shadow-md active:scale-[0.98] pointer-cursor"
+        className=" cursor-pointer group relative flex w-full max-w-sm items-center justify-center gap-3 rounded-xl border border-[#e5e7eb] bg-white px-6 py-4 text-[15px] font-semibold text-[#1f2937] transition-all hover:bg-[#f9fafb] hover:shadow-md active:scale-[0.98] pointer-cursor"
       >
         <GoogleIcon className="h-5 w-5" />
         <span>Kontynuuj przez Google</span>
       </button>
 
       {/* Wizualna blokada sekcji płatności */}
-      <div className="w-full mt-12 pt-12 border-t border-gray-100 opacity-40 grayscale select-none pointer-events-none">
+      <div className="w-full mt-12 -mb-12  pt-12 border-t border-gray-100 opacity-40 grayscale select-none pointer-events-none">
+        <h2 className="text-xl font-bold text-[#103830] mb-6 flex items-center gap-3 bb-">
+          Dane do faktury
+        </h2>
         <h2 className="text-xl font-bold text-[#103830] mb-6 flex items-center gap-3">
           Metoda płatności
         </h2>
-        <div className="h-24 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
-          <span className="text-sm font-medium">Dostępne po zalogowaniu</span>
-        </div>
       </div>
     </div>
   );

@@ -270,9 +270,9 @@ export const Navbar = ({ session }: NavbarProps) => {
             ) : (
               <Button
                 href="/logowanie"
-                textColor="text-primary"
+                textColor={`${isLightVersion ? "text-primary" : "text-white"}`}
                 className={cn(
-                  "pointer-cursor",
+                  "pointer-cursor bg-primary !text-white",
                   isLightVersion &&
                     "bg-contrast hover:bg-contrast/90 border-transparent",
                   isScrolled && "scale-90",

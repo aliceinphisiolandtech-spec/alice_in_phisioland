@@ -5,6 +5,8 @@ import ClientTopbar from "@/components/panel-kursanta/ClientTopbar";
 import ClientSidebar from "@/components/panel-kursanta/ClientSidebar";
 import { MobileMenu } from "@/components/panel-kursanta/MobileMenu";
 
+import { PurchaseSuccessModal } from "@/components/panel-kursanta/dashboard/PurchaseSuccessModal";
+
 interface DashboardLayoutProps {
   children: ReactNode;
 }
@@ -17,7 +19,7 @@ export default async function DashboardLayout({
   return (
     // ZEWNĘTRZNY KONTER: Sztywny h-screen, żeby Sidebar był zawsze widoczny
     <div className="h-screen w-full bg-[#F5F6F8] overflow-hidden flex">
-      {/* 1. SIDEBAR (Stały) */}
+      <PurchaseSuccessModal />
       <ClientSidebar session={session} />
 
       {/* PRAWA STRONA (Treść) */}

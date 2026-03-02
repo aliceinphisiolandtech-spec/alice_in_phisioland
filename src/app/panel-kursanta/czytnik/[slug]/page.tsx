@@ -15,6 +15,7 @@ import {
 import { notFound } from "next/navigation";
 // Upewnij się, że ścieżka do Twojego komponentu jest poprawna
 import { EbookInfoCard } from "@/components/panel-kursanta/czytnik/EbookInfoCard";
+import { ProgressTracker } from "@/components/panel-kursanta/czytnik/ProgressTracker";
 
 // --- 1. TWOJE STANDARDOWE KOMPONENTY ---
 const components = {
@@ -43,7 +44,7 @@ const components = {
   ul: (props: any) => (
     <ul className="list-disc pl-5 mb-4 space-y-2 text-gray-700" {...props} />
   ),
-  li: (props: any) => <li className="pl-1" {...props} />,
+  li: (props: any) => <li className="pl-1 !text-[18px]" {...props} />,
   strong: (props: any) => (
     <strong className="font-bold text-[#103830]" {...props} />
   ),
@@ -212,7 +213,7 @@ export default async function ChapterPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-white pb-32">
-      {/* HEADER */}
+      <ProgressTracker slug={decodedSlug} />
       <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-4 flex items-center justify-between">
         <Link
           href="/panel-kursanta/czytnik"
@@ -264,11 +265,16 @@ export default async function ChapterPage({ params }: Props) {
             </div>
           </Link>
         ) : (
-          <div className="text-center p-10 bg-gray-50 rounded-2xl border border-gray-100">
-            <Star
-              className="mx-auto text-yellow-400 mb-2"
-              fill="currentColor"
-            />
+          <div className="text-center p-10 bg-contrast rounded-2xl border border-gray-100">
+            <div className="w-full flex items-center justify-center mb-4">
+              <div className="bg-primary  h-12  flex items-center content-center w-12 rounded-full">
+                <Star
+                  className="mx-auto text-contrast "
+                  size={26}
+                  fill="currentColor"
+                />
+              </div>
+            </div>
             <p className="font-bold text-gray-900">To już koniec e-booka!</p>
             <Link
               href="/panel-kursanta/kursy"
@@ -282,7 +288,7 @@ export default async function ChapterPage({ params }: Props) {
         {prevChapter && (
           <Link
             href={`/panel-kursanta/czytnik/${prevChapter.slug}`}
-            className="text-center text-sm font-bold text-gray-400 hover:text-[#103830] py-4 transition-colors pointer-cursor"
+            className="text-center text-sm font-bold mt-4 bg-contrast p-2 rounded-2xl text-primary py-4 pointer-cursor hover:scale-[1.02] transition-all"
           >
             Poprzedni rozdział: {prevChapter.title}
           </Link>

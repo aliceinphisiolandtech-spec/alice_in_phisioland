@@ -14,6 +14,7 @@ import {
   PieChart,
   LayoutTemplate,
   FilePenLine,
+  BellRing,
 } from "lucide-react";
 import { cn } from "@/lib/utils"; // Zakładam, że masz cn utility, jeśli nie - usuń i użyj template string
 import Image from "next/image";
@@ -23,6 +24,7 @@ interface AdminSidebarProps {
 }
 const menuItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Aktualności", href: "/admin/news", icon: BellRing }, // <--- NOWOŚĆ
   { label: "CMS", href: "/admin/cms", icon: FilePenLine },
 ];
 

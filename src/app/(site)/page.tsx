@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-
 import { About } from "@/features/landing-page/components/About";
 import { ContactFooter } from "@/features/landing-page/components/ContactFooter";
 import { ContentPreview } from "@/features/landing-page/components/ContentPreview";
@@ -9,10 +8,7 @@ import { Hero } from "@/features/landing-page/components/Hero";
 import { PracticalTraining } from "@/features/landing-page/components/PracticalTraining";
 import { SecurePanel } from "@/features/landing-page/components/SecurePanel";
 import { Testimonials } from "@/features/landing-page/components/Testimonials";
-
 import { prisma } from "@/lib/prisma";
-
-import { Navbar } from "@/components/common/Navbar";
 
 // Helper do pobrania danych
 async function getLandingData() {
@@ -33,7 +29,20 @@ async function getLandingData() {
   // 3. Zwracamy TYLKO to co jest w bazie
   return dbContent;
 }
+async function checkUserAccess(userId?: string) {
+  if (!userId) return false;
 
+  const purchase = await prisma.purchase.findUnique({
+    where: {
+      userId_productId: {
+        userId: userId,
+        productId: "ebook-tom-1", // ID twojego produktu
+      },
+    },
+  });
+
+  return !!purchase;
+}
 export default async function Home() {
   // Równoległe pobieranie danych dla szybszego ładowania
   const landingDataPromise = getLandingData();
@@ -43,7 +52,7 @@ export default async function Home() {
     landingDataPromise,
     sessionPromise,
   ]);
-
+  const hasAccess = await checkUserAccess(session?.user?.id);
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Navbar z sesją */}
@@ -53,9 +62,12 @@ export default async function Home() {
             Jeśli sekcja nie istnieje w bazie, prop będzie 'undefined'. */}
 
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <Hero data={landingData.hero} />
+        <Hero data={landingData.hero} hasAccess={hasAccess} session={session} />
         <div id="o-ebooku">
-          <EbookFeatures data={landingData.ebookFeatures} />
+          <EbookFeatures
+            data={landingData.ebookFeatures}
+            hasAccess={hasAccess}
+          />
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <ContentPreview data={landingData.contentPreview} />
         </div>

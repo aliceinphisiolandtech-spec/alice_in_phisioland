@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { BookOpen, ChevronRight } from "lucide-react";
+import { BookOpen, Check, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 
@@ -14,8 +14,8 @@ type Chapter = {
 
 interface TocContentProps {
   chapters: Chapter[];
+  completedChapters: string[]; // Nowy prop
 }
-
 // --- 1. Helpery ---
 
 function toRoman(num: number): string {
@@ -102,10 +102,12 @@ const RolodexCard = ({
   chapter,
   containerRef,
   scrollTop,
+  isCompleted,
 }: {
   chapter: Chapter;
   containerRef: React.RefObject<HTMLDivElement | null>;
   scrollTop: number;
+  isCompleted: boolean;
 }) => {
   const linkRef = useRef<HTMLAnchorElement>(null);
 
@@ -188,15 +190,24 @@ const RolodexCard = ({
         </h3>
       </div>
 
-      <span className="text-gray-300 transition-colors duration-300 group-hover:text-[#103830]">
-        <ChevronRight className="w-4 h-4 md:w-[18px] md:h-[18px]" />
-      </span>
+      {isCompleted ? (
+        <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
+          <Check className="text-contrast w-4 h-4" fontWeight={600} />
+        </div>
+      ) : (
+        <span className="text-gray-300 transition-colors duration-300 group-hover:text-[#103830]">
+          <ChevronRight className="w-4 h-4 md:w-[18px] md:h-[18px]" />
+        </span>
+      )}
     </Link>
   );
 };
 
 // --- 4. GŁÓWNY KOMPONENT ---
-export default function TocContent({ chapters }: TocContentProps) {
+export default function TocContent({
+  chapters,
+  completedChapters,
+}: TocContentProps) {
   const [showIntro, setShowIntro] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -274,6 +285,7 @@ export default function TocContent({ chapters }: TocContentProps) {
                 chapter={chapter}
                 containerRef={containerRef}
                 scrollTop={scrollTop}
+                isCompleted={completedChapters.includes(chapter.slug)}
               />
             ))}
           </div>
