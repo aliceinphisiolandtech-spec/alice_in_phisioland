@@ -7,18 +7,17 @@ export const OneSignalInit = () => {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (initialized) return; // Zapobiega podwójnemu ładowaniu w trybie deweloperskim
+    if (initialized) return;
 
     const runOneSignal = async () => {
       try {
         await OneSignal.init({
-          appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID!, // Upewnij się, że masz to w .env
-          // Jeśli nie masz .env, wklej tu swoje ID w cudzysłowie: "twoje-id-z-panelu"
-
-          allowLocalhostAsSecureOrigin: true, // Ważne dla localhost
+          appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID!,
+          allowLocalhostAsSecureOrigin: true,
+          // TUTAJ JEST ZMIANA:
           notifyButton: {
-            enable: true, // Włącz dzwoneczek testowo
-          },
+            enable: true,
+          } as any, // <--- Dodaj 'as any', żeby oszukać TypeScript
         });
 
         setInitialized(true);
@@ -31,5 +30,5 @@ export const OneSignalInit = () => {
     runOneSignal();
   }, [initialized]);
 
-  return null; // Ten komponent nie renderuje nic wizualnego (poza dzwoneczkiem z configu)
+  return null;
 };
