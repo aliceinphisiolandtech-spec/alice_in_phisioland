@@ -6,6 +6,7 @@ import { CourseProgressCard } from "./CourseProgressCard";
 import { DocumentsSection } from "./DocumentsSection";
 import { PromoBanner } from "./PromoBanner";
 import { NewsSection } from "./NewsSection";
+import { News } from "@/generated/prisma";
 
 interface DashboardClientProps {
   userName: string;
@@ -13,6 +14,7 @@ interface DashboardClientProps {
   progressPercent: number;
   lastChapterSlug: string | null;
   hasReviewed: boolean;
+  latestNews: News[];
 }
 
 const containerVariants = {
@@ -29,6 +31,7 @@ export default function DashboardClient({
   progressPercent,
   lastChapterSlug,
   hasReviewed,
+  latestNews,
 }: DashboardClientProps) {
   return (
     <motion.div
@@ -50,7 +53,7 @@ export default function DashboardClient({
 
       <div className="flex flex-col gap-6">
         <PromoBanner />
-        <NewsSection />
+        <NewsSection news={latestNews} />
       </div>
     </motion.div>
   );

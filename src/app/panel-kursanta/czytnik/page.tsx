@@ -5,6 +5,7 @@ import TocContent from "@/components/panel-kursanta/czytnik/TocContent";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
 export default async function TableOfContentsPage() {
   const contentDir = path.join(process.cwd(), "content");
@@ -29,8 +30,22 @@ export default async function TableOfContentsPage() {
 
   // 2. Pobieranie postępu (Prisma)
   const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    redirect("/logowanie");
+  }
+  const hasAccess = await prisma.purchase.findUnique({
+    where: {
+      userId_productId: {
+        userId: session.user.id,
+        productId: "ebook-tom-1", // Upewnij się, że to ID produktu jest poprawne
+      },
+    },
+  });
+  if (!hasAccess) {
+    console.log("⛔ Próba nieautoryzowanego dostępu do spisu treści");
+    redirect("/panel-kursanta"); // Lub np. "/oferta"
+  }
   let completedSlugs: string[] = [];
-
   if (session?.user?.id) {
     const progress = await prisma.userProgress.findMany({
       where: {

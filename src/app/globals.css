@@ -2,7 +2,9 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-
+:root {
+  color-scheme: light;
+}
 @theme {
   /* Definiowanie kolorów */
   --color-primary: #0c493e;

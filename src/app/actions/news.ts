@@ -4,9 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth"; // Upewnij się co do ścieżki
+import { authOptions } from "@/lib/auth";
 
-// Schemat walidacji
 const NewsSchema = z.object({
   title: z.string().min(3, "Tytuł musi mieć min. 3 znaki"),
   content: z.string().min(10, "Treść musi mieć min. 10 znaków"),
@@ -18,14 +17,12 @@ export async function createNewsAction(
   content: string,
   sendPush: boolean,
 ) {
-  // 1. Weryfikacja uprawnień (Security)
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "admin") {
     return { error: "Brak uprawnień administratora." };
   }
 
-  // 2. Walidacja danych wejściowych
   const validation = NewsSchema.safeParse({ title, content, sendPush });
 
   if (!validation.success) {
@@ -33,52 +30,61 @@ export async function createNewsAction(
   }
 
   try {
-    // 3. Zapis do bazy danych
+    // 1. Zapis do bazy
     const newNews = await prisma.news.create({
       data: {
         title: validation.data.title,
         content: validation.data.content,
-        // Mapujemy "sendPush" na flagę "important" w bazie (żeby wyróżnić wizualnie)
         important: validation.data.sendPush,
         published: true,
       },
     });
 
-    // 4. Obsługa Powiadomień PUSH
+    // 2. Obsługa OneSignal (REST API)
     if (validation.data.sendPush) {
-      // TUTAJ BĘDZIE LOGIKA WYSYŁANIA POWIADOMIEŃ
-      // Np. wywołanie OneSignal, Firebase lub WebPush API
-      console.log(
-        `🚀 WYSYŁANIE PUSH: "${title}" do wszystkich użytkowników...`,
-      );
+      console.log(`🚀 Wysyłanie do OneSignal: "${title}"`);
 
-      // await sendPushNotificationToAllUsers({
-      //   title: newNews.title,
-      //   body: newNews.content.substring(0, 50) + "...",
-      //   url: `/panel-kursanta`
-      // });
+      const options = {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          Authorization: `Basic ${process.env.ONESIGNAL_API_KEY}`,
+        },
+        body: JSON.stringify({
+          app_id: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
+          included_segments: ["All"], // Lub ["Subscribed Users"]
+          headings: { en: "Nowość w panelu!", pl: title },
+          contents: {
+            en: "Check out the new update.",
+            pl: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
+          },
+          url: `${process.env.NEXTAUTH_URL}/panel-kursanta/aktualnosci`, // Link po kliknięciu
+        }),
+      };
+
+      try {
+        const response = await fetch(
+          "https://onesignal.com/api/v1/notifications",
+          options,
+        );
+        const data = await response.json();
+        if (data.errors) {
+          console.error("❌ OneSignal Error:", data.errors);
+        } else {
+          console.log("✅ OneSignal Success:", data);
+        }
+      } catch (pushError) {
+        console.error("❌ Błąd połączenia z OneSignal:", pushError);
+        // Nie przerywamy funkcji, bo news w bazie już jest
+      }
     }
 
-    revalidatePath("/admin/news");
-    revalidatePath("/panel-kursanta"); // Żeby kursanci od razu widzieli
-    return { success: true };
-  } catch (error) {
-    console.error("News create error:", error);
-    return { error: "Błąd bazy danych podczas tworzenia aktualności." };
-  }
-}
-
-export async function deleteNewsAction(id: string) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin")
-    return { error: "Unauthorized" };
-
-  try {
-    await prisma.news.delete({ where: { id } });
     revalidatePath("/admin/news");
     revalidatePath("/panel-kursanta");
     return { success: true };
   } catch (error) {
-    return { error: "Nie udało się usunąć" };
+    console.error("News create error:", error);
+    return { error: "Błąd bazy danych podczas tworzenia aktualności." };
   }
 }

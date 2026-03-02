@@ -28,6 +28,11 @@ export default async function DashboardPage() {
       userId: session.user.id,
     },
   });
+  const latestNews = await prisma.news.findMany({
+    where: { published: true },
+    orderBy: { createdAt: "desc" },
+    take: 2, // <--- Pobieramy dwa
+  });
   // 2. Pobieramy statystyki czytania (Dla paska postępu)
   // Funkcja zwraca obiekt { percent: number, lastSlug: string | null }
   const stats = await getUserReadingStats(session.user.id);
@@ -40,6 +45,7 @@ export default async function DashboardPage() {
       progressPercent={stats.percent}
       lastChapterSlug={stats.lastSlug}
       hasReviewed={!!existingReview}
+      latestNews={latestNews}
     />
   );
 }
