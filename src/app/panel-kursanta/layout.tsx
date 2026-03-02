@@ -6,6 +6,7 @@ import ClientSidebar from "@/components/panel-kursanta/ClientSidebar";
 import { MobileMenu } from "@/components/panel-kursanta/MobileMenu";
 
 import { PurchaseSuccessModal } from "@/components/panel-kursanta/dashboard/PurchaseSuccessModal";
+import { InstallPrompt } from "@/components/panel-kursanta/InstallPrompt";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -21,7 +22,7 @@ export default async function DashboardLayout({
     <div className="h-screen w-full bg-[#F5F6F8] overflow-hidden flex">
       <PurchaseSuccessModal />
       <ClientSidebar session={session} />
-
+      <InstallPrompt />
       {/* PRAWA STRONA (Treść) */}
       <div className="flex-1 flex flex-col h-full ml-[280px] max-[1024px]:ml-0 transition-all duration-300">
         {/* Topbar (Stały) */}

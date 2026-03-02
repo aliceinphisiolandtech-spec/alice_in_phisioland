@@ -1,0 +1,22 @@
+{
+  "name": "Alice In Phisioland",
+  "short_name": "AW",
+  "description": "Dedykowana aplikacja Alicji Wójcik pozwalająca na łatwy dostęp do edukacji fizjoterapeutycznej",
+  "start_url": "/panel-kursanta",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0c493e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -13,11 +13,17 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Alice in Phisioland | Profesjonalna Fizjoterapia",
-  description: "Zaawansowana i bezpieczna opieka fizjoterapeutyczna.",
-  keywords: ["fizjoterapia", "rehabilitacja", "zdrowie", "Alice in Phisioland"],
+  title: "Alice in phisioland",
+  description:
+    "Dedykowana aplikacja Alicji Wójcik, pozwalająca na łatwy i nowoczesny dostęp do wiedzy fizjoterapeutycznej",
+  manifest: "/manifest.json", // <--- 1. Link do manifestu
+  appleWebApp: {
+    // <--- 2. Konfiguracja dla Apple (iOS)
+    capable: true,
+    statusBarStyle: "default",
+    title: "Alice in phisioland",
+  },
 };
-
 export default function RootLayout({
   children,
 }: Readonly<{
