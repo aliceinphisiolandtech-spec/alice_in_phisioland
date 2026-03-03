@@ -88,3 +88,35 @@ export async function createNewsAction(
     return { error: "Błąd bazy danych podczas tworzenia aktualności." };
   }
 }
+
+export async function deleteNewsAction(id: string) {
+  const session = await getServerSession(authOptions);
+
+  // 1. Sprawdzenie uprawnień (tylko admin)
+  if (!session || session.user.role !== "admin") {
+    return { error: "Brak uprawnień administratora." };
+  }
+
+  // 2. Prosta walidacja
+  if (!id || typeof id !== "string") {
+    return { error: "Nieprawidłowe ID aktualności." };
+  }
+
+  try {
+    // 3. Usunięcie z bazy danych
+    await prisma.news.delete({
+      where: {
+        id: id,
+      },
+    });
+
+    // 4. Odświeżenie widoków po usunięciu
+    revalidatePath("/admin/news");
+    revalidatePath("/panel-kursanta");
+
+    return { success: true };
+  } catch (error) {
+    console.error("News delete error:", error);
+    return { error: "Błąd bazy danych podczas usuwania aktualności." };
+  }
+}

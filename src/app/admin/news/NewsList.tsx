@@ -21,8 +21,6 @@ export const NewsList = ({ news }: { news: NewsItem[] }) => {
     e.preventDefault(); // <--- WAŻNE: Nie wchodź w link
     e.stopPropagation(); // <--- WAŻNE: Nie triggeruj rodzica
 
-    if (!confirm("Czy na pewno usunąć tę wiadomość?")) return;
-
     const res = await deleteNewsAction(id);
     if (res.error) toast.error(res.error);
     else toast.success("Usunięto aktualność");
