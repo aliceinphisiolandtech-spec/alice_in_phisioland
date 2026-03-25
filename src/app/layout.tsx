@@ -6,6 +6,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ComingSoonToaster } from "@/features/landing-page/components/CommingSoonToaster";
 import { OneSignalInit } from "@/components/panel-kursanta/OneSignalInit";
+import { Analytics } from "@vercel/analytics/next";
 // Konfiguracja czcionki - ładuje się raz dla całej aplikacji
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -34,6 +35,7 @@ export default function RootLayout({
     <html lang="pl" className="scroll-smooth">
       <body className={`${montserrat.variable} font-montserrat antialiased`}>
         {children}
+        <Analytics />
         <OneSignalInit />
         <Toaster position="top-right" richColors />
         <ComingSoonToaster />
