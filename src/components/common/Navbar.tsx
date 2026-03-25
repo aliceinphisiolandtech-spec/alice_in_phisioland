@@ -15,8 +15,8 @@ import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 /* Sekcja: Linki nawigacyjne */
 const navLinks = [
   { name: "Strona główna", href: "/" },
-  { name: "O e-booku", href: "#o-ebooku" },
-  { name: "Kursy", href: "#kursy" },
+  { name: "O e-booku", href: "/#o-ebooku" },
+  { name: "Kursy", href: "/#kursy" },
   { name: "Strefa pacjenta", href: "/strefa-pacjenta" },
 ];
 
