@@ -21,7 +21,7 @@ const STATIC_IMAGE_ALT =
 const STATIC_IMAGE_SRC_MOBILE = "/landing-assets/panel_klienta_mobile.webp"; // Twoja grafika
 const STATIC_IMAGE_ALT_MOBILE =
   "Panel z wbudowaną aplikacją do bezpiecznego czytanie ebooka";
-const STATIC_BUTTON_URL = "/bezpieczenstwo-danych";
+const STATIC_BUTTON_URL = "/logowanie";
 
 interface SecurePanelProps {
   data: SecurePanelData;
