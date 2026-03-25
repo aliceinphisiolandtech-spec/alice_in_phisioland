@@ -10,7 +10,7 @@ import { PracticalTrainingData } from "@/lib/types/landing";
 const FEATURE_ICONS = [GraduationCap, Ticket];
 const STATIC_IMAGE_SRC = "/landing-assets/mentoring-image.webp"; // Twoje zdjęcie
 const STATIC_IMAGE_ALT = "Szkolenie praktyczne z diagnostyki";
-const STATIC_BUTTON_URL = "/szkolenia";
+const STATIC_BUTTON_URL = process.env.NEXT_PUBLIC_KURSY_LINK;
 
 interface PracticalTrainingProps {
   data: PracticalTrainingData;
