@@ -3,16 +3,26 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/utils/stripe";
 import { prisma } from "@/lib/prisma";
-import { BillingSchema } from "@/lib/validators/orders"; // Import walidacji
+import { BillingSchema } from "@/lib/validators/orders";
 
-const EBOOK_PRICE = 14900; // 149.00 PLN
+const EBOOK_PRICE = 14900; // 149.00 PLN standardowo
 const PRODUCT_ID = "ebook-tom-1";
+
+// Konfiguracja Tygodnia Testowego
+const IS_TESTING_WEEK = process.env.NEXT_PUBLIC_IS_TESTING_WEEK === "true";
+const TESTERS_WHITELIST = [
+  "juszczakmat@gmail.com",
+  "aleksandra.kozlowska38@gmail.com",
+  "mlech.pan@gmail.com",
+  "gaskaula9@gmail.com",
+  "kosminskanatalia95@gmail.com",
+  "biuro@kocikdev.com",
+];
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    // 1. Sprawdzenie autoryzacji
     if (!session?.user || !session.user.email || !session.user.id) {
       return NextResponse.json(
         { message: "Musisz być zalogowany, aby dokonać zakupu." },
@@ -21,12 +31,24 @@ export async function POST(req: Request) {
     }
 
     const userId = session.user.id;
+    const userEmail = session.user.email.toLowerCase();
 
-    // ODBIERAMY DANE Z FORMULARZA
+    // --- BLOKADA TESTOWA ---
+    const isTester = TESTERS_WHITELIST.includes(userEmail);
+    if (IS_TESTING_WEEK && !isTester) {
+      return NextResponse.json(
+        { message: "Sprzedaż jest obecnie zamknięta (Okres Testowy)." },
+        { status: 403 },
+      );
+    }
+
+    // --- LOGIKA CENY ---
+    let amountToCharge = EBOOK_PRICE;
+    if (IS_TESTING_WEEK && isTester) {
+      amountToCharge = 8900; // 89.00 PLN (zniżka)
+    }
+
     const body = await req.json();
-
-    // 2. WALIDACJA DANYCH DO FAKTURY
-    // To jest kluczowe: sprawdzamy czy frontend przysłał poprawne dane zanim ruszymy dalej
     const validation = BillingSchema.safeParse(body);
 
     if (!validation.success) {
@@ -41,14 +63,8 @@ export async function POST(req: Request) {
 
     const billingData = validation.data;
 
-    // 3. Sprawdzenie, czy użytkownik już nie posiada produktu
     const existingPurchase = await prisma.purchase.findUnique({
-      where: {
-        userId_productId: {
-          userId: userId,
-          productId: PRODUCT_ID,
-        },
-      },
+      where: { userId_productId: { userId: userId, productId: PRODUCT_ID } },
     });
 
     if (existingPurchase) {
@@ -58,42 +74,35 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. Utworzenie PaymentIntent w Stripe
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: EBOOK_PRICE,
+      amount: amountToCharge, // Dynamiczna kwota (89zł lub 149zł)
       currency: "pln",
       automatic_payment_methods: { enabled: true },
       metadata: {
         userId: userId,
         email: session.user.email,
         productId: PRODUCT_ID,
-        // Dodajemy NIP do metadata w Stripe (opcjonalnie, dla wygody księgowej)
         billingNip: billingData.billingNip || "",
       },
     });
 
-    // 5. Zapisanie zamówienia w bazie Z DANYMI DO FAKTURY
-    // Tutaj robimy "snapshot" danych, które klient wpisał
     await prisma.order.create({
       data: {
         userId: userId,
-        amount: EBOOK_PRICE,
+        amount: amountToCharge, // Zapisujemy faktycznie zapłaconą kwotę
         currency: "pln",
         status: "pending",
         paymentIntentId: paymentIntent.id,
-
-        // --- DANE DO FAKTURY ---
         billingType: billingData.billingType,
         billingName: billingData.billingName,
         billingAddress: billingData.billingAddress,
         billingCity: billingData.billingCity,
         billingPostalCode: billingData.billingPostalCode,
-        billingCountry: billingData.billingCountry, // To zawsze będzie "PL"
-        billingNip: billingData.billingNip || null, // null jeśli user prywatny
+        billingCountry: billingData.billingCountry,
+        billingNip: billingData.billingNip || null,
       },
     });
 
-    // 6. Zwracamy sekret frontowi
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
     console.error("[CHECKOUT_ERROR]", error);

@@ -18,7 +18,7 @@ export const PatientZoneHero = ({ content }: any) => {
       id="strefa-pacjenta"
     >
       <div className="custom-container px-4 relative z-10 pt-32">
-        <div className="flex flex-row items-center gap-20 max-[1150px]:flex-col max-[1150px]:gap-12">
+        <div className="flex flex-row items-center gap-20 max-[1150px]:flex-col max-[1150px]:gap-12 min-w-[1100px] max-[1150px]:min-w-full">
           {/* --- LEWA KOLUMNA: TREŚĆ --- */}
           <div className="flex-1 w-full flex flex-col items-start gap-10 -mt-12 max-[1150px]:items-center">
             <div className="flex flex-col items-start gap-6 max-[1150px]:items-center">
@@ -48,14 +48,16 @@ export const PatientZoneHero = ({ content }: any) => {
                 return (
                   <div
                     key={index}
-                    className="bg-[#d4f0c8]/5 border border-[#d4f0c8]/20 p-4 rounded-2xl backdrop-blur-sm hover:bg-[#d4f0c8]/10 transition-colors pointer-cursor group max-[1150px]:text-center"
+                    className="bg-[#d4f0c8]/5 border text-center border-[#d4f0c8]/20 p-4 rounded-2xl backdrop-blur-sm hover:bg-[#d4f0c8]/10 transition-colors pointer-cursor group max-[1150px]:text-center"
                   >
-                    <div className="w-10 h-10 bg-[#d4f0c8] rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform max-[1150px]:justify-self-center">
-                      {/* 4. Renderujemy wybraną ikonę */}
-                      <IconComponent
-                        className="w-5 h-5 text-[#0c493e]"
-                        strokeWidth={2.5}
-                      />
+                    <div className="w-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-[#d4f0c8] rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform max-[1150px]:justify-self-center">
+                        {/* 4. Renderujemy wybraną ikonę */}
+                        <IconComponent
+                          className="w-5 h-5 text-[#0c493e] justify-self-center"
+                          strokeWidth={2.5}
+                        />
+                      </div>
                     </div>
                     <h3 className="text-white font-bold text-sm mb-1">
                       {feature.title}
@@ -94,10 +96,10 @@ export const PatientZoneHero = ({ content }: any) => {
                 </div>
                 <div>
                   <p className="text-[#0c493e] font-bold text-base">
-                    {content.stats.rating}
+                    Znany lekarz
                   </p>
-                  <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">
-                    {content.stats.ratingText}
+                  <p className="text-gray-500 text-[15px] uppercase font-bold tracking-wider">
+                    5.0
                   </p>
                 </div>
               </div>

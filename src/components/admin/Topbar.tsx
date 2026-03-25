@@ -45,34 +45,10 @@ export default function AdminTopbar({
         <button className="hidden max-[980px]:flex items-center justify-center p-2 rounded-lg bg-gray-100 text-gray-600">
           <Menu className="h-6 w-6" />
         </button>
-
-        <div className="relative w-full max-w-[400px] max-[980px]:hidden opacity-40 grayscale pointer-events-none select-none">
-          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Szukaj zamówienia, klienta..."
-            disabled
-            className="h-[50px] w-full rounded-2xl border-none bg-gray-50 pl-12 pr-4 text-sm font-medium text-gray-700 outline-none placeholder:text-gray-400"
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-white px-2 py-1 text-xs font-bold text-gray-400 shadow-sm border border-gray-100">
-            ⌘ F
-          </div>
-        </div>
       </div>
 
       {/* --- PRAWA STRONA --- */}
       <div className="flex items-center gap-6 max-[980px]:gap-3">
-        {/* Ikony (Bez zmian) */}
-        <div className="flex items-center gap-2 opacity-40 grayscale pointer-events-none select-none">
-          <button className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm">
-            <Mail className="h-5 w-5 text-gray-500" />
-          </button>
-          <button className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm">
-            <Bell className="h-5 w-5 text-gray-500" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 border border-white"></span>
-          </button>
-        </div>
-
         <div className="h-8 w-[1px] bg-gray-200 max-[980px]:hidden"></div>
 
         {/* --- PROFIL UŻYTKOWNIKA (DYNAMICZNY) --- */}

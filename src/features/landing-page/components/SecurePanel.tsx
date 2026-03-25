@@ -15,8 +15,12 @@ import { SecurePanelData } from "@/lib/types/landing";
 
 // STAŁE ZASOBY (Hardcoded in Code)
 const FEATURE_ICONS = [FileX, Fingerprint, ShieldAlert, Printer];
-const STATIC_IMAGE_SRC = "/landing-assets/secure-panel-mockup.webp"; // Twoja grafika
-const STATIC_IMAGE_ALT = "Panel bezpieczeństwa diagnostycznego";
+const STATIC_IMAGE_SRC = "/landing-assets/panel_klienta_desktop.webp"; // Twoja grafika
+const STATIC_IMAGE_ALT =
+  "Panel z wbudowaną aplikacją do bezpiecznego czytanie ebooka";
+const STATIC_IMAGE_SRC_MOBILE = "/landing-assets/panel_klienta_mobile.webp"; // Twoja grafika
+const STATIC_IMAGE_ALT_MOBILE =
+  "Panel z wbudowaną aplikacją do bezpiecznego czytanie ebooka";
 const STATIC_BUTTON_URL = "/bezpieczenstwo-danych";
 
 interface SecurePanelProps {
@@ -75,7 +79,7 @@ export const SecurePanel = ({ data }: SecurePanelProps) => {
           >
             <div className="absolute left-1/2 top-1/2 -z-10 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#D4F0C8]/20 blur-[80px]" />
 
-            <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-sm">
+            <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-sm max-[700px]:hidden">
               <div className="flex h-8 items-center gap-2 border-b border-white/10 bg-white/5 px-4">
                 <div className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
                 <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/80" />
@@ -88,6 +92,22 @@ export const SecurePanel = ({ data }: SecurePanelProps) => {
                 width={600}
                 height={400}
                 className="h-auto w-full object-cover"
+              />
+            </div>
+            {/* WERSJA MOBILNA: Wygląd nowoczesnego smartfona */}
+            <div className="relative mx-auto hidden w-[85%] max-w-[380px] flex-col overflow-hidden rounded-[2.5rem] border-[12px] border-[#1a1a1a] bg-white shadow-2xl max-[700px]:flex">
+              {/* Wcięcie w ekranie (tzw. notch / dynamic island) */}
+              <div className="absolute left-1/2 top-2 z-10 flex h-5 w-28 -translate-x-1/2 items-center justify-center rounded-full bg-[#1a1a1a]">
+                {/* Kropka imitująca obiektyw aparatu */}
+                <div className="h-2 w-2 rounded-full bg-gray-600/50" />
+              </div>
+
+              <Image
+                src={STATIC_IMAGE_SRC_MOBILE}
+                alt={STATIC_IMAGE_ALT_MOBILE}
+                width={600}
+                height={1200}
+                className="h-auto w-full object-cover pt-2"
               />
             </div>
           </motion.div>

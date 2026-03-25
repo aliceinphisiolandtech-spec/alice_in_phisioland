@@ -56,6 +56,7 @@ export async function GET(req: Request) {
         status: 502,
       });
     }
+    console.log(order);
 
     // 5. Przekazanie pliku do Frontendu
     const fileBuffer = await externalRes.arrayBuffer();

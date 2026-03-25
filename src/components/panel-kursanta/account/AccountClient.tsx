@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
 import OneSignal from "react-onesignal";
-import Link from "next/link";
+
 import {
   LogOut,
   BellRing,
@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import Image from "next/image";
 
 interface AccountClientProps {
   user: {
@@ -134,12 +135,6 @@ export default function AccountClient({ user }: AccountClientProps) {
     <div className="min-h-screen bg-[#f8fafc] pb-20 pt-8">
       <div className="mx-auto max-w-2xl px-4 md:px-8">
         {/* NAGŁÓWEK */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#103830]">Twoje Konto</h1>
-          <p className="mt-2 text-gray-500">
-            Zarządzaj ustawieniami aplikacji.
-          </p>
-        </div>
 
         <motion.div
           variants={containerVariants}
@@ -154,10 +149,11 @@ export default function AccountClient({ user }: AccountClientProps) {
           >
             <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#D4F0C8] text-[#103830] text-3xl font-bold shadow-inner">
               {user.image ? (
-                <img
+                <Image
                   src={user.image}
                   alt="Avatar"
                   className="h-full w-full rounded-full object-cover"
+                  fill
                 />
               ) : (
                 <User size={36} />
@@ -201,7 +197,7 @@ export default function AccountClient({ user }: AccountClientProps) {
               <button
                 onClick={handlePushToggle}
                 disabled={pushPermission}
-                className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${
+                className={`rounded-xl cursor-pointer px-4 py-2 text-sm font-bold transition-all ${
                   pushPermission
                     ? "cursor-default bg-green-100 text-green-700"
                     : "bg-[#103830] text-white hover:bg-[#0a2923] shadow-lg shadow-[#103830]/20"
@@ -241,7 +237,7 @@ export default function AccountClient({ user }: AccountClientProps) {
                 </p>
                 <button
                   onClick={handleInstallClick}
-                  className="shrink-0 flex items-center justify-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-2 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-300 shadow-sm"
+                  className="shrink-0  cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-2 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-300 shadow-sm"
                 >
                   <Download size={16} />
                   {isIOS ? "Instrukcja" : "Zainstaluj"}
@@ -254,13 +250,23 @@ export default function AccountClient({ user }: AccountClientProps) {
           <motion.div variants={itemVariants} className="mt-4">
             <button
               onClick={handleLogout}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-600 transition-all hover:bg-red-100 hover:shadow-inner font-bold"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-600 transition-all hover:bg-red-100 hover:shadow-inner font-bold  cursor-pointer"
             >
               <LogOut size={20} />
               Wyloguj się
             </button>
             <p className="mt-4 text-center text-xs text-gray-400">
               Wersja aplikacji: 1.2.0 • Build: Production
+            </p>
+            <p className="mt-4 text-center text-xs text-gray-400">
+              Masz problem? <br />
+              Napisz na{" "}
+              <a
+                href="mailto:biuro@kocikdev.com"
+                className="text-primary text-md transition-all duration-300 hover:[text-shadow:0_0_0.5px_currentColor]"
+              >
+                biuro@kocikdev.com
+              </a>
             </p>
           </motion.div>
         </motion.div>

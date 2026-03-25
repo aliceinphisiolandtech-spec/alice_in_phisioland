@@ -165,7 +165,7 @@ export default function ClientSidebar({ session }: ClientSidebarProps) {
 
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-2.5 text-xs font-bold hover:bg-white/20 transition-colors pointer-cursor border border-white/5"
+            className="flex w-full items-center justify-center cursor-pointer gap-2 rounded-xl bg-white/10 py-2.5 text-xs font-bold hover:bg-white/20 transition-colors pointer-cursor border border-white/5"
           >
             <LogOut className="h-4 w-4" />
             Wyloguj się

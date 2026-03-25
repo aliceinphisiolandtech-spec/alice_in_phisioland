@@ -92,8 +92,7 @@ export const CourseProgressCard = ({
                 {/* LEWA STRONA */}
                 <div className="flex-1 flex flex-col gap-4">
                   <h2 className="text-xl md:text-2xl font-bold leading-tight max-w-2xl">
-                    Fizjoterapeutyczna diagnostyka zróżnicowana w ujęciu
-                    klinicznym
+                    Fizjoterapeutyczna diagnostyka różnicowa w ujęciu klinicznym
                   </h2>
 
                   {hasAccess ? (

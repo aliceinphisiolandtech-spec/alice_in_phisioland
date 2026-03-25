@@ -3,6 +3,9 @@ import { CheckCircle2 } from "lucide-react";
 
 const STATIC_PRODUCT_IMAGE = "/landing-assets/E-book-presentation.webp";
 
+// Ważne: process.env zawsze zwraca stringa, więc sprawdzamy czy to dokładnie "true"
+const IS_TESTING_WEEK = process.env.NEXT_PUBLIC_IS_TESTING_WEEK === "true";
+
 export const OrderSummary = () => {
   return (
     <div className="w-[380px] shrink-0 max-[1024px]:w-full">
@@ -25,7 +28,20 @@ export const OrderSummary = () => {
               Fizjoterapeutyczna Diagnostyka Różnicowa
             </h4>
             <p className="text-sm text-gray-500 mb-2">Tom 1 • Aplikacja PWA</p>
-            <span className="font-bold text-[#103830]">149,00 zł</span>
+
+            {/* --- SEKCJA CENY (DYNAMICZNA) --- */}
+            {IS_TESTING_WEEK ? (
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[#103830] text-lg">
+                  89,00 zł
+                </span>
+                <span className="text-sm text-gray-400 line-through">
+                  149,00 zł
+                </span>
+              </div>
+            ) : (
+              <span className="font-bold text-[#103830]">149,00 zł</span>
+            )}
           </div>
         </div>
 

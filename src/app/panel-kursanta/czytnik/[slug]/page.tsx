@@ -16,6 +16,7 @@ import { notFound } from "next/navigation";
 // Upewnij się, że ścieżka do Twojego komponentu jest poprawna
 import { EbookInfoCard } from "@/components/panel-kursanta/czytnik/EbookInfoCard";
 import { ProgressTracker } from "@/components/panel-kursanta/czytnik/ProgressTracker";
+import { cn } from "@/lib/utils";
 
 // --- 1. TWOJE STANDARDOWE KOMPONENTY ---
 const components = {
@@ -36,8 +37,14 @@ const components = {
     <h3 className="text-lg font-bold text-[#103830] mt-6 mb-3" {...props} />
   ),
   p: (props: any) => (
-    <p
-      className="text-gray-700 leading-relaxed mb-4 text-[16px] sm:text-[18px]"
+    <div
+      // 1. Zmiana na <div> eliminuje błąd hydratacji (div może zawierać w sobie inne divy).
+      // 2. Używamy cn(), aby zachować domyślny wygląd akapitu ORAZ dokleić Twoje
+      //    customowe klasy z plików MDX (np. className="italic mb-4").
+      className={cn(
+        "text-gray-700 leading-relaxed mb-4 text-[16px] sm:text-[18px]",
+        props.className,
+      )}
       {...props}
     />
   ),

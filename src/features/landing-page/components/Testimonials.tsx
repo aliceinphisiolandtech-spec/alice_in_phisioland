@@ -67,7 +67,6 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
       </>
     );
   };
-  console.log("DATA FROM REVIEWS", data);
 
   // Jeśli nie ma recenzji, nie renderujemy nic (lub placeholder)
   if (!activeTestimonial) return null;
@@ -150,7 +149,7 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
                   key={item.id}
                   onClick={() => setActiveIndex(index)}
                   className={cn(
-                    "group relative flex items-center gap-4 rounded-2xl p-4 text-left transition-all duration-300 overflow-hidden",
+                    "group relative flex items-center gap-4 rounded-2xl p-4 text-left transition-all duration-300 overflow-hidden cursor-pointer",
                     isActive
                       ? "bg-white shadow-md scale-[1.02]"
                       : "bg-white/50 hover:bg-white hover:shadow-sm",

@@ -31,7 +31,7 @@ export default async function LogowaniePage() {
       redirect("/admin");
     } else {
       // ZMIANA: Zamiast do nieistniejącego dashboardu, wracamy na główną
-      redirect("/?coming-soon=true");
+      redirect("/panel-kursanta");
     }
   }
 

@@ -24,25 +24,25 @@ export const PurchaseSuccessModal = () => {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // 1. Otwieranie modala
+    // 1. Otwieranie modala po sukcesie płatności
     const isAfterPurchase =
       searchParams.get("redirect_status") === "succeeded" ||
       searchParams.get("success") === "true";
 
     if (isAfterPurchase && typeof window !== "undefined") {
       setTimeout(() => {
-        // ZAWSZE otwieramy do testów, nawet jak OneSignal nie odpowiada
         setIsOpen(true);
         triggerConfetti();
       }, 1000);
     }
 
-    // 2. Wykrywanie (zostawiamy, ale nie będziemy tego używać do blokowania)
+    // 2. Wykrywanie iOS (dla logiki PWA)
     const isIosDevice = /iphone|ipad|ipod/.test(
       window.navigator.userAgent.toLowerCase(),
     );
     setIsIOS(isIosDevice);
 
+    // Przechwytywanie eventu instalacji PWA (dla Androida/Chrome)
     const installHandler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -52,24 +52,20 @@ export const PurchaseSuccessModal = () => {
       window.removeEventListener("beforeinstallprompt", installHandler);
   }, [searchParams]);
 
-  // --- LOGIKA KROKU 1: POWIADOMIENIA ---
+  // --- LOGIKA KROKU 1: POWIADOMIENIA (PRODUKCJA) ---
   const handleEnableNotifications = async () => {
     setIsLoading(true);
     try {
-      // Symulujemy oczekiwanie na OneSignal (żebyś widziała spinner)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Wywołujemy natywny prompt OneSignal
+      await OneSignal.Slidedown.promptPush();
 
-      // --- TESTOWE WYMUSZENIE ---
-      // Ignorujemy czy OneSignal zadziałał, czy nie.
-      // Ignorujemy czy przeglądarka pozwala na instalację.
-      // Po prostu idziemy do kroku 2.
-      console.log("🚀 TEST MODE: Wymuszam przejście do kroku instalacji");
+      // Niezależnie od tego, czy użytkownik kliknął "Zezwól" czy "Blokuj",
+      // przechodzimy do kolejnego ekranu (instalacji aplikacji).
       setStep("install");
     } catch (error) {
-      console.error(error);
-      // W trybie testowym nawet jak jest błąd, to chcemy zobaczyć następny ekran?
-      // Jeśli tak, odkomentuj poniższe:
-      // setStep("install");
+      console.error("OneSignal prompt error:", error);
+      // Nawet w razie błędu API puszczamy klienta dalej
+      setStep("install");
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +73,13 @@ export const PurchaseSuccessModal = () => {
 
   // --- LOGIKA KROKU 2: INSTALACJA ---
   const handleInstallApp = async () => {
-    if (isIOS) return;
+    if (isIOS) {
+      // iOS nie wspiera beforeinstallprompt. PWA dodaje się przez "Dodaj do ekranu głównego" w Safari.
+      alert(
+        "Aby zainstalować na iOS, kliknij przycisk 'Udostępnij' na dole ekranu i wybierz 'Dodaj do ekranu głównego'.",
+      );
+      return;
+    }
 
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -87,24 +89,26 @@ export const PurchaseSuccessModal = () => {
         handleClose();
       }
     } else {
-      alert(
-        "To jest tryb testowy. Na produkcji tutaj wyskoczy okienko przeglądarki.",
-      );
+      // Jeśli nie ma deferredPrompt (np. apka już jest zainstalowana lub przeglądarka nie wspiera)
+      handleClose();
     }
   };
 
   const handleClose = () => {
     setIsOpen(false);
+    // Czyścimy parametry z URL, żeby modal nie otwierał się po odświeżeniu
     const params = new URLSearchParams(searchParams.toString());
     params.delete("redirect_status");
     params.delete("payment_intent");
+    params.delete("payment_intent_client_secret");
     params.delete("success");
     router.replace(`${pathname}?${params.toString()}`);
+
+    // Resetujemy step dla ewentualnych przyszłych otwarć
     setTimeout(() => setStep("notifications"), 500);
   };
 
   const triggerConfetti = () => {
-    // ... (kod konfetti bez zmian) ...
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 };
@@ -188,14 +192,8 @@ export const PurchaseSuccessModal = () => {
                         Włącz powiadomienia
                       </LoadingButton>
 
-                      {/* PRZYCISK "NIE TERAZ" - TEŻ WYMUSZA PRZEJŚCIE DALEJ */}
                       <button
-                        onClick={() => {
-                          console.log(
-                            "🚀 TEST MODE: Pomijam powiadomienia, idę do instalacji",
-                          );
-                          setStep("install");
-                        }}
+                        onClick={() => setStep("install")}
                         className="text-gray-400 text-xs py-2 hover:text-gray-600 transition-colors cursor-pointer"
                       >
                         Nie teraz, przejdź dalej
@@ -223,7 +221,6 @@ export const PurchaseSuccessModal = () => {
                     </p>
                   </div>
                   <div className="p-6 text-center space-y-4">
-                    {/* ZAWSZE pokazujemy przycisk na dole w teście, nawet jak to nie iOS */}
                     <div className="space-y-2">
                       <p className="text-sm text-gray-500 leading-relaxed">
                         Zainstaluj naszą aplikację, aby mieć szybszy dostęp do

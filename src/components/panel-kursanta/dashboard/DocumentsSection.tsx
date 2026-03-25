@@ -75,7 +75,15 @@ const DocumentButton = ({
       if (!response.ok) {
         throw new Error("Błąd pobierania");
       }
+      const disposition = response.headers.get("Content-Disposition");
+      let filename = `faktura.${format}`; // Domyślna nazwa awaryjna
 
+      if (disposition && disposition.includes("filename=")) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      }
       // 2. Odbieramy plik jako Blob (Binary Large Object)
       const blob = await response.blob();
 
@@ -83,7 +91,7 @@ const DocumentButton = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `faktura.${format}`; // Nazwa pliku (fallback)
+      a.download = filename; // Nazwa pliku (fallback)
       document.body.appendChild(a);
       a.click();
 

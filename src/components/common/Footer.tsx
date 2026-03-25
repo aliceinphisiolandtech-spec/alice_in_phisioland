@@ -1,7 +1,9 @@
 import React from "react";
-import { Instagram, ArrowUpRight } from "lucide-react";
+import { Instagram } from "lucide-react";
 import Image from "next/image";
 import { TechFooterSignature } from "./TechFooterSignature";
+import { NewsletterForm } from "../site/footer/NewsLetterForm";
+import Link from "next/link";
 
 export const Footer = () => {
   return (
@@ -49,25 +51,28 @@ export const Footer = () => {
             Zapisz się na newsletter
           </h3>
 
-          <form className="flex w-full max-w-[400px] items-center gap-2 max-[500px]:flex-col">
-            <input
-              type="email"
-              placeholder="Twój adres email"
-              className="min-h-[48px] w-full flex-1 rounded-[8px] border-none bg-white px-4 text-[14px] text-black outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#c5e1a5]"
-            />
-            <button
-              type="submit"
-              className="group flex h-[48px] items-center justify-center gap-2 rounded-[8px] bg-[#c5e1a5] px-6 text-[14px] font-bold text-[#0e3f2d] transition-transform hover:scale-105 active:scale-95 max-[500px]:w-full"
-            >
-              Zapisz się
-              <ArrowUpRight
-                size={16}
-                className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-              />
-            </button>
-          </form>
+          <NewsletterForm />
         </div>
-
+        <div className="flex flex-col gap-2 text-center mb-7">
+          <Link
+            href="/regulamin"
+            className="text-[15px] text-white/70 transition-colors hover:text-white"
+          >
+            Regulamin aplikacji
+          </Link>
+          <Link
+            href="/polityka-prywatnosci"
+            className="text-[15px] text-white/70 transition-colors hover:text-white"
+          >
+            Polityka prywatności
+          </Link>
+          <Link
+            href="/regulamin-zakupow"
+            className="text-[15px] text-white/70 transition-colors hover:text-white"
+          >
+            Regulamin zakupu e-booka
+          </Link>
+        </div>
         {/* Separator 2 */}
         <div className="h-[1px] w-full bg-white/10"></div>
 

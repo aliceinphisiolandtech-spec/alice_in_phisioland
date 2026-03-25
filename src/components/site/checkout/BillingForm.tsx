@@ -128,7 +128,7 @@ export const BillingForm = ({
               className="hidden"
             />
             <User className="w-5 h-5" />
-            <span className="font-semibold">Osoba prywatna</span>
+            <span className="font-semibold text-sm ">Osoba prywatna</span>
           </label>
 
           <label
@@ -146,7 +146,7 @@ export const BillingForm = ({
               className="hidden"
             />
             <Building2 className="w-5 h-5" />
-            <span className="font-semibold">Firma / DG</span>
+            <span className="font-semibold text-sm">Firma / DG</span>
           </label>
         </div>
       </div>
@@ -222,7 +222,7 @@ export const BillingForm = ({
           type="submit"
           isLoading={isLoading}
           variant="primary"
-          className="w-full text-base font-semibold h-12 rounded-xl"
+          className="w-full text-base text-sm font-semibold  rounded-xl"
         >
           Zapisz i przejdź do płatności
         </LoadingButton>

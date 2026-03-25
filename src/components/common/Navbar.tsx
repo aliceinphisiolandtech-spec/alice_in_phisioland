@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,12 +10,7 @@ import { Button } from "../ui/Button";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Session } from "next-auth";
-import {
-  ChevronDown,
-  ChevronLeft,
-  LayoutDashboard,
-  LogOut,
-} from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 
 /* Sekcja: Linki nawigacyjne */
 const navLinks = [
@@ -36,7 +31,8 @@ export const Navbar = ({ session }: NavbarProps) => {
   const [activeSection, setActiveSection] = useState<string>("/");
   const pathname = usePathname();
   const isZakupPage = pathname === "/zakup";
-  /* Sekcja: Logika Scroll Spy (Active Link) */
+  const isLoginPage = pathname === "/logowanie";
+  const isSticky = isScrolled && !isZakupPage && !isLoginPage;
   useEffect(() => {
     if (pathname !== "/") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -159,12 +155,12 @@ export const Navbar = ({ session }: NavbarProps) => {
       <nav
         className={cn(
           "top-0 z-[100] w-full transition-all duration-500 ease-in-out",
-          isScrolled && !isZakupPage
+          isSticky
             ? "fixed bg-white/80 backdrop-blur-md shadow-sm py-2"
             : "py-4",
           isAbsolutePosition
             ? "absolute"
-            : !isScrolled && "relative bg-white border-b border-gray-100 pb-4",
+            : !isSticky && "relative bg-white border-b border-gray-100 pb-4",
         )}
       >
         <div
@@ -177,7 +173,7 @@ export const Navbar = ({ session }: NavbarProps) => {
           {/* --- LOGO --- */}
           <Link
             href="/"
-            className="relative shrink-0 pointer-cursor"
+            className="relative shrink-0 cursor-pointer"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <Image
@@ -213,7 +209,7 @@ export const Navbar = ({ session }: NavbarProps) => {
                   key={link.name}
                   href={link.href}
                   onMouseEnter={() => setHoveredIndex(idx)}
-                  className="relative z-10 px-6 py-2.5 text-[14px] font-medium transition-colors duration-300 pointer-cursor"
+                  className="relative z-10 px-6 py-2.5 text-[14px] font-medium transition-colors duration-300 cursor-pointer"
                 >
                   <span
                     className={cn(
@@ -303,7 +299,7 @@ export const Navbar = ({ session }: NavbarProps) => {
             layout
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className={cn(
-              "pointer-events-auto flex items-center justify-center transition-colors outline-none focus:outline-none ring-0 pointer-cursor",
+              "pointer-events-auto flex items-center justify-center transition-colors outline-none focus:outline-none ring-0 cursor-pointer",
               isMobileMenuOpen
                 ? "bg-black text-white rounded-full p-0 shadow-2xl border border-white/10"
                 : cn(
@@ -347,6 +343,7 @@ export const Navbar = ({ session }: NavbarProps) => {
       </div>
 
       {/* --- MOBILE MENU OVERLAY --- */}
+      {/* --- MOBILE MENU OVERLAY --- */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -356,7 +353,7 @@ export const Navbar = ({ session }: NavbarProps) => {
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
               className={cn(
-                "fixed inset-0 z-[110] backdrop-blur-md bg-black/20 pointer-cursor",
+                "fixed inset-0 z-[110] backdrop-blur-md bg-black/20 cursor-pointer",
                 mobileToggleClass,
               )}
             />
@@ -370,6 +367,7 @@ export const Navbar = ({ session }: NavbarProps) => {
                 mobileToggleClass,
               )}
             >
+              {/* Główne linki nawigacyjne */}
               {navLinks.map((link) => (
                 <motion.div
                   key={link.name}
@@ -379,12 +377,68 @@ export const Navbar = ({ session }: NavbarProps) => {
                   <Link
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="inline-block rounded-full bg-black px-8 py-4 text-lg font-medium text-white shadow-2xl transition-transform pointer-cursor border border-white/10 mb-4"
+                    className="inline-block rounded-full bg-primary px-8 py-4 text-lg font-medium text-contrast shadow-2xl transition-transform cursor-pointer border border-white/10 mb-4"
                   >
                     {link.name}
                   </Link>
                 </motion.div>
               ))}
+
+              {/* Opcje autoryzowanego użytkownika w menu mobilnym */}
+              {session ? (
+                <>
+                  <motion.div
+                    variants={itemVariants}
+                    className="flex w-full justify-end pointer-events-auto pr-6 mt-4"
+                  >
+                    <Link
+                      href={
+                        session.user?.role === "admin"
+                          ? "/admin"
+                          : "/panel-kursanta"
+                      }
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="inline-block rounded-full bg-contrast px-8 py-4 text-lg font-medium text-primary shadow-2xl transition-transform cursor-pointer border border-white/10 mb-4"
+                    >
+                      {session.user?.role === "admin"
+                        ? "Panel Admina"
+                        : "Panel Kursanta"}
+                    </Link>
+                  </motion.div>
+
+                  <motion.div
+                    variants={itemVariants}
+                    className="flex w-full justify-end pointer-events-auto pr-6"
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMobileMenuOpen(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="inline-block rounded-full bg-contrast px-8 py-4 text-lg font-medium text-primary shadow-2xl transition-transform cursor-pointer  mb-4"
+                    >
+                      Wyloguj
+                    </button>
+                  </motion.div>
+                </>
+              ) : (
+                <motion.div
+                  variants={itemVariants}
+                  className="flex w-full justify-end pointer-events-auto pr-6"
+                >
+                  <Link
+                    href={"/logowanie"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="inline-block rounded-full font-semibold mt-2 bg-contrast px-8 py-4 text-lg font-medium text-primary shadow-2xl transition-transform cursor-pointer  mb-4"
+                  >
+                    Zaloguj
+                  </Link>
+                </motion.div>
+              )}
             </motion.div>
           </>
         )}
@@ -404,12 +458,13 @@ const NavbarProfile = ({ session, isLightVersion, isScrolled }: any) => {
       .join("")
       .toUpperCase()
       .slice(0, 2) || "AW";
+  const linkRoute = session.user.role === "admin" ? "/admin" : "panel-kursanta";
 
   return (
     <div
       onClick={() => setIsExpanded(!isExpanded)}
       className={cn(
-        "group relative flex items-center gap-3 cursor-pointer p-1 pr-3 rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 pointer-cursor z-50",
+        "group relative flex items-center gap-3 cursor-pointer p-1 pr-3 rounded-full bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer z-50",
         isLightVersion && "!bg-contrast !text-primary border-0",
         isScrolled && "scale-90",
       )}
@@ -453,8 +508,8 @@ const NavbarProfile = ({ session, isLightVersion, isScrolled }: any) => {
           )}
         >
           <Link
-            href="/admin"
-            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[#0c493e] hover:bg-[#0c493e]/10 pointer-cursor"
+            href={linkRoute}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[#0c493e] hover:bg-[#0c493e]/10 cursor-pointer"
             onClick={(e) => e.stopPropagation()}
           >
             <LayoutDashboard className="h-4 w-4" />{" "}
@@ -465,7 +520,7 @@ const NavbarProfile = ({ session, isLightVersion, isScrolled }: any) => {
               e.stopPropagation();
               signOut({ callbackUrl: "/" });
             }}
-            className="p-1.5 rounded-md text-red-500 hover:bg-red-50 pointer-cursor"
+            className="p-1.5 rounded-md text-red-500 hover:bg-red-50 cursor-pointer"
           >
             <LogOut className="h-4 w-4" />
           </button>

@@ -7,7 +7,7 @@ import { Session } from "next-auth";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
-import { CheckCircle2, Pencil, Lock } from "lucide-react"; // Dodałem ikonę Lock
+import { CheckCircle2, Pencil, Lock, ShieldAlert } from "lucide-react";
 
 import { OrderSummary } from "./OrderSummary";
 import { CheckoutForm } from "./CheckoutForm";
@@ -19,12 +19,26 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
+const IS_TESTING_WEEK = process.env.NEXT_PUBLIC_IS_TESTING_WEEK === "true";
+const TESTERS_WHITELIST = [
+  "juszczakmat@gmail.com",
+  "aleksandra.kozlowska38@gmail.com",
+  "mlech.pan@gmail.com",
+  "gaskaula9@gmail.com",
+  "kosminskanatalia95@gmail.com",
+  "biuro@kocikdev.com",
+];
+
 export const CheckoutSection = ({ session }: { session: Session | null }) => {
   const [clientSecret, setClientSecret] = useState("");
   const [isInitializing, setIsInitializing] = useState(false);
-
   const [savedBillingData, setSavedBillingData] =
     useState<BillingFormData | null>(null);
+
+  // Zabezpieczenie na poziomie wyświetlania
+  const userEmail = session?.user?.email?.toLowerCase();
+  const isTester = userEmail && TESTERS_WHITELIST.includes(userEmail);
+  const isLockedForNonTesters = IS_TESTING_WEEK && !isTester;
 
   const handleBillingSubmit = async (data: BillingFormData) => {
     setIsInitializing(true);
@@ -82,6 +96,7 @@ export const CheckoutSection = ({ session }: { session: Session | null }) => {
               <>
                 {/* 1. KONTO UŻYTKOWNIKA */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                  {/* ... [Bez zmian - pozostawione awatary i nazwa użytkownika] ... */}
                   <h2 className="text-lg font-bold text-[#103830] mb-4 flex items-center gap-2">
                     1. Konto użytkownika
                   </h2>
@@ -113,91 +128,108 @@ export const CheckoutSection = ({ session }: { session: Session | null }) => {
                   </div>
                 </div>
 
-                {/* 2. DANE DO FAKTURY */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 relative transition-all duration-300">
-                  {!clientSecret ? (
-                    // TRYB EDYCJI
-                    <BillingForm
-                      session={session}
-                      onSubmit={handleBillingSubmit}
-                      isLoading={isInitializing}
-                    />
-                  ) : (
-                    // TRYB PODGLĄDU (ZWINIĘTY)
-                    <div className="flex justify-between items-center animate-in fade-in">
-                      <div className="flex gap-4 items-start">
-                        <div className="mt-1 text-green-600 bg-green-100 p-1 rounded-full">
-                          <CheckCircle2 size={20} />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-[#103830] text-lg">
-                            Dane do faktury
-                          </h3>
-                          <p className="font-medium text-gray-900">
-                            {savedBillingData?.billingName}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {savedBillingData?.billingAddress},{" "}
-                            {savedBillingData?.billingPostalCode}{" "}
-                            {savedBillingData?.billingCity}
-                          </p>
-                          {savedBillingData?.billingNip && (
-                            <p className="text-xs text-gray-400 mt-1 font-mono">
-                              NIP: {savedBillingData.billingNip}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        onClick={handleEditBilling}
-                        className="p-2 text-gray-400 hover:text-[#103830] hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Edytuj dane"
-                      >
-                        <Pencil size={20} />
-                      </button>
+                {/* --- NOWA LOGIKA: BLOKADA DLA NIE-TESTERÓW --- */}
+                {isLockedForNonTesters ? (
+                  <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-8 text-center bg-red-50/30">
+                    <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <ShieldAlert size={32} />
                     </div>
-                  )}
-                </div>
-
-                {/* 3. METODA PŁATNOŚCI (Zawsze widoczna, ale zablokowana bez clientSecret) */}
-                <div
-                  className={`
-                    bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 
-                    transition-all duration-300
-                    ${!clientSecret ? "opacity-50 grayscale pointer-events-none select-none" : "opacity-100"}
-                  `}
-                >
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-lg font-bold text-[#103830] flex items-center gap-2">
-                      2. Metoda płatności
-                      {!clientSecret && (
-                        <Lock className="w-4 h-4 text-gray-400" />
-                      )}
-                    </h2>
+                    <h3 className="font-bold text-lg text-gray-900 mb-2">
+                      Okres testowy (Zamknięta sprzedaż)
+                    </h3>
+                    <p className="text-gray-500 max-w-md mx-auto">
+                      Aplikacja znajduje się obecnie w zamkniętej fazie testów.
+                      Zakup e-booka jest zablokowany dla osób spoza listy
+                      testerów. Dziękujemy za zainteresowanie i zapraszamy na
+                      premierę!
+                    </p>
                   </div>
+                ) : (
+                  <>
+                    {/* 2. DANE DO FAKTURY (Zwykły widok jeśli przeszedł blokadę) */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 relative transition-all duration-300">
+                      {!clientSecret ? (
+                        <BillingForm
+                          session={session}
+                          onSubmit={handleBillingSubmit}
+                          isLoading={isInitializing}
+                        />
+                      ) : (
+                        <div className="flex justify-between items-center animate-in fade-in">
+                          {/* ... [KOD PODGLĄDU ZWINIĘTEJ FAKTURY BEZ ZMIAN] ... */}
+                          <div className="flex gap-4 items-start">
+                            <div className="mt-1 text-green-600 bg-green-100 p-1 rounded-full">
+                              <CheckCircle2 size={20} />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-[#103830] text-lg">
+                                Dane do faktury
+                              </h3>
+                              <p className="font-medium text-gray-900">
+                                {savedBillingData?.billingName}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {savedBillingData?.billingAddress},{" "}
+                                {savedBillingData?.billingPostalCode}{" "}
+                                {savedBillingData?.billingCity}
+                              </p>
+                              {savedBillingData?.billingNip && (
+                                <p className="text-xs text-gray-400 mt-1 font-mono">
+                                  NIP: {savedBillingData.billingNip}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={handleEditBilling}
+                            className="p-2 text-gray-400 hover:text-[#103830] hover:bg-gray-100 rounded-lg transition-colors"
+                          >
+                            <Pencil size={20} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Renderujemy Stripe Elements tylko gdy mamy sekret, w przeciwnym razie pusto */}
-                  {clientSecret ? (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                      <Elements
-                        options={{ clientSecret, appearance, locale: "pl" }}
-                        stripe={stripePromise}
-                      >
-                        <CheckoutForm session={session} />
-                      </Elements>
+                    {/* 3. METODA PŁATNOŚCI */}
+                    <div
+                      className={`
+                        bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 
+                        transition-all duration-300
+                        ${!clientSecret ? "opacity-50 grayscale pointer-events-none select-none" : "opacity-100"}
+                      `}
+                    >
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-lg font-bold text-[#103830] flex items-center gap-2">
+                          2. Metoda płatności
+                          {!clientSecret && (
+                            <Lock className="w-4 h-4 text-gray-400" />
+                          )}
+                        </h2>
+                      </div>
+                      {clientSecret ? (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                          <Elements
+                            options={{ clientSecret, appearance, locale: "pl" }}
+                            stripe={stripePromise}
+                          >
+                            <CheckoutForm session={session} />
+                          </Elements>
+                        </div>
+                      ) : (
+                        <div className="h-12 bg-gray-50 rounded-xl border border-gray-100 border-dashed flex items-center justify-center text-sm text-gray-400">
+                          Uzupełnij dane powyżej, aby odblokować płatność
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="h-12 bg-gray-50 rounded-xl border border-gray-100 border-dashed flex items-center justify-center text-sm text-gray-400">
-                      Uzupełnij dane powyżej, aby odblokować płatność
-                    </div>
-                  )}
-                </div>
+                  </>
+                )}
               </>
             )}
           </div>
 
           {/* PRAWA KOLUMNA */}
           <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 lg:sticky lg:top-32">
+            {/* Poprawione wywołanie z przekazaniem maila */}
             <OrderSummary />
           </div>
         </div>

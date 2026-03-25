@@ -41,7 +41,7 @@ export const WelcomeHeader = ({ userName }: WelcomeHeaderProps) => {
       // to ten komponent odziedziczy te stany automatycznie.
       className="flex items-center justify-between"
     >
-      <div>
+      <div className="pr-12">
         <h1 className="text-2xl md:text-3xl font-bold text-[#103830]">
           {greeting}, {userName}!
         </h1>
@@ -50,12 +50,12 @@ export const WelcomeHeader = ({ userName }: WelcomeHeaderProps) => {
         </p>
       </div>
 
-      <div className="relative h-12 w-12 md:h-14 md:w-14 shrink-0">
+      <div className="relative h-12 w-12 md:h-14 md:w-14 shrink-0 ">
         <Image
           src="/AW-logo.svg"
           alt="Logo"
           fill
-          className="object-contain"
+          className="object-contain "
           priority // Warto dodać priority dla LCP (największego elementu), jeśli to logo jest widoczne od razu
         />
       </div>

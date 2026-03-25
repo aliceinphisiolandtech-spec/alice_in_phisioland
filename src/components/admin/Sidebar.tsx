@@ -5,32 +5,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Users,
-  ShoppingBag,
   Settings,
   HelpCircle,
   LogOut,
-  FileText,
-  PieChart,
-  LayoutTemplate,
+  MailboxIcon,
   FilePenLine,
   BellRing,
+  Lock, // <--- IMPORT KŁÓDKI
+  PlayCircle, // <--- IMPORT IKONY DLA KURSÓW WIDEO
 } from "lucide-react";
-import { cn } from "@/lib/utils"; // Zakładam, że masz cn utility, jeśli nie - usuń i użyj template string
 import Image from "next/image";
 import { signOut } from "next-auth/react";
+
 interface AdminSidebarProps {
   adminName?: string | null;
 }
-const menuItems = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Aktualności", href: "/admin/news", icon: BellRing }, // <--- NOWOŚĆ
-  { label: "CMS", href: "/admin/cms", icon: FilePenLine },
-];
 
-const generalItems = [
-  { label: "Ustawienia", href: "/admin/settings", icon: Settings },
-  { label: "Pomoc", href: "/admin/help", icon: HelpCircle },
+const menuItems = [
+  { label: "Dashboard", href: "/admin", icon: LayoutDashboard, locked: false },
+  { label: "Aktualności", href: "/admin/news", icon: BellRing, locked: false },
+  { label: "CMS", href: "/admin/cms", icon: FilePenLine, locked: false },
+  { label: "Newsletter", href: "#", icon: MailboxIcon, locked: true },
+  // NOWA ZAKŁADKA
+  { label: "Kursy Video", href: "#", icon: PlayCircle, locked: true },
 ];
 
 export default function AdminSidebar({ adminName }: AdminSidebarProps) {
@@ -41,8 +38,7 @@ export default function AdminSidebar({ adminName }: AdminSidebarProps) {
       {/* --- LOGO --- */}
       <div className="px-8 py-8">
         <div className="flex items-center gap-3">
-          {/* Proste Logo AW */}
-          <div className="flex h-10 w-10 items-center relative  justify-center rounded-xl bg-[#0c493e] text-white font-bold text-lg">
+          <div className="flex h-10 w-10 items-center relative justify-center rounded-xl bg-[#0c493e] text-white font-bold text-lg">
             <Image
               src={"/AW-logo-negatyw.svg"}
               fill
@@ -65,56 +61,38 @@ export default function AdminSidebar({ adminName }: AdminSidebarProps) {
           </p>
           <ul className="space-y-2">
             {menuItems.map((item) => {
-              const isActive = pathname === item.href;
+              // Dodatkowe zabezpieczenie: element zablokowany nie może być aktywny
+              const isActive = pathname === item.href && !item.locked;
+
               return (
-                <li key={item.href}>
+                <li key={item.label}>
+                  {" "}
+                  {/* Zmiana klucza na label, bo href może się powtarzać np. "#" */}
                   <Link
                     href={item.href}
                     className={`group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300
+                      ${item.locked ? "pointer-events-none opacity-50 grayscale" : ""} 
                       ${
                         isActive
                           ? "text-[#0c493e] bg-[#c5e96b]/20"
                           : "text-gray-500 hover:bg-gray-50 hover:text-[#0c493e]"
                       }`}
                   >
-                    {/* Zielony pasek aktywnego elementu (jak na zdjęciu) */}
+                    {/* Zielony pasek aktywnego elementu */}
                     {isActive && (
                       <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-[#0c493e]" />
                     )}
-                    <item.icon
-                      className={`h-5 w-5 ${isActive ? "text-[#0c493e]" : "text-gray-400 group-hover:text-[#0c493e]"}`}
-                    />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
 
-        {/* Sekcja GENERAL */}
-        <div>
-          <p className="mb-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
-            General
-          </p>
-          <ul className="space-y-2">
-            {generalItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300
-                      ${
-                        isActive
-                          ? "text-[#0c493e] bg-[#c5e96b]/20"
-                          : "text-gray-500 hover:bg-gray-50 hover:text-[#0c493e]"
-                      }`}
-                  >
                     <item.icon
                       className={`h-5 w-5 ${isActive ? "text-[#0c493e]" : "text-gray-400 group-hover:text-[#0c493e]"}`}
                     />
+
                     {item.label}
+
+                    {/* IKONA KŁÓDKI - Wyrównana do prawej dzięki ml-auto */}
+                    {item.locked && (
+                      <Lock className="ml-auto h-4 w-4 text-gray-400" />
+                    )}
                   </Link>
                 </li>
               );
@@ -123,7 +101,7 @@ export default function AdminSidebar({ adminName }: AdminSidebarProps) {
         </div>
       </div>
 
-      {/* --- WIDGET NA DOLE (Jak "Download App" na zdjęciu, ale np. wylogowanie) --- */}
+      {/* --- WIDGET NA DOLE --- */}
       <div className="p-6">
         <div className="rounded-2xl bg-[#0c493e] p-4 text-white relative overflow-hidden">
           {/* Dekoracja tła */}
@@ -135,7 +113,6 @@ export default function AdminSidebar({ adminName }: AdminSidebarProps) {
           </p>
 
           <button
-            // 2. Wywołanie funkcji wylogowania z przekierowaniem na stronę główną
             onClick={() => signOut({ callbackUrl: "/logowanie" })}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-2 text-sm font-medium hover:bg-white/20 transition-colors pointer-cursor"
           >

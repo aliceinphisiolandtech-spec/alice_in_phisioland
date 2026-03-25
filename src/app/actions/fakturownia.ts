@@ -21,13 +21,6 @@ export async function createFakturowniaInvoice(
     api_token: API_TOKEN,
     invoice: {
       kind: "vat",
-      // ZAMIAST department_id, wpisz to ręcznie:
-      seller_name: "Moja Firma Testowa", // Cokolwiek
-      seller_tax_no: "5252445767", // Przykładowy poprawny NIP (Fakturownia waliduje sumy kontrolne)
-      seller_street: "Ulica Testowa 1/2",
-      seller_post_code: "00-001",
-      seller_city: "Warszawa",
-
       number: null,
       sell_date: new Date().toISOString().split("T")[0],
       issue_date: new Date().toISOString().split("T")[0],

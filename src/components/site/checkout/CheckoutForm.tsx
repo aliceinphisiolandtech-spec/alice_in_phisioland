@@ -77,10 +77,19 @@ export const CheckoutForm = ({ session }: CheckoutFormProps) => {
           <span className="text-xs text-gray-600 leading-relaxed">
             Akceptuję{" "}
             <Link
-              href="/regulamin"
-              className="underline font-medium text-[#103830]"
+              href="/regulamin-zakupow"
+              className="underline font-medium text-[#103830] hover:text-[#0c493e]"
+              target="_blank"
             >
-              Regulamin
+              Regulamin zakupów
+            </Link>{" "}
+            oraz{" "}
+            <Link
+              href="/polityka-prywatnosci"
+              className="underline font-medium text-[#103830] hover:text-[#0c493e]"
+              target="_blank"
+            >
+              Politykę prywatności
             </Link>
             . Rozumiem, że kupuję dostęp do treści cyfrowej i tracę prawo do
             odstąpienia od umowy z momentem otrzymania dostępu.
@@ -93,7 +102,7 @@ export const CheckoutForm = ({ session }: CheckoutFormProps) => {
           type="submit"
           isLoading={isProcessing}
           disabled={!stripe || !elements || !acceptTerms}
-          className="w-full py-6 text-lg font-semibold rounded-xl"
+          className="w-full text-sm font-semibold rounded-xl"
         >
           Kupuję i płacę
         </LoadingButton>

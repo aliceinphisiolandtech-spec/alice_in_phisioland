@@ -8,7 +8,7 @@ import {
   CalendarDays,
   ArrowRight,
 } from "lucide-react";
-
+const courseLink = process.env.NEXT_PUBLIC_KURSY_LINK;
 export default function CoursesPage() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-8">
@@ -45,12 +45,12 @@ export default function CoursesPage() {
           </h3>
 
           <p className="mb-6 text-xs text-gray-300 leading-relaxed max-w-[260px]">
-            Wideo to nie wszystko. Zapraszam Cię na warsztaty na żywo, gdzie
-            przećwiczymy techniki manualne w praktyce.
+            Diagnostyka kliniczna i postępowanie w fizjoterapii - kurs dla
+            młodych praktyków
           </p>
 
           <a
-            href="https://zewnetrzna-strona.pl" // Link do zapisów
+            href={courseLink} // Link do zapisów
             target="_blank"
             rel="noopener noreferrer"
             className="group/btn flex w-full items-center justify-center gap-2 rounded-xl bg-[#D4F0C8] py-3 text-sm font-bold text-[#103830] transition-all hover:bg-white pointer-cursor"

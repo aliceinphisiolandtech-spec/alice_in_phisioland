@@ -14,7 +14,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Alice in phisioland",
+  title: "Alice in Physioland",
   description:
     "Dedykowana aplikacja Alicji Wójcik, pozwalająca na łatwy i nowoczesny dostęp do wiedzy fizjoterapeutycznej",
   manifest: "/manifest.json", // <--- 1. Link do manifestu
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     // <--- 2. Konfiguracja dla Apple (iOS)
     capable: true,
     statusBarStyle: "default",
-    title: "Alice in phisioland",
+    title: "Alice in Physioland",
   },
 };
 export default function RootLayout({

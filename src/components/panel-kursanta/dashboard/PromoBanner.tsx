@@ -33,7 +33,7 @@ export const PromoBanner = () => {
           <div className="space-y-3 max-w-[80%]">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#D4F0C8] backdrop-blur-md">
               <Users size={12} />
-              Warsztaty
+              Szkolenie
             </div>
 
             <h3 className="text-xl font-bold leading-tight text-white">

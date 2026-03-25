@@ -14,9 +14,14 @@ interface MobileMenuProps {
 export const MobileMenu = ({ session }: MobileMenuProps) => {
   const pathname = usePathname();
 
-  // Helper function to check if the path is active
-  // Using exact match for simplicity, or startsWith for sub-routes if needed
-  const isActive = (path: string) => pathname === path;
+  // Zaktualizowana funkcja sprawdzająca - pozwala na ścisłe dopasowanie (exact)
+  // lub dopasowanie na podstawie prefiksu (np. dla podstron czytnika)
+  const isActive = (path: string, exact = true) => {
+    if (exact) {
+      return pathname === path;
+    }
+    return pathname === path || pathname.startsWith(`${path}/`);
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 min-[1024px]:hidden pointer-events-none">
@@ -25,7 +30,7 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
         {/* 1. START */}
         <Link
           href="/panel-kursanta"
-          className="group flex flex-1 flex-col items-center justify-center gap-1 mt-1 pointer-cursor"
+          className="group flex flex-1 flex-col items-center justify-center gap-1 mt-1 cursor-pointer"
         >
           <Home
             size={24}
@@ -33,14 +38,14 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
             className={cn(
               "transition-colors duration-300",
               isActive("/panel-kursanta")
-                ? "text-[#103830]"
-                : "text-gray-400 group-hover:text-[#103830]",
+                ? "text-primary"
+                : "text-gray-400 group-hover:text-primary",
             )}
           />
           <span
             className={cn(
               "text-[10px] font-semibold transition-colors",
-              isActive("/panel-kursanta") ? "text-[#103830]" : "text-gray-400",
+              isActive("/panel-kursanta") ? "text-primary" : "text-gray-400",
             )}
           >
             Start
@@ -50,7 +55,7 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
         {/* 2. KURSY (Zewnętrzny / Wewnętrzny) */}
         <Link
           href="/panel-kursanta/kursy"
-          className="group flex flex-1 flex-col items-center justify-center gap-1 mt-1 pointer-cursor"
+          className="group flex flex-1 flex-col items-center justify-center gap-1 mt-1 cursor-pointer"
         >
           <GraduationCap
             size={24}
@@ -58,15 +63,15 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
             className={cn(
               "transition-colors duration-300",
               isActive("/panel-kursanta/kursy")
-                ? "text-[#103830]"
-                : "text-gray-400 group-hover:text-[#103830]",
+                ? "text-primary"
+                : "text-gray-400 group-hover:text-primary",
             )}
           />
           <span
             className={cn(
               "text-[10px] font-semibold transition-colors",
               isActive("/panel-kursanta/kursy")
-                ? "text-[#103830]"
+                ? "text-primary"
                 : "text-gray-400",
             )}
           >
@@ -75,16 +80,15 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
         </Link>
 
         {/* 3. ŚRODEK: CZYTNIK (Wystający Notch) */}
-        {/* This container pushes the button up */}
+        {/* Tutaj przekazujemy false jako drugi argument do isActive, aby działało też na podstronach */}
         <div className="relative flex flex-1 flex-col items-center justify-start -top-7 pointer-events-none">
           <Link
             href="/panel-kursanta/czytnik"
             className={cn(
-              "pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full transition-transform pointer-cursor active:scale-95 shadow-lg",
-              // Logic for active state vs default state
-              isActive("/panel-kursanta/czytnik")
-                ? "bg-[#103830] text-white ring-4 ring-white" // Active: Green bg, White icon
-                : "bg-black text-white ring-4 ring-white", // Default: Black bg, White icon
+              "pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full transition-transform cursor-pointer active:scale-95 shadow-lg",
+              isActive("/panel-kursanta/czytnik", false)
+                ? "bg-contrast text-primary ring-4 ring-white" // Aktywny
+                : "bg-primary text-white ring-4 ring-white", // Domyślny
             )}
           >
             <BookOpen size={24} fill="currentColor" />
@@ -94,7 +98,7 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
         {/* 4. INFO */}
         <Link
           href="/panel-kursanta/aktualnosci"
-          className="group flex flex-1 flex-col items-center justify-center gap-1 mt-1 pointer-cursor"
+          className="group flex flex-1 flex-col items-center justify-center gap-1 mt-1 cursor-pointer"
         >
           <Bell
             size={24}
@@ -102,15 +106,15 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
             className={cn(
               "transition-colors duration-300",
               isActive("/panel-kursanta/aktualnosci")
-                ? "text-[#103830]"
-                : "text-gray-400 group-hover:text-[#103830]",
+                ? "text-primary"
+                : "text-gray-400 group-hover:text-primary",
             )}
           />
           <span
             className={cn(
               "text-[10px] font-semibold transition-colors",
               isActive("/panel-kursanta/aktualnosci")
-                ? "text-[#103830]"
+                ? "text-primary"
                 : "text-gray-400",
             )}
           >
@@ -121,14 +125,14 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
         {/* 5. KONTO */}
         <Link
           href="/panel-kursanta/profil"
-          className="group flex flex-1 flex-col items-center justify-center gap-1 mt-1 pointer-cursor"
+          className="group flex flex-1 flex-col items-center justify-center gap-1 mt-1 cursor-pointer"
         >
           <div
             className={cn(
               "relative h-6 w-6 overflow-hidden rounded-full border transition-all",
               isActive("/panel-kursanta/profil")
-                ? "border-[#103830] ring-1 ring-[#103830]"
-                : "border-gray-200 group-hover:border-[#103830]",
+                ? "border-primary ring-1 ring-primary"
+                : "border-gray-200 group-hover:border-primary",
             )}
           >
             {session?.user?.image ? (
@@ -148,7 +152,7 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
             className={cn(
               "text-[10px] font-semibold transition-colors",
               isActive("/panel-kursanta/profil")
-                ? "text-[#103830]"
+                ? "text-primary"
                 : "text-gray-400",
             )}
           >

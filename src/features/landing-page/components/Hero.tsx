@@ -46,7 +46,6 @@ export const Hero = ({ data, hasAccess, session }: HeroProps) => {
   };
 
   const primaryButton = getButtonConfig();
-  console.log(primaryButton);
 
   const renderHeadline = () => {
     const { headline, highlight } = data;
