@@ -147,14 +147,9 @@ export default function AccountClient({ user }: AccountClientProps) {
             variants={itemVariants}
             className="flex items-center gap-6 rounded-3xl bg-white p-6 shadow-sm border border-gray-100"
           >
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#D4F0C8] text-[#103830] text-3xl font-bold shadow-inner">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#D4F0C8] text-[#103830] text-3xl font-bold shadow-inner relative overflow-hidden">
               {user.image ? (
-                <Image
-                  src={user.image}
-                  alt="Avatar"
-                  className="h-full w-full rounded-full object-cover"
-                  fill
-                />
+                <Image src={user.image} alt="Avatar" fill />
               ) : (
                 <User size={36} />
               )}
