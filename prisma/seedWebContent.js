@@ -1,162 +1,123 @@
 import { PrismaClient } from "../src/generated/prisma/index.js";
 
+// Inicjalizacja klienta Prisma
 const prisma = new PrismaClient();
+// ⬇️ TUTAJ WPISZ MAILE, KTÓRYM CHCESZ NADAĆ DOSTĘP I 100% POSTĘPU ⬇️
+const EMAILS_TO_GRANT_ACCESS = ["biuro@kocikdev.com"];
 
-// Definiujemy TYLKO nowe sekcje.
-// Stare sekcje (hero, about, etc.) nie zostaną dotknięte,
-// ponieważ nie ma ich w tym obiekcie.
-const NEW_PATIENT_DATA = {
-  // --- 1. PATIENT HERO ---
-  patientHero: {
-    badge: "Strefa Pacjenta",
-    title: "Skuteczna terapia manualna i diagnostyka funkcjonalna",
-    description:
-      "Nazywam się Alicja Wójcik. Stworzyłam tę strefę, aby ułatwić Ci proces leczenia. Znajdziesz tu rzetelne informacje o tym jak pracuję, ile kosztuje wizyta oraz jak przygotować się do pierwszego spotkania.",
-    features: [
-      {
-        title: "Diagnostyka",
-        desc: "Znajdujemy źródło bólu",
-        // Dodaję 'icon' na sztywno, bo schemat Zod tego wymaga,
-        // mimo że formularz tego nie edytuje (dla bezpieczeństwa typów).
-        icon: "ScanSearch",
-      },
-      {
-        title: "Terapia indywidualna",
-        desc: "Czas w 100% dla Ciebie",
-        icon: "UserCheck",
-      },
-      {
-        title: "Edukacja i profilaktyka",
-        desc: "Świadomość własnego ciała",
-        icon: "BrainCircuit",
-      },
-    ],
-    // Te pola nie są edytowalne w formularzu, ale muszą być w bazie
-    cta: {
-      text: "Sprawdź wolne terminy",
-      href: "https://www.znanylekarz.pl/alicja-wojcik-4/fizjoterapeuta/warszawa",
-    },
-    stats: {
-      rating: "5.0 / 5.0",
-      ratingText: "Zweryfikowane opinie pacjentów",
-    },
-  },
+const PRODUCT_ID = "ebook-tom-1";
 
-  // --- 2. PATIENT REVIEWS ---
-  patientReviews: {
-    sectionTitle: "Co mówią pacjenci?",
-    sectionSubtitle: "Opinie zweryfikowane z portalu ZnanyLekarz",
-    widgetTitleMobile: "Umów wizytę online",
-    reviews: [
-      {
-        name: "Aneta",
-        text: "Serdecznie polecam, Pani Alicja wyleczyła już jedną z moich kontuzji, do dzisiaj nie wrócił ból. Teraz zajmujemy się kolejną. Dosłownie ręce, które leczą :)",
-      },
-      {
-        name: "IIZ",
-        text: "Niezwykle kompetentna, otwarta, rzeczowa i bardzo zaangażowana. Żaden fizjoterapeuta nie zajął się jak do tej pory moim problemem tak kompleksowo i z taką skutecznością. Polecam!",
-      },
-      {
-        name: "AAda",
-        text: "Jestem bardzo zadowolona, przychodzę już od kilku tygodni. Pani Alicja jest bardzo zaangażowana, słucha pacjenta i dostosowuje ćwiczenia i terapię do jego potrzeb.",
-      },
-    ],
-    allReviewsLink: "Zobacz wszystkie 80+ opinii na ZnanyLekarz.pl →",
-    allReviewsHref:
-      "https://www.znanylekarz.pl/alicja-wojcik-4/fizjoterapeuta/warszawa#profile-reviews",
-  },
-
-  // --- 3. PATIENT PREPARATION ---
-  patientPreparation: {
-    badge: "Komfort wizyty",
-    title: "Jak przygotować się do wizyty?",
-    description: "3 proste kroki dla lepszej diagnozy.",
-    steps: [
-      {
-        icon: "FileText",
-        step: "01",
-        title: "Dokumentacja",
-        desc: "Zabierz aktualne badania obrazowe (RTG, MRI, USG) oraz wypisy ze szpitala.",
-      },
-      {
-        icon: "Shirt",
-        step: "02",
-        title: "Strój",
-        desc: "Luźny, sportowy strój niekrępujący ruchów. Dostępna jest przebieralnia.",
-      },
-      {
-        icon: "Coffee",
-        step: "03",
-        title: "Posiłek",
-        desc: "Nie jedz obfitego posiłku tuż przed wizytą, ale nie przychodź na czczo.",
-      },
-    ],
-  },
-
-  // --- 4. PATIENT FAQ ---
-  patientFaq: {
-    badge: "FAQ",
-    title: "Pytania i odpowiedzi",
-    items: [
-      {
-        id: 1,
-        question: "Jak mogę odwołać wizytę?",
-        answer:
-          "Najszybciej zrobisz to samodzielnie przez profil na ZnanyLekarz.pl (link znajdziesz w mailu potwierdzającym). Możesz też wysłać SMS lub zadzwonić. Proszę o informację z wyprzedzeniem min. 24h.",
-      },
-      {
-        id: 2,
-        question: "Ile trwa wizyta?",
-        answer:
-          "Pierwsza wizyta diagnostyczna trwa zazwyczaj około 45-60 minut, co pozwala na dokładny wywiad i badanie. Kolejne wizyty terapeutyczne trwają standardowo około 45 minut.",
-      },
-      {
-        id: 3,
-        question: "Jakie są metody płatności?",
-        answer:
-          "Dla Twojej wygody w gabinecie akceptuję wszystkie popularne formy płatności: gotówkę, kartę płatniczą oraz BLIK.",
-      },
-      {
-        id: 4,
-        question: "Czy przyjmujesz dzieci?",
-        answer:
-          "Tak, pracuję z dziećmi (np. wady postawy). W przypadku niemowląt proszę o wcześniejszy kontakt telefoniczny przed umówieniem wizyty.",
-      },
-      {
-        id: 5,
-        question: "Czy muszę mieć skierowanie?",
-        answer:
-          "Nie, skierowanie nie jest wymagane. Jako fizjoterapeuta przeprowadzam własną diagnostykę funkcjonalną i kwalifikację do terapii.",
-      },
-      {
-        id: 6,
-        question: "Gdzie jest gabinet?",
-        answer:
-          "Gabinet znajduje się w ścisłym centrum. Dokładny adres oraz wskazówki dojazdu otrzymasz w wiadomości potwierdzającej rezerwację.",
-      },
-    ],
-  },
-};
+// ⬇️ WAŻNE: WPISZ TUTAJ WSZYSTKIE SLUGI SWOICH ROZDZIAŁÓW ⬇️
+// Użytkownik musi mieć wpis dla każdego z nich, żeby mieć 100%
+const CHAPTER_SLUGS = [
+  "00-start",
+  "01-wstep-diagnostyka",
+  "02-gojenie-tkanek",
+  "03-bol",
+  "04-centralne",
+  "05-fenotypowanie",
+  "06-czerwone-flagi",
+  "07-dekalog-diagnostyczny",
+  "08-testy-kliniczne-wedlug-EBM",
+  "09-diagnostyka-roznicowa-jako-fundament-wspolczesnej-praktyki-fizjoterapeutycznej",
+  "10-biografia",
+];
 
 async function main() {
-  console.log("🚀 Rozpoczynam aktualizację sekcji STREFY PACJENTA...");
+  console.log(
+    "Rozpoczynam nadawanie dostępów, postępu i flagi pierwszego logowania...\n",
+  );
 
-  for (const [key, content] of Object.entries(NEW_PATIENT_DATA)) {
-    // Używamy upsert:
-    // - Jeśli sekcja nie istnieje -> stworzy ją (CREATE).
-    // - Jeśli sekcja już istnieje -> zaktualizuje ją do wersji z tego pliku (UPDATE).
-    // To bezpieczne dla nowych sekcji. Stare sekcje (hero, about) są bezpieczne, bo ich tu nie ma.
-    await prisma.section.upsert({
-      where: { key },
-      update: { content },
-      create: { key, content },
-    });
-    console.log(`✓ Zaktualizowano/Dodano: ${key}`);
+  let successCount = 0;
+  let skippedCount = 0;
+  let errorCount = 0;
+
+  for (const email of EMAILS_TO_GRANT_ACCESS) {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    try {
+      // 1. Znajdź użytkownika w bazie
+      const user = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (!user) {
+        console.log(
+          `❌ POMINIĘTO: Użytkownik ${normalizedEmail} nie istnieje w bazie. (Musi najpierw założyć konto)`,
+        );
+        errorCount++;
+        continue;
+      }
+
+      // 2. Sprawdź, czy ma już dostęp do e-booka
+      const existingPurchase = await prisma.purchase.findUnique({
+        where: {
+          userId_productId: {
+            userId: user.id,
+            productId: PRODUCT_ID,
+          },
+        },
+      });
+
+      // Używamy transakcji, żeby na pewno dodać zakup ORAZ wszystkie postępy, albo nic
+      await prisma.$transaction(async (tx) => {
+        // A. Dodaj zakup (tylko jeśli go jeszcze nie ma)
+        if (!existingPurchase) {
+          await tx.purchase.create({
+            data: {
+              userId: user.id,
+              productId: PRODUCT_ID,
+            },
+          });
+        }
+
+        // B. Ustaw postęp na 100% (dodaj wpisy dla każdego rozdziału)
+        // Robimy createMany ze skipDuplicates, więc jeśli już jakiś rozdział miał "przeczytany",
+        // to go nie nadpisze błędem, tylko doda brakujące.
+        if (CHAPTER_SLUGS.length > 0) {
+          const progressData = CHAPTER_SLUGS.map((slug) => ({
+            userId: user.id,
+            chapterId: slug,
+          }));
+
+          await tx.userProgress.createMany({
+            data: progressData,
+            skipDuplicates: true, // Zabezpieczenie przed błędem "unikalnego klucza"
+          });
+        }
+
+        // C. WYMUSZENIE POP-UPA Z KONFETTI PO PIERWSZYM LOGOWANIU
+        await tx.user.update({
+          where: { id: user.id },
+          data: { isFirstLogin: true },
+        });
+      });
+
+      if (existingPurchase) {
+        console.log(
+          `⚠️ OSTRZEŻENIE: ${normalizedEmail} już miał dostęp, zaktualizowano mu postęp na 100% i ustawiono flagę pierwszego logowania.`,
+        );
+        skippedCount++;
+      } else {
+        console.log(
+          `✅ SUKCES: Nadano dostęp, 100% postępu i flagę pierwszego logowania dla ${normalizedEmail}`,
+        );
+        successCount++;
+      }
+    } catch (error) {
+      console.error(`💥 BŁĄD podczas przetwarzania ${normalizedEmail}:`, error);
+      errorCount++;
+    }
   }
 
+  console.log("\n--- PODSUMOWANIE ---");
   console.log(
-    "✅ Zakończono! Stare sekcje (Hero, About itp.) pozostały bez zmian.",
+    `Pomyślnie nadano nowe dostępy (z 100% postępem): ${successCount}`,
   );
+  console.log(
+    `Zaktualizowano sam postęp i flagę (mieli już dostęp): ${skippedCount}`,
+  );
+  console.log(`Błędy (brak konta itp.): ${errorCount}`);
 }
 
 main()

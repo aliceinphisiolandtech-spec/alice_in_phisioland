@@ -1,12 +1,13 @@
 "use client";
 
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { Download, Receipt, Code, Loader2 } from "lucide-react"; // Dodano Loader2
+import { Download, Receipt, Code, Loader2, Lock } from "lucide-react"; // Dodano Loader2
 import { useState } from "react";
 import { toast } from "sonner"; // Upewnij się, że masz sonner zainstalowany
 
 interface DocumentsSectionProps {
   hasAccess: boolean;
+  hasInvoice: boolean;
 }
 
 const itemVariants: Variants = {
@@ -18,7 +19,11 @@ const itemVariants: Variants = {
   },
 };
 
-export const DocumentsSection = ({ hasAccess }: DocumentsSectionProps) => {
+export const DocumentsSection = ({
+  hasAccess,
+  hasInvoice,
+}: DocumentsSectionProps) => {
+  const blurClasses = hasInvoice ? " " : "blur-[3px] ";
   return (
     <AnimatePresence>
       {hasAccess && (
@@ -27,7 +32,16 @@ export const DocumentsSection = ({ hasAccess }: DocumentsSectionProps) => {
           initial="hidden"
           animate="visible"
           exit="hidden"
+          className="relative"
         >
+          {!hasInvoice && (
+            <div className="flex flex-col h-full w-full text-center justify-center items-center content-center absolute z-20 pointer-none: ">
+              <div className="p-2  w-fit rounded-lg ">
+                <Lock size={26} className="text-primary" strokeWidth={2} />
+              </div>
+              <h3 className=""> Nie masz dostepu do faktur</h3>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* PDF */}
             <DocumentButton
@@ -35,6 +49,7 @@ export const DocumentsSection = ({ hasAccess }: DocumentsSectionProps) => {
               icon={<Receipt size={24} />}
               label="Faktura VAT (PDF)"
               colorClass="text-orange-500 bg-orange-50 group-hover:bg-orange-500 group-hover:text-white"
+              blurClass={blurClasses}
             />
             {/* XML */}
             <DocumentButton
@@ -42,6 +57,7 @@ export const DocumentsSection = ({ hasAccess }: DocumentsSectionProps) => {
               icon={<Code size={24} />}
               label="Faktura (XML/KSeF)"
               colorClass="text-indigo-500 bg-indigo-50 group-hover:bg-indigo-500 group-hover:text-white"
+              blurClass={blurClasses}
             />
           </div>
         </motion.section>
@@ -57,11 +73,13 @@ const DocumentButton = ({
   label,
   colorClass,
   format,
+  blurClass,
 }: {
   icon: React.ReactNode;
   label: string;
   colorClass: string;
   format: "pdf" | "xml";
+  blurClass?: string;
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -114,7 +132,7 @@ const DocumentButton = ({
       disabled={isDownloading}
       whileHover={{ y: -2 }}
       whileTap={{ scale: 0.98 }}
-      className="flex items-center gap-4 cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-all group text-left w-full disabled:opacity-70 disabled:cursor-wait"
+      className={`flex items-center gap-4 cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-all group text-left w-full disabled:opacity-70 disabled:cursor-wait ${blurClass}`}
     >
       <div
         className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors ${colorClass}`}

@@ -195,7 +195,7 @@ model User {
   email         String?   @unique
 
   // DODAJ TO POLE, ABY ADAPTER PRZESTAŁ KRZYCZEĆ:
-
+ isFirstLogin  Boolean   @default(false)
   emailVerified DateTime?
 
   image         String?

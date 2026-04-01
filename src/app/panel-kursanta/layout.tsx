@@ -1,13 +1,16 @@
 import { ReactNode } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation"; // <-- DODANE
+import { prisma } from "@/lib/prisma"; // <-- DODANE
+
 import ClientTopbar from "@/components/panel-kursanta/ClientTopbar";
 import ClientSidebar from "@/components/panel-kursanta/ClientSidebar";
 import { MobileMenu } from "@/components/panel-kursanta/MobileMenu";
 
 import { PurchaseSuccessModal } from "@/components/panel-kursanta/dashboard/PurchaseSuccessModal";
 
-import { OneSignalInit } from "@/components/panel-kursanta/OneSignalInit";
+import { PWAWarning } from "@/components/PWAWarning";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -17,6 +20,10 @@ export default async function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const session = await getServerSession(authOptions);
+
+  // --- LOGIKA PIERWSZEGO LOGOWANIA ---
+
+  // -----------------------------------
 
   return (
     // ZEWNĘTRZNY KONTER: Sztywny h-screen, żeby Sidebar był zawsze widoczny
@@ -37,7 +44,7 @@ export default async function DashboardLayout({
           {children}
         </main>
       </div>
-
+      <PWAWarning />
       {/* 3. MOBILE MENU */}
       <MobileMenu session={session} />
     </div>

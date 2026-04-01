@@ -15,6 +15,7 @@ interface DashboardClientProps {
   lastChapterSlug: string | null;
   hasReviewed: boolean;
   latestNews: News[];
+  hasInvoice: boolean;
 }
 
 const containerVariants = {
@@ -32,6 +33,7 @@ export default function DashboardClient({
   lastChapterSlug,
   hasReviewed,
   latestNews,
+  hasInvoice,
 }: DashboardClientProps) {
   return (
     <motion.div
@@ -49,7 +51,7 @@ export default function DashboardClient({
         hasReviewed={hasReviewed}
       />
 
-      <DocumentsSection hasAccess={hasAccess} />
+      <DocumentsSection hasAccess={hasAccess} hasInvoice={hasInvoice} />
 
       <div className="flex flex-col gap-6">
         <PromoBanner />

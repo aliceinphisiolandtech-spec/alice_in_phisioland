@@ -33,9 +33,10 @@ export const Footer = () => {
           {/* Prawa strona: Sociadasdl Media */}
           <div>
             <a
-              href="#"
+              href="https://www.instagram.com/alice_in_physioland/"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-white transition-colors hover:bg-white hover:text-[#0e3f2d]"
               aria-label="Instagram"
+              target="_blank"
             >
               <Instagram size={20} />
             </a>
