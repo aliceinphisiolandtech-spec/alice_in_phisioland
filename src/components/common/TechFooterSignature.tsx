@@ -2,7 +2,7 @@
 
 import React from "react";
 // Upewnij się, że ścieżka do GridScan jest poprawna w Twoim projekcie
-import { GridScan } from "../GridScan";
+
 import ColorBends from "../ColorBends";
 
 export const TechFooterSignature = () => {
