@@ -3,7 +3,22 @@ import { z } from "zod";
 // =========================================================
 // 1. SCHEMATY WALIDACJI (ZOD)
 // =========================================================
+// src/lib/types/landing.ts
+export interface TestimonialReview {
+  id: string;
+  rating: number;
+  headline: string;
+  text: string;
+  role: string;
+  name: string;
+  avatar: string; // Dodane, będziemy to pobierać z relacji User
+}
 
+export interface TestimonialsData {
+  headline: string | { line1: string; line2: string };
+  highlight?: string;
+  reviews?: TestimonialReview[]; // <--- Upewnij się, że to masz, choć zaraz to nadpiszemy
+}
 // --- HERO ---
 export const heroSchema = z.object({
   headline: z.string().min(1, "Nagłówek jest wymagany"),

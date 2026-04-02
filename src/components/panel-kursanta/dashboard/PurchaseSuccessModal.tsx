@@ -8,10 +8,15 @@ import OneSignal from "react-onesignal";
 import { BellRing, X, CheckCircle2, Download, Smartphone } from "lucide-react";
 import { LoadingButton } from "@/components/ui/LoadingButton";
 import confetti from "canvas-confetti";
+import { markFirstLoginComplete } from "@/app/actions/user";
 
 type ModalStep = "notifications" | "install";
 
-export const PurchaseSuccessModal = () => {
+export const PurchaseSuccessModal = ({
+  isFirstLogin = false,
+}: {
+  isFirstLogin?: boolean;
+}) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -19,30 +24,62 @@ export const PurchaseSuccessModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // 1. DODANA FLAGA LOKALNA: Zabezpiecza przed ponownym otwarciem
+  const [hasBeenOpened, setHasBeenOpened] = useState(false);
+
   const [step, setStep] = useState<ModalStep>("notifications");
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // 1. Otwieranie modala po sukcesie płatności
+    // Jeśli modal był już dzisiaj/w tej sesji otwarty (zmieniono na true)
+    // ignorujemy kolejne wywołania useEffect (np. te spowodowane przez router.replace)
+    if (hasBeenOpened) return;
+
+    // Sprawdzamy czy to "zła przeglądarka"
+    const userAgent =
+      navigator.userAgent || navigator.vendor || (window as any).opera;
+    const badBrowsers = [
+      "Instagram",
+      "FBAN",
+      "FBAV",
+      "TikTok",
+      "Bytedance",
+      "MessengerForiOS",
+      "LinkedInApp",
+    ];
+    const isBadBrowser = badBrowsers.some((rule) => userAgent.includes(rule));
+
+    if (isBadBrowser) {
+      return;
+    }
+
+    // Otwieranie modala po sukcesie płatności LUB przy isFirstLogin
     const isAfterPurchase =
       searchParams.get("redirect_status") === "succeeded" ||
       searchParams.get("success") === "true";
 
-    if (isAfterPurchase && typeof window !== "undefined") {
+    if ((isAfterPurchase || isFirstLogin) && typeof window !== "undefined") {
+      // 2. ZAZNACZAMY FLAGĘ NA TRUE: Zabezpieczamy przed pętlą
+      setHasBeenOpened(true);
+
       setTimeout(() => {
         setIsOpen(true);
         triggerConfetti();
+
+        // ZGASZENIE FLAGI W BAZIE
+        if (isFirstLogin) {
+          markFirstLoginComplete();
+        }
       }, 1000);
     }
 
-    // 2. Wykrywanie iOS (dla logiki PWA)
+    // Wykrywanie iOS (dla logiki PWA)
     const isIosDevice = /iphone|ipad|ipod/.test(
       window.navigator.userAgent.toLowerCase(),
     );
     setIsIOS(isIosDevice);
 
-    // Przechwytywanie eventu instalacji PWA (dla Androida/Chrome)
     const installHandler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -50,21 +87,16 @@ export const PurchaseSuccessModal = () => {
     window.addEventListener("beforeinstallprompt", installHandler);
     return () =>
       window.removeEventListener("beforeinstallprompt", installHandler);
-  }, [searchParams]);
+  }, [searchParams, isFirstLogin, hasBeenOpened]); // Dodano hasBeenOpened do zależności
 
   // --- LOGIKA KROKU 1: POWIADOMIENIA (PRODUKCJA) ---
   const handleEnableNotifications = async () => {
     setIsLoading(true);
     try {
-      // Wywołujemy natywny prompt OneSignal
       await OneSignal.Slidedown.promptPush();
-
-      // Niezależnie od tego, czy użytkownik kliknął "Zezwól" czy "Blokuj",
-      // przechodzimy do kolejnego ekranu (instalacji aplikacji).
       setStep("install");
     } catch (error) {
       console.error("OneSignal prompt error:", error);
-      // Nawet w razie błędu API puszczamy klienta dalej
       setStep("install");
     } finally {
       setIsLoading(false);
@@ -74,7 +106,6 @@ export const PurchaseSuccessModal = () => {
   // --- LOGIKA KROKU 2: INSTALACJA ---
   const handleInstallApp = async () => {
     if (isIOS) {
-      // iOS nie wspiera beforeinstallprompt. PWA dodaje się przez "Dodaj do ekranu głównego" w Safari.
       alert(
         "Aby zainstalować na iOS, kliknij przycisk 'Udostępnij' na dole ekranu i wybierz 'Dodaj do ekranu głównego'.",
       );
@@ -89,26 +120,29 @@ export const PurchaseSuccessModal = () => {
         handleClose();
       }
     } else {
-      // Jeśli nie ma deferredPrompt (np. apka już jest zainstalowana lub przeglądarka nie wspiera)
       handleClose();
     }
   };
 
   const handleClose = () => {
     setIsOpen(false);
-    // Czyścimy parametry z URL, żeby modal nie otwierał się po odświeżeniu
+    // Czyścimy parametry z URL
     const params = new URLSearchParams(searchParams.toString());
-    params.delete("redirect_status");
-    params.delete("payment_intent");
-    params.delete("payment_intent_client_secret");
-    params.delete("success");
-    router.replace(`${pathname}?${params.toString()}`);
 
-    // Resetujemy step dla ewentualnych przyszłych otwarć
+    // Sprawdzamy czy w ogóle jest coś do czyszczenia żeby nie robić niepotrzebnych redirectów
+    if (params.has("redirect_status") || params.has("success")) {
+      params.delete("redirect_status");
+      params.delete("payment_intent");
+      params.delete("payment_intent_client_secret");
+      params.delete("success");
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+
     setTimeout(() => setStep("notifications"), 500);
   };
 
   const triggerConfetti = () => {
+    //... (kod konfetti bez zmian)
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 };
@@ -136,6 +170,7 @@ export const PurchaseSuccessModal = () => {
   };
 
   return (
+    // JSX bez zmian
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

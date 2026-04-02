@@ -1,15 +1,13 @@
+// app/panel-kursanta/layout.tsx
 import { ReactNode } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation"; // <-- DODANE
-import { prisma } from "@/lib/prisma"; // <-- DODANE
+import { prisma } from "@/lib/prisma"; // Dodaj import Prismy
 
 import ClientTopbar from "@/components/panel-kursanta/ClientTopbar";
 import ClientSidebar from "@/components/panel-kursanta/ClientSidebar";
 import { MobileMenu } from "@/components/panel-kursanta/MobileMenu";
-
 import { PurchaseSuccessModal } from "@/components/panel-kursanta/dashboard/PurchaseSuccessModal";
-
 import { PWAWarning } from "@/components/PWAWarning";
 
 interface DashboardLayoutProps {
@@ -21,31 +19,29 @@ export default async function DashboardLayout({
 }: DashboardLayoutProps) {
   const session = await getServerSession(authOptions);
 
-  // --- LOGIKA PIERWSZEGO LOGOWANIA ---
-
-  // -----------------------------------
+  // 1. TYLKO ODCZYTUJEMY FLAGĘ (Nic nie zmieniamy!)
+  let isFirstLogin = false;
+  if (session?.user?.id) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { isFirstLogin: true },
+    });
+    isFirstLogin = !!user?.isFirstLogin;
+  }
 
   return (
-    // ZEWNĘTRZNY KONTER: Sztywny h-screen, żeby Sidebar był zawsze widoczny
     <div className="h-screen w-full bg-[#F5F6F8] overflow-hidden flex">
       <ClientSidebar session={session} />
-
-      {/* PRAWA STRONA (Treść) */}
       <div className="flex-1 flex flex-col h-full ml-[280px] max-[1024px]:ml-0 transition-all duration-300">
-        {/* Topbar (Stały) */}
         <ClientTopbar session={session} />
+        <main className="flex-1 h-full overflow-y-auto  scrollbar-hide relative">
+          {/* 2. PRZEKAZUJEMY FLAGĘ DO MODALA */}
+          <PurchaseSuccessModal isFirstLogin={isFirstLogin} />
 
-        {/* ZMIANA KLUCZOWA:
-           overflow-y-auto: Pozwala na scrollowanie treści (dla Czytnika E-booka).
-           Dla Spisu Treści zablokujemy to z poziomu dziecka (TocContent).
-        */}
-        <main className="flex-1 h-full overflow-y-auto relative scrollbar-hide relative">
-          <PurchaseSuccessModal />
           {children}
         </main>
       </div>
       <PWAWarning />
-      {/* 3. MOBILE MENU */}
       <MobileMenu session={session} />
     </div>
   );

@@ -12,7 +12,13 @@ interface CourseProgressCardProps {
   hasAccess: boolean;
   progressPercent: number;
   lastChapterSlug: string | null;
-  hasReviewed: boolean;
+  // Zmiana tutaj:
+  existingReview: {
+    rating: number;
+    headline: string;
+    text: string;
+    role: string;
+  } | null;
 }
 
 const itemVariants: Variants = {
@@ -28,7 +34,8 @@ export const CourseProgressCard = ({
   hasAccess,
   progressPercent,
   lastChapterSlug,
-  hasReviewed,
+
+  existingReview,
 }: CourseProgressCardProps) => {
   const [isReviewMode, setIsReviewMode] = useState(false);
 
@@ -141,15 +148,13 @@ export const CourseProgressCard = ({
                             Wróć do e-booka
                           </Link>
                           <div className="flex gap-2">
-                            {!hasReviewed && (
-                              <button
-                                onClick={() => setIsReviewMode(true)}
-                                className="flex-1 text-sm flex items-center cursor-pointer justify-center gap-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-colors"
-                              >
-                                <Star size={14} />
-                                Oceń
-                              </button>
-                            )}
+                            <button
+                              onClick={() => setIsReviewMode(true)}
+                              className="flex-1 text-sm flex items-center cursor-pointer justify-center gap-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-colors"
+                            >
+                              <Star size={14} />
+                              {existingReview ? "Opinia" : "Oceń"}
+                            </button>
                             <button
                               onClick={handleResetProgress}
                               className="flex-1 text-sm flex items-center  cursor-pointer justify-center gap-2 bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-200 text-xs font-semibold py-2.5 px-4 rounded-lg transition-colors"
@@ -195,7 +200,10 @@ export const CourseProgressCard = ({
               transition={{ duration: 0.2 }}
               className="w-full"
             >
-              <ReviewInline onClose={() => setIsReviewMode(false)} />
+              <ReviewInline
+                onClose={() => setIsReviewMode(false)}
+                existingReview={existingReview} // <-- Przekazujemy to niżej!
+              />
             </motion.div>
           )}
         </AnimatePresence>

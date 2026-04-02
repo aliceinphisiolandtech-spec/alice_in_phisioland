@@ -13,15 +13,12 @@ export default async function DashboardPage() {
     redirect("/logowanie");
   }
 
-  // 1. Sprawdzamy zakup
   const purchase = await prisma.purchase.findUnique({
     where: {
-      userId_productId: {
-        userId: session.user.id,
-        productId: "ebook-tom-1",
-      },
+      userId_productId: { userId: session.user.id, productId: "ebook-tom-1" },
     },
   });
+
   const userOrderWithInvoice = await prisma.order.findFirst({
     where: {
       userId: session.user.id,
@@ -29,50 +26,28 @@ export default async function DashboardPage() {
       fakturowniaId: { not: null },
     },
   });
-  const hasInvoice = !!userOrderWithInvoice;
+
   const existingReview = await prisma.review.findFirst({
-    where: {
-      userId: session.user.id,
-    },
+    where: { userId: session.user.id },
   });
+
   const latestNews = await prisma.news.findMany({
     where: { published: true },
     orderBy: { createdAt: "desc" },
-    take: 2, // <--- Pobieramy dwa
+    take: 2,
   });
-  // 2. Pobieramy statystyki czytania (Dla paska postępu)
-  // Funkcja zwraca obiekt { percent: number, lastSlug: string | null }
+
   const stats = await getUserReadingStats(session.user.id);
-  if (session?.user?.id) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isFirstLogin: true },
-    });
 
-    if (user?.isFirstLogin) {
-      // 1. Gasimy flagę w bazie
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { isFirstLogin: false },
-      });
-
-      // 2. Przekierowujemy, dodając nasz parametr (np. welcome=true)
-      // Zabezpieczenie: Jeśli chcesz tu zachować jakieś parametry,
-      // bezpieczniej jest przenieść tę logikę do page.tsx,
-      // ale jeśli to ma działać globalnie po prostu ładujemy panel-kursanta.
-      redirect("/panel-kursanta?success=true");
-    }
-  }
   return (
     <DashboardClient
       userName={session.user.name || "Kursancie"}
       hasAccess={!!purchase}
-      // Przekazujemy pobrane dane do Client Componentu
       progressPercent={stats.percent}
       lastChapterSlug={stats.lastSlug}
-      hasReviewed={!!existingReview}
+      existingReview={existingReview} // <-- ZMIANA: Przekazujemy cały obiekt pobrany z bazy (lub null)
       latestNews={latestNews}
-      hasInvoice={hasInvoice}
+      hasInvoice={!!userOrderWithInvoice}
     />
   );
 }

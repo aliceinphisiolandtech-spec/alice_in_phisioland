@@ -1,5 +1,5 @@
 "use client";
-
+// ZMIENIĆ ZMIENNE DO BLURA
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Download, Receipt, Code, Loader2, Lock } from "lucide-react"; // Dodano Loader2
 import { useState } from "react";
@@ -23,7 +23,7 @@ export const DocumentsSection = ({
   hasAccess,
   hasInvoice,
 }: DocumentsSectionProps) => {
-  const blurClasses = hasInvoice ? " " : "blur-[3px] ";
+  const blurClasses = hasInvoice ? " " : "blur-[3px]s ";
   return (
     <AnimatePresence>
       {hasAccess && (
@@ -34,14 +34,14 @@ export const DocumentsSection = ({
           exit="hidden"
           className="relative"
         >
-          {!hasInvoice && (
+          {/* {!hasInvoice && (
             <div className="flex flex-col h-full w-full text-center justify-center items-center content-center absolute z-20 pointer-none: ">
               <div className="p-2  w-fit rounded-lg ">
                 <Lock size={26} className="text-primary" strokeWidth={2} />
               </div>
               <h3 className=""> Nie masz dostepu do faktur</h3>
             </div>
-          )}
+          )} */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* PDF */}
             <DocumentButton

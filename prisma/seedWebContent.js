@@ -3,12 +3,14 @@ import { PrismaClient } from "../src/generated/prisma/index.js";
 // Inicjalizacja klienta Prisma
 const prisma = new PrismaClient();
 // ⬇️ TUTAJ WPISZ MAILE, KTÓRYM CHCESZ NADAĆ DOSTĘP I 100% POSTĘPU ⬇️
-const EMAILS_TO_GRANT_ACCESS = ["biuro@kocikdev.com"];
+const EMAILS_TO_GRANT_ACCESS = [
+  "biuro@kocikdev.com",
+  // dodaj kolejne maile...
+];
 
 const PRODUCT_ID = "ebook-tom-1";
 
 // ⬇️ WAŻNE: WPISZ TUTAJ WSZYSTKIE SLUGI SWOICH ROZDZIAŁÓW ⬇️
-// Użytkownik musi mieć wpis dla każdego z nich, żeby mieć 100%
 const CHAPTER_SLUGS = [
   "00-start",
   "01-wstep-diagnostyka",
@@ -36,20 +38,19 @@ async function main() {
     const normalizedEmail = email.toLowerCase().trim();
 
     try {
-      // 1. Znajdź użytkownika w bazie
-      const user = await prisma.user.findUnique({
+      // 1. ZNAJDŹ LUB STWÓRZ UŻYTKOWNIKA (Upsert)
+      // Jeśli użytkownik z tym emailem nie istnieje, zostanie automatycznie utworzony!
+      // Ustawiamy od razu flagę isFirstLogin na true przy tworzeniu.
+      const user = await prisma.user.upsert({
         where: { email: normalizedEmail },
+        update: {}, // Nic nie aktualizujemy w profilu usera jeśli już istnieje (flagę zmienimy w transakcji niżej)
+        create: {
+          email: normalizedEmail,
+          isFirstLogin: true, // Nowe konto z definicji ma true
+        },
       });
 
-      if (!user) {
-        console.log(
-          `❌ POMINIĘTO: Użytkownik ${normalizedEmail} nie istnieje w bazie. (Musi najpierw założyć konto)`,
-        );
-        errorCount++;
-        continue;
-      }
-
-      // 2. Sprawdź, czy ma już dostęp do e-booka
+      // 2. Sprawdź, czy ma już dostęp do e-booka (żeby nie duplikować logów)
       const existingPurchase = await prisma.purchase.findUnique({
         where: {
           userId_productId: {
@@ -59,7 +60,7 @@ async function main() {
         },
       });
 
-      // Używamy transakcji, żeby na pewno dodać zakup ORAZ wszystkie postępy, albo nic
+      // 3. Używamy transakcji, żeby na pewno dodać zakup ORAZ wszystkie postępy
       await prisma.$transaction(async (tx) => {
         // A. Dodaj zakup (tylko jeśli go jeszcze nie ma)
         if (!existingPurchase) {
@@ -72,8 +73,6 @@ async function main() {
         }
 
         // B. Ustaw postęp na 100% (dodaj wpisy dla każdego rozdziału)
-        // Robimy createMany ze skipDuplicates, więc jeśli już jakiś rozdział miał "przeczytany",
-        // to go nie nadpisze błędem, tylko doda brakujące.
         if (CHAPTER_SLUGS.length > 0) {
           const progressData = CHAPTER_SLUGS.map((slug) => ({
             userId: user.id,
@@ -86,7 +85,7 @@ async function main() {
           });
         }
 
-        // C. WYMUSZENIE POP-UPA Z KONFETTI PO PIERWSZYM LOGOWANIU
+        // C. WYMUSZENIE POP-UPA Z KONFETTI PO PIERWSZYM LOGOWANIU (dla pewności, nawet jeśli konto istniało)
         await tx.user.update({
           where: { id: user.id },
           data: { isFirstLogin: true },
@@ -95,12 +94,12 @@ async function main() {
 
       if (existingPurchase) {
         console.log(
-          `⚠️ OSTRZEŻENIE: ${normalizedEmail} już miał dostęp, zaktualizowano mu postęp na 100% i ustawiono flagę pierwszego logowania.`,
+          `⚠️ OSTRZEŻENIE: ${normalizedEmail} (konto istniało, zakup już był). Zaktualizowano postęp na 100% i ustawiono flagę powitania.`,
         );
         skippedCount++;
       } else {
         console.log(
-          `✅ SUKCES: Nadano dostęp, 100% postępu i flagę pierwszego logowania dla ${normalizedEmail}`,
+          `✅ SUKCES: Nadano dostęp, 100% postępu i przygotowano powitanie dla ${normalizedEmail}`,
         );
         successCount++;
       }
@@ -111,13 +110,11 @@ async function main() {
   }
 
   console.log("\n--- PODSUMOWANIE ---");
+  console.log(`Pomyślnie przetworzono nowe dostępy: ${successCount}`);
   console.log(
-    `Pomyślnie nadano nowe dostępy (z 100% postępem): ${successCount}`,
+    `Zaktualizowano istniejące (tylko postęp/flaga): ${skippedCount}`,
   );
-  console.log(
-    `Zaktualizowano sam postęp i flagę (mieli już dostęp): ${skippedCount}`,
-  );
-  console.log(`Błędy (brak konta itp.): ${errorCount}`);
+  console.log(`Błędy: ${errorCount}`);
 }
 
 main()

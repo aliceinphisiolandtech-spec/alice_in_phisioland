@@ -3,44 +3,68 @@
 
 import { useState, useTransition } from "react";
 import { Star, X, Send } from "lucide-react";
-
 import { toast } from "sonner";
-import { LoadingButton } from "@/components/ui/LoadingButton"; // Twój komponent
+import { LoadingButton } from "@/components/ui/LoadingButton";
 import { createReviewAction } from "@/app/actions/review";
+
+interface ReviewData {
+  rating: number;
+  headline: string;
+  text: string;
+  role: string;
+}
 
 interface ReviewInlineProps {
   onClose: () => void;
+  existingReview?: ReviewData | null;
 }
 
-export const ReviewInline = ({ onClose }: ReviewInlineProps) => {
-  const [rating, setRating] = useState(0);
+const MAX_HEADLINE_LENGTH = 30; // Limit dla nagłówka
+const MAX_TEXT_LENGTH = 250; // Limit dla treści
+
+export const ReviewInline = ({
+  onClose,
+  existingReview,
+}: ReviewInlineProps) => {
+  const [rating, setRating] = useState(existingReview?.rating || 0);
+  const [headline, setHeadline] = useState(existingReview?.headline || "");
+  const [role, setRole] = useState(existingReview?.role || "");
+  const [text, setText] = useState(existingReview?.text || "");
+
   const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (rating === 0) {
       toast.error("Zaznacz liczbę gwiazdek!");
       return;
     }
 
     startTransition(async () => {
-      const res = await createReviewAction(rating, comment);
+      onClose();
+
+      const res = await createReviewAction(rating, headline, text, role);
+
       if (res.success) {
-        toast.success("Dzięki za opinię!");
-        onClose();
+        toast.success(
+          existingReview ? "Zaktualizowano opinię!" : "Dzięki za opinię!",
+        );
       } else {
         toast.error(res.error);
       }
     });
   };
-  const incompleteData = !comment && rating === 0;
+
+  const incompleteData =
+    !headline.trim() || !text.trim() || !role.trim() || rating === 0;
+
   return (
     <div className="w-full animate-in fade-in duration-300 flex flex-col gap-4">
-      {/* NAGŁÓWEK KARTY Z X */}
       <div className="flex items-start justify-between">
         <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-bold text-white">Jak Ci się podobało?</h2>
+          <h2 className="text-xl font-bold text-white">
+            {existingReview ? "Edytuj swoją opinię" : "Jak Ci się podobało?"}
+          </h2>
           <p className="text-sm max-w-[90%] text-gray-300 ">
             Twoja opinia pomaga nam tworzyć lepsze materiały!
           </p>
@@ -53,7 +77,6 @@ export const ReviewInline = ({ onClose }: ReviewInlineProps) => {
         </button>
       </div>
 
-      {/* GWIAZDKI */}
       <div className="flex gap-2">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
@@ -66,7 +89,7 @@ export const ReviewInline = ({ onClose }: ReviewInlineProps) => {
           >
             <Star
               size={26}
-              fill={star <= (hoverRating || rating) ? "#FACC15" : "transparent"} // Żółty lub przezroczysty
+              fill={star <= (hoverRating || rating) ? "#FACC15" : "transparent"}
               className={`transition-colors duration-200 cursor-pointer ${
                 star <= (hoverRating || rating)
                   ? "text-contrast fill-contrast"
@@ -77,20 +100,64 @@ export const ReviewInline = ({ onClose }: ReviewInlineProps) => {
         ))}
       </div>
 
-      {/* TEXTAREA (Dostosowana do ciemnego tła) */}
-      <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        placeholder="Napisz co myślisz ..."
-        className="w-full h-24 p-3 rounded-xl border border-white/10 bg-black/20 text-white placeholder:text-gray-400 focus:border-[#D4F0C8] focus:ring-1 focus:ring-[#D4F0C8] outline-none resize-none text-md transition-all"
+      {/* KRÓTKI NAGŁÓWEK Z LICZNIKIEM */}
+      <div className="flex flex-col gap-1.5">
+        <input
+          type="text"
+          value={headline}
+          onChange={(e) => setHeadline(e.target.value)}
+          placeholder="Tytuł opinii (np. Super książka!)"
+          className="w-full p-3 rounded-xl border border-white/10 bg-black/20 text-white placeholder:text-gray-400 focus:border-[#D4F0C8] focus:ring-1 focus:ring-[#D4F0C8] outline-none font-bold text-sm transition-all"
+          maxLength={MAX_HEADLINE_LENGTH}
+        />
+        <div className="flex justify-end">
+          <span
+            className={`text-xs font-medium ${
+              headline.length >= MAX_HEADLINE_LENGTH
+                ? "text-red-400"
+                : "text-gray-500"
+            }`}
+          >
+            {headline.length} / {MAX_HEADLINE_LENGTH}
+          </span>
+        </div>
+      </div>
+
+      {/* ZAWÓD / TYTUŁ NAUKOWY */}
+      <input
+        type="text"
+        value={role}
+        onChange={(e) => setRole(e.target.value)}
+        placeholder="Kim jesteś? (np. Studentka fizjoterapii, Osteopata)"
+        className="w-full p-3 rounded-xl border border-white/10 bg-black/20 text-white placeholder:text-gray-400 focus:border-[#D4F0C8] focus:ring-1 focus:ring-[#D4F0C8] outline-none text-sm transition-all"
+        maxLength={40}
       />
 
-      {/* BUTTONY */}
-      <div className="flex gap-3 justify-end">
+      {/* PEŁNA TREŚĆ Z LICZNIKIEM */}
+      <div className="flex flex-col gap-1.5">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Napisz co myślisz..."
+          maxLength={MAX_TEXT_LENGTH}
+          className="w-full h-24 p-3 rounded-xl border border-white/10 bg-black/20 text-white placeholder:text-gray-400 focus:border-[#D4F0C8] focus:ring-1 focus:ring-[#D4F0C8] outline-none resize-none text-sm transition-all"
+        />
+        <div className="flex justify-end">
+          <span
+            className={`text-xs font-medium ${
+              text.length >= MAX_TEXT_LENGTH ? "text-red-400" : "text-gray-500"
+            }`}
+          >
+            {text.length} / {MAX_TEXT_LENGTH}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex gap-3 justify-end mt-2">
         <button
           onClick={onClose}
-          disabled={isPending || incompleteData}
-          className={`px-4 py-2 text-sm font-bold text-gray-300 hover:text-white transition-colors cursor-pointer`}
+          disabled={isPending}
+          className={`px-4 py-2 text-sm font-bold text-gray-300 hover:text-white transition-colors cursor-pointer ${isPending && "opacity-50 pointer-events-none"}`}
         >
           Anuluj
         </button>
@@ -98,13 +165,16 @@ export const ReviewInline = ({ onClose }: ReviewInlineProps) => {
         <div className="w-32">
           <LoadingButton
             onClick={handleSubmit}
-            isLoading={isPending}
+            isLoading={false}
             variant="primary"
-            // Nadpisujemy style, żeby pasowały do ciemnej karty (np. białe tło przycisku lub jasny zielony)
-            className={`w-full font-semibold text-sm rounded-xl bg-[#D4F0C8] text-[#103830] hover:bg-white border-none  ${isPending || (incompleteData && "cursor-none pointer-events-none grayscale-100 opacity-50")}`}
+            className={`w-full font-semibold text-sm rounded-xl bg-[#D4F0C8] text-[#103830] hover:bg-white border-none transition-all ${
+              incompleteData || isPending
+                ? "cursor-not-allowed grayscale-[80%] opacity-60"
+                : "cursor-pointer"
+            }`}
           >
-            Wyślij
-            <Send size={17} className="" />
+            {existingReview ? "Zapisz" : "Wyślij"}
+            <Send size={17} className="ml-1" />
           </LoadingButton>
         </div>
       </div>

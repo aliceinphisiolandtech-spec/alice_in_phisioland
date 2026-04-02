@@ -5,30 +5,35 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Star, Quote, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils/cn";
-import { TestimonialsData } from "@/lib/types/landing";
 import React from "react";
 
-// Stałe avatary (ponieważ nie przenosimy zdjęć do tekstów)
-const STATIC_AVATARS = [
-  "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150",
-  "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150",
-  "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150",
-  "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150",
-];
+// Zaktualizuj interfejsy (jeśli nie importujesz z lib/types)
+interface TestimonialReview {
+  id: string;
+  rating: number;
+  headline: string;
+  text: string;
+  role: string;
+  name: string;
+  avatar: string;
+}
 
 interface TestimonialsProps {
-  data: TestimonialsData;
+  data: {
+    headline: any;
+    highlight?: string;
+    reviews?: TestimonialReview[];
+  };
 }
 
 export const Testimonials = ({ data }: TestimonialsProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Zabezpieczenie: jeśli reviews jest puste/undefined (np. błąd migracji), użyj pustej tablicy
   const reviews = data.reviews || [];
   const activeTestimonial = reviews[activeIndex];
 
   const renderHeadline = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // ... logic for headline rendering (bez zmian)
     const headlineAny = data.headline as any;
 
     if (typeof headlineAny === "object" && headlineAny !== null) {
@@ -68,8 +73,9 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
     );
   };
 
-  // Jeśli nie ma recenzji, nie renderujemy nic (lub placeholder)
-  if (!activeTestimonial) return null;
+  // Zwracamy null tylko jeśli w ogóle nie ma recenzji
+
+  if (reviews.length === 0) return null;
 
   return (
     <section className="bg-white py-40 ">
@@ -88,7 +94,7 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
 
             <AnimatePresence mode="wait">
               <motion.div
-                key={activeTestimonial.id}
+                key={activeTestimonial?.id}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -102,7 +108,7 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
                         key={i}
                         size={20}
                         className={cn(
-                          i < Math.floor(activeTestimonial.rating)
+                          i < Math.floor(activeTestimonial?.rating || 5)
                             ? "fill-[#F59E0B] text-[#F59E0B]"
                             : "fill-white/20 text-white/20",
                         )}
@@ -111,28 +117,28 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
                   </div>
 
                   <h3 className="text-2xl font-bold text-[#D4F0C8] mb-4 max-[640px]:text-xl max-[450]:text-lg">
-                    &quot;{activeTestimonial.headline}&quot;
+                    &quot;{activeTestimonial?.headline}&quot;
                   </h3>
                   <p className="text-lg leading-relaxed text-gray-200 max-[640px]:text-[16px] max-[450px]:text-[14px]">
-                    {activeTestimonial.text}
+                    {activeTestimonial?.text}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-4 mt-10 pt-6 border-t border-white/10">
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-[#D4F0C8]">
                     <Image
-                      src={STATIC_AVATARS[activeIndex % STATIC_AVATARS.length]}
-                      alt={activeTestimonial.name}
+                      src={activeTestimonial?.avatar || "/default-avatar.png"} // UŻYWA AVATARA Z GOOGLE
+                      alt={activeTestimonial?.name || "Użytkownik"}
                       fill
                       className="object-cover"
                     />
                   </div>
                   <div>
                     <p className="font-bold text-white text-lg">
-                      {activeTestimonial.name}
+                      {activeTestimonial?.name}
                     </p>
                     <p className="text-sm text-[#D4F0C8]/80 uppercase tracking-wider">
-                      {activeTestimonial.role}
+                      {activeTestimonial?.role}
                     </p>
                   </div>
                 </div>
@@ -172,7 +178,7 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
                     )}
                   >
                     <Image
-                      src={STATIC_AVATARS[index % STATIC_AVATARS.length]}
+                      src={item.avatar || "/default-avatar.png"} // UŻYWA AVATARA Z GOOGLE
                       alt={item.name}
                       fill
                       className="object-cover"

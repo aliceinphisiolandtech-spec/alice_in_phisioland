@@ -13,7 +13,13 @@ interface DashboardClientProps {
   hasAccess: boolean;
   progressPercent: number;
   lastChapterSlug: string | null;
-  hasReviewed: boolean;
+  // ZMIANA: Zamiast hasReviewed przyjmujemy obiekt opinii (lub null)
+  existingReview: {
+    rating: number;
+    headline: string;
+    text: string;
+    role: string;
+  } | null;
   latestNews: News[];
   hasInvoice: boolean;
 }
@@ -31,7 +37,7 @@ export default function DashboardClient({
   hasAccess,
   progressPercent,
   lastChapterSlug,
-  hasReviewed,
+  existingReview, // <-- ZMIANA
   latestNews,
   hasInvoice,
 }: DashboardClientProps) {
@@ -48,7 +54,7 @@ export default function DashboardClient({
         hasAccess={hasAccess}
         progressPercent={progressPercent}
         lastChapterSlug={lastChapterSlug}
-        hasReviewed={hasReviewed}
+        existingReview={existingReview} // <-- ZMIANA: przekazujemy cały obiekt do karty
       />
 
       <DocumentsSection hasAccess={hasAccess} hasInvoice={hasInvoice} />
