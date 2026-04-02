@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -13,7 +13,10 @@ const montserrat = Montserrat({
   weight: ["400", "600", "700", "900"], // 400=Regular, 600=SemiBold, 700=Bold, 900=Black
   variable: "--font-montserrat",
 });
-
+export const viewport: Viewport = {
+  themeColor: "#ffffff", // Lub Twój główny jasny kolor tła
+  colorScheme: "light", // To kluczowa flaga blokująca auto-odwracanie kolorów
+};
 export const metadata: Metadata = {
   title: "Alice in Physioland",
   description:
