@@ -13,10 +13,7 @@ const montserrat = Montserrat({
   weight: ["400", "600", "700", "900"], // 400=Regular, 600=SemiBold, 700=Bold, 900=Black
   variable: "--font-montserrat",
 });
-export const viewport: Viewport = {
-  themeColor: "#ffffff", // Lub Twój główny jasny kolor tła
-  colorScheme: "light", // To kluczowa flaga blokująca auto-odwracanie kolorów
-};
+
 export const metadata: Metadata = {
   title: "Alice in Physioland",
   description:
