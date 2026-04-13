@@ -40,8 +40,9 @@ export default function CoursesPage() {
             Szkolenie Stacjonarne
           </div>
 
-          <h3 className="mb-2 text-lg font-bold leading-tight">
-            Zdobądź praktykę pod moim okiem
+          <h3 className="mb-2 text-lg font-bold leading-wide">
+            Zapraszam Cię na moje autorskie szkolenie: Diagnostyka kliniczna i
+            postępowanie w fizjoterapii, kurs dla młodych praktyków
           </h3>
 
           <p className="mb-6 text-xs text-gray-300 leading-relaxed max-w-[260px]">

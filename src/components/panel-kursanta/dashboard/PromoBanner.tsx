@@ -36,14 +36,10 @@ export const PromoBanner = () => {
               Szkolenie
             </div>
 
-            <h3 className="text-xl font-bold leading-tight text-white">
-              Chcesz zdobyć <span className="text-[#D4F0C8]">praktykę?</span>
+            <h3 className="text-xl font-bold leading-wide text-white">
+              Zapraszam Cię na moje autorskie szkolenie: Diagnostyka kliniczna i
+              postępowanie w fizjoterapii, kurs dla młodych praktyków
             </h3>
-
-            <p className="text-sm font-medium leading-relaxed text-gray-300">
-              Zapisz się na szkolenie stacjonarne i przećwicz materiał pod okiem
-              instruktora.
-            </p>
           </div>
 
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#D4F0C8] text-[#103830] shadow-lg shadow-[#D4F0C8]/20 transition-transform group-hover:rotate-6">

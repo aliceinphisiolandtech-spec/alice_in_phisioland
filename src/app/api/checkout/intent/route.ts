@@ -5,11 +5,11 @@ import { stripe } from "@/lib/utils/stripe";
 import { prisma } from "@/lib/prisma";
 import { BillingSchema } from "@/lib/validators/orders";
 
-const EBOOK_PRICE = 14900; // 149.00 PLN standardowo
+const EBOOK_PRICE = 10900; // 149.00 PLN standardowo
 const PRODUCT_ID = "ebook-tom-1";
 
 // Konfiguracja Tygodnia Testowego
-const IS_TESTING_WEEK = process.env.NEXT_PUBLIC_IS_TESTING_WEEK === "true";
+const IS_TESTING_WEEK = process.env.IS_TESTING_WEEK === "true";
 const TESTERS_WHITELIST = [
   "juszczakmat@gmail.com",
   "aleksandra.kozlowska38@gmail.com",
@@ -78,6 +78,9 @@ export async function POST(req: Request) {
       amount: amountToCharge, // Dynamiczna kwota (89zł lub 149zł)
       currency: "pln",
       automatic_payment_methods: { enabled: true },
+      receipt_email: session.user.email,
+      description:
+        "E-book: Fizjoterapeutyczna diagnostyka różnicowa W ujęciu klinicznym. Tom 1",
       metadata: {
         userId: userId,
         email: session.user.email,

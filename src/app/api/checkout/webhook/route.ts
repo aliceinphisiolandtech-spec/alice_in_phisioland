@@ -47,21 +47,28 @@ export async function POST(req: Request) {
     }
 
     // 3. Generowanie faktury (Fakturownia)
+    // 3. Generowanie faktury (Fakturownia) - TYLKO JEŚLI JEST NIP
     let fakturowniaData = { id: null, number: null };
 
-    try {
-      const productName = "E-book: Fizjoterapeutyczna diagnostyka...";
+    if (order.billingNip && order.billingNip.trim() !== "") {
+      try {
+        const productName = "E-book: Fizjoterapeutyczna diagnostyka...";
+        const invoice = await createFakturowniaInvoice(order, productName);
 
-      const invoice = await createFakturowniaInvoice(order, productName);
-
-      fakturowniaData = { id: invoice.id, number: invoice.number };
-      console.log(`✅ Faktura wystawiona: ${invoice.number}`);
-    } catch (error) {
-      console.error(
-        "⚠️ Błąd generowania faktury (dostęp zostanie nadany):",
-        error,
-      );
+        fakturowniaData = { id: invoice.id, number: invoice.number };
+        console.log(`✅ Faktura wystawiona: ${invoice.number}`);
+      } catch (error) {
+        console.error(
+          "⚠️ Błąd generowania faktury (dostęp zostanie nadany):",
+          error,
+        );
+      }
+    } else {
+      console.log("Osoba prywatna pomijamy tworzenia faktury");
     }
+
+    // 4. Aktualizacja bazy (JEDNA TRANSAKCJA)
+    // (reszta kodu zostaje bez zmian)
 
     // 4. Aktualizacja bazy (JEDNA TRANSAKCJA)
     try {

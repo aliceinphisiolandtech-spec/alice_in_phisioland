@@ -185,7 +185,7 @@ export const CourseProgressCard = ({
                       className="flex w-full md:w-auto items-center justify-center gap-2 rounded-xl bg-[#D4F0C8] px-6 py-3 text-sm font-bold text-[#103830] transition-transform active:scale-95 hover:bg-[#c1e8b0] shadow-lg shadow-black/10"
                     >
                       <ShoppingCart size={16} />
-                      Kup za 149 zł
+                      Kup za 109 zł
                     </Link>
                   )}
                 </div>

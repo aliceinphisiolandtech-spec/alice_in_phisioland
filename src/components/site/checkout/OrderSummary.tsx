@@ -36,11 +36,11 @@ export const OrderSummary = () => {
                   89,00 zł
                 </span>
                 <span className="text-sm text-gray-400 line-through">
-                  149,00 zł
+                  109,00 zł
                 </span>
               </div>
             ) : (
-              <span className="font-bold text-[#103830]">149,00 zł</span>
+              <span className="font-bold text-[#103830]">109,00 zł</span>
             )}
           </div>
         </div>
