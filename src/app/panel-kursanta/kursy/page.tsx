@@ -41,8 +41,7 @@ export default function CoursesPage() {
           </div>
 
           <h3 className="mb-2 text-lg font-bold leading-wide">
-            Zapraszam Cię na moje autorskie szkolenie: Diagnostyka kliniczna i
-            postępowanie w fizjoterapii, kurs dla młodych praktyków
+            Zapraszam Cię na moje autorskie szkolenie
           </h3>
 
           <p className="mb-6 text-xs text-gray-300 leading-relaxed max-w-[260px]">
