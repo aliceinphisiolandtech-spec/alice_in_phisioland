@@ -1,5 +1,5 @@
 // app/panel-kursanta/layout.tsx
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma"; // Dodaj import Prismy
@@ -35,8 +35,9 @@ export default async function DashboardLayout({
       <div className="flex-1 flex flex-col h-full ml-[280px] max-[1024px]:ml-0 transition-all duration-300">
         <ClientTopbar session={session} />
         <main className="flex-1 h-full overflow-y-auto  scrollbar-hide relative">
-          {/* 2. PRZEKAZUJEMY FLAGĘ DO MODALA */}
-          <PurchaseSuccessModal isFirstLogin={isFirstLogin} />
+          <Suspense fallback={null}>
+            <PurchaseSuccessModal isFirstLogin={isFirstLogin} />
+          </Suspense>
 
           {children}
         </main>

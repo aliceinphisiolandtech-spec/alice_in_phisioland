@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { ComingSoonToaster } from "@/features/landing-page/components/CommingSoonToaster";
+
 import { OneSignalInit } from "@/components/panel-kursanta/OneSignalInit";
 import { Analytics } from "@vercel/analytics/next";
 // Konfiguracja czcionki - ładuje się raz dla całej aplikacji
@@ -36,7 +36,6 @@ export default function RootLayout({
         <Analytics />
         <OneSignalInit />
         <Toaster position="top-right" richColors />
-        <ComingSoonToaster />
       </body>
     </html>
   );
