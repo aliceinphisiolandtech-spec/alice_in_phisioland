@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import { OneSignalInit } from "@/components/panel-kursanta/OneSignalInit";
 import { Analytics } from "@vercel/analytics/next";
+
 // Konfiguracja czcionki - ładuje się raz dla całej aplikacji
 const montserrat = Montserrat({
   subsets: ["latin"],
