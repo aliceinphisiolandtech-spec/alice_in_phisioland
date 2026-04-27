@@ -4,17 +4,6 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 
-// --- KONFIGURACJA WHITE-LISTY ---
-const WHITELISTED_EMAILS = [
-  "dstolarczyk6231@gmail.com",
-  "highland.therapist@gmail.com",
-  "e.kulmaczewska@gmail.com",
-  "orlowska.katarzynaaa@gmail.com",
-  "jangryczka21@gmail.com",
-  "biuro@kocikdev.com",
-  "piotr.eher@gmail.com",
-].map((email) => email.toLowerCase().trim());
-
 const CHAPTER_SLUGS = [
   "00-start",
   "01-wstep-diagnostyka",
@@ -43,14 +32,25 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
+
   // --- ZDARZENIA NEXT-AUTH ---
   events: {
     // To odpala się TYLKO RAZ, gdy w bazie powstaje nowy użytkownik
     async createUser({ user }) {
-      if (user.email && WHITELISTED_EMAILS.includes(user.email.toLowerCase())) {
-        try {
+      if (!user.email) return;
+
+      const emailToSearch = user.email.toLowerCase().trim();
+
+      try {
+        // 1. Sprawdzamy, czy mail znajduje się w naszej nowej tabeli w bazie
+        const isWhitelisted = await prisma.whitelistedEmail.findUnique({
+          where: { email: emailToSearch },
+        });
+
+        if (isWhitelisted) {
+          // 2. Jeśli jest na liście, wykonujemy transakcję (wszystko albo nic!)
           await prisma.$transaction(async (tx) => {
-            // 1. Nadaj dostęp do e-booka
+            // a. Nadaj dostęp do e-booka
             await tx.purchase.create({
               data: {
                 userId: user.id,
@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
               },
             });
 
-            // 2. Ustaw 100% postępu
+            // b. Ustaw 100% postępu
             const progressData = CHAPTER_SLUGS.map((slug) => ({
               userId: user.id,
               chapterId: slug,
@@ -69,44 +69,44 @@ export const authOptions: NextAuthOptions = {
               skipDuplicates: true,
             });
 
-            // 3. Ustaw flagę pierwszego logowania na true (żeby dostał konfetti)
+            // c. Ustaw flagę pierwszego logowania na true (żeby dostał konfetti)
             await tx.user.update({
               where: { id: user.id },
               data: { isFirstLogin: true },
             });
+
+            // d. NOWOŚĆ: Usuń maila z listy (baza sama się czyści z każdym logowaniem)
+            await tx.whitelistedEmail.delete({
+              where: { email: emailToSearch },
+            });
           });
 
           console.log(
-            `[WHITELIST] ✅ Automatycznie nadano pełen dostęp dla: ${user.email}`,
-          );
-        } catch (error) {
-          console.error(
-            `[WHITELIST ERROR] 💥 Błąd podczas nadawania uprawnień dla ${user.email}:`,
-            error,
+            `[WHITELIST] ✅ Automatycznie nadano pełen dostęp i usunięto z bazy: ${user.email}`,
           );
         }
+      } catch (error) {
+        console.error(
+          `[WHITELIST ERROR] 💥 Błąd podczas nadawania uprawnień dla ${user.email}:`,
+          error,
+        );
       }
     },
   },
-  // ... reszta pliku na górze (importy, whitelist, events) pozostaje bez zmian
 
   callbacks: {
-    // 1. NOWY CALLBACK: Sprawdza i aktualizuje zdjęcie przy każdym logowaniu
+    // 1. Sprawdza i aktualizuje zdjęcie przy każdym logowaniu
     async signIn({ user, account, profile }) {
       if (account?.provider === "google" && profile) {
-        // Pobieramy najświeższe zdjęcie prosto z profilu Google
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const freshGooglePicture = (profile as any).picture;
 
-        // Jeśli Google zwróciło zdjęcie, a w naszej bazie jest inne (lub puste)
         if (freshGooglePicture && user.image !== freshGooglePicture) {
           try {
             await prisma.user.update({
-              where: { email: user.email! }, // Aktualizujemy po mailu
+              where: { email: user.email! },
               data: { image: freshGooglePicture },
             });
-            // Ważne: aktualizujemy też obiekt w pamięci, żeby funkcja 'jwt'
-            // (która odpala się ułamek sekundy później) dostała już nowy link
             user.image = freshGooglePicture;
 
             console.log(`🔄 Zaktualizowano avatar dla ${user.email}`);
@@ -115,21 +115,21 @@ export const authOptions: NextAuthOptions = {
           }
         }
       }
-      return true; // Zawsze zwracamy true, żeby pozwolić na zalogowanie
+      return true;
     },
 
-    // 2. Twój dotychczasowy callback JWT
+    // 2. JWT
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.role = (user as any).role;
-        token.picture = user.image; // Tutaj trafi już zaktualizowane zdjęcie!
+        token.picture = user.image;
       }
       return token;
     },
 
-    // 3. Twój dotychczasowy callback Session
+    // 3. Session
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;

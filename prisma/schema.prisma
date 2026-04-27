@@ -17,7 +17,11 @@ datasource db {
 }
 
 
-
+model WhitelistedEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
 model Section {
 
   id        String   @id @default(cuid())
