@@ -27,18 +27,21 @@ const components = {
   // --- Standardowe tagi HTML ---
   h1: (props: any) => (
     <div
-      className="text-2xl sm:text-3xl font-bold text-[#103830] mt-8 mb-6 leading-tight"
+      className="text-2xl comment-title sm:text-3xl font-bold text-[#103830] mt-8 mb-6 leading-tight"
       {...props}
     />
   ),
   h2: (props: any) => (
     <div
-      className="text-xl font-bold text-[#103830] mt-8 mb-4 border-b pb-2 border-gray-100"
+      className="text-xl comment-title font-bold text-[#103830] mt-8 mb-4 border-b pb-2 border-gray-100"
       {...props}
     />
   ),
   h3: (props: any) => (
-    <div className="text-lg font-bold text-[#103830] mt-6 mb-3" {...props} />
+    <div
+      className="text-lg comment-title font-bold text-[#103830] mt-6 mb-3"
+      {...props}
+    />
   ),
   p: (props: any) => (
     <div
@@ -46,18 +49,21 @@ const components = {
       // 2. Używamy cn(), aby zachować domyślny wygląd akapitu ORAZ dokleić Twoje
       //    customowe klasy z plików MDX (np. className="italic mb-4").
       className={cn(
-        "text-gray-700 leading-relaxed mb-4 text-[16px] sm:text-[18px]",
+        "text-gray-700 comment-title leading-relaxed mb-4 text-[16px] sm:text-[18px]",
         props.className,
       )}
       {...props}
     />
   ),
   ul: (props: any) => (
-    <ul className="list-disc pl-5 mb-4 space-y-2 text-gray-700" {...props} />
+    <ul
+      className="list-disc comment-title pl-5 mb-4 space-y-2 text-gray-700"
+      {...props}
+    />
   ),
   li: (props: any) => <li className="pl-1 !text-[18px]" {...props} />,
   strong: (props: any) => (
-    <strong className="font-bold text-[#103830]" {...props} />
+    <strong className="font-bold comment-title text-[#103830]" {...props} />
   ),
 
   // Uwaga: EbookInfoCard tutaj jest tylko "zaślepką",
@@ -80,12 +86,12 @@ const components = {
   // --- 3. Customowe Komponenty ---
 
   ContactLink: ({ email, instagram }: { email: string; instagram: string }) => (
-    <div className="flex flex-col gap-3 mt-4 mb-8">
+    <div className="flex flex-col comment-title gap-3 mt-4 mb-8">
       <a
         href={`mailto:${email}`}
-        className="flex items-center gap-2 text-gray-700 hover:text-[#103830] transition-colors w-fit pointer-cursor"
+        className="flex items-center gap-2 comment-title text-gray-700 hover:text-[#103830] transition-colors w-fit pointer-cursor"
       >
-        <div className="p-2 bg-gray-100 rounded-full text-[#103830]">
+        <div className="p-2 bg-gray-100 comment-title rounded-full text-[#103830]">
           <Mail size={16} />
         </div>
         <span className="font-bold text-sm">{email}</span>
