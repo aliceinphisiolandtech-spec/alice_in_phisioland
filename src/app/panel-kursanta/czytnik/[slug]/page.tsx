@@ -26,19 +26,19 @@ import { authOptions } from "@/lib/auth";
 const components = {
   // --- Standardowe tagi HTML ---
   h1: (props: any) => (
-    <h1
+    <div
       className="text-2xl sm:text-3xl font-bold text-[#103830] mt-8 mb-6 leading-tight"
       {...props}
     />
   ),
   h2: (props: any) => (
-    <h2
+    <div
       className="text-xl font-bold text-[#103830] mt-8 mb-4 border-b pb-2 border-gray-100"
       {...props}
     />
   ),
   h3: (props: any) => (
-    <h3 className="text-lg font-bold text-[#103830] mt-6 mb-3" {...props} />
+    <div className="text-lg font-bold text-[#103830] mt-6 mb-3" {...props} />
   ),
   p: (props: any) => (
     <div
@@ -254,7 +254,7 @@ export default async function ChapterPage({ params }: Props) {
       </div>
 
       {/* TREŚĆ */}
-      <article className="max-w-2xl mx-auto px-5 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 select-none">
+      <div className="max-w-2xl mx-auto px-5 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 select-none">
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-extrabold text-[#103830] leading-tight mb-2">
             {data.title}
@@ -270,7 +270,7 @@ export default async function ChapterPage({ params }: Props) {
           {/* Przekazujemy naszą nową listę komponentów z danymi */}
           <MDXRemote source={content} components={componentsWithData} />
         </div>
-      </article>
+      </div>
 
       {/* NAWIGACJA DÓŁ */}
       <div className="max-w-2xl mx-auto px-5 mt-16 flex flex-col gap-4">
