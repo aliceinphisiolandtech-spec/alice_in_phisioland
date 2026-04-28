@@ -230,7 +230,23 @@ export default async function ChapterPage({ params }: Props) {
   // TWORZYMY SPECJALNĄ LISTĘ KOMPONENTÓW Z WSTRZYKNIĘTYMI DANYMI
   const componentsWithData = {
     ...components,
-    // Nadpisujemy EbookInfoCard tak, żeby miał już dane z YAML
+    p: (props: any) => (
+      <div
+        className={cn(
+          "text-gray-700 comment-title leading-relaxed mb-4 text-[16px] sm:text-[18px]",
+          props.className,
+        )}
+      >
+        {/* Ten tekst jest niewidoczny na stronie, ale Tryb Czytania i Ctrl+C go skopiują! */}
+        <span className="sr-only select-all">
+          [Dokument przypisany do konta:{" "}
+          {session?.user?.email || "Nieznany użytkownik"}. Udostępnianie podlega
+          karze.]
+        </span>
+        {/* Właściwa treść akapitu z pliku MDX */}
+        {props.children}
+      </div>
+    ),
     EbookInfoCard: () => (
       <EbookInfoCard
         schedule={cardData.schedule}
@@ -296,7 +312,7 @@ export default async function ChapterPage({ params }: Props) {
         </div>
 
         <div className="prose prose-stone prose-lg max-w-none prose-headings:text-[#103830] prose-a:text-[#103830]">
-          <article className="overflow-hidden w-[1px] h-[1px]">
+          <article className="absolute opacity-0">
             <h1>⚠️ UWAGA: Ochrona Praw Autorskich</h1>
             <p>
               W celu zapewnienia dostępności e-booka dla każdego (w tym osób
