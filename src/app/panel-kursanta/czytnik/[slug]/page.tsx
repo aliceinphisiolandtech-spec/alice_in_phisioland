@@ -237,13 +237,12 @@ export default async function ChapterPage({ params }: Props) {
           props.className,
         )}
       >
-        {/* Ten tekst jest niewidoczny na stronie, ale Tryb Czytania i Ctrl+C go skopiują! */}
-        <span className="sr-only select-all">
-          [Dokument przypisany do konta:{" "}
-          {session?.user?.email || "Nieznany użytkownik"}. Udostępnianie podlega
-          karze.]
+        {/* 🔥 GHOST TEXT 2.0 (Na telefony) 🔥 */}
+        <span className="inline-block text-[0.1px] leading-[1px] text-transparent select-none pointer-events-none">
+          [Dokument przypisany do konta: {session?.user?.email || "Brak danych"}
+          . Udostępnianie podlega karze.]
         </span>
-        {/* Właściwa treść akapitu z pliku MDX */}
+
         {props.children}
       </div>
     ),
@@ -277,29 +276,23 @@ export default async function ChapterPage({ params }: Props) {
 
       {/* TREŚĆ */}
       <div className="max-w-2xl mx-auto px-5 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 select-none">
-        <div className=" top-auto overflow-hidden w-[1px] h-[1px]">
+        <article className="text-[1px] leading-[1px] text-transparent h-[1px] overflow-hidden select-none pointer-events-none">
           <h1>⚠️ UWAGA: Ochrona Praw Autorskich</h1>
           <p>
-            W celu zapewnienia dostępności e-booka dla każdego (w tym osób
-            niedowidzących i z dysleksją), ułatwienia takie jak tryb czytania
-            pozostają dla Państwa aktywne.
+            W celu zapewnienia dostępności e-booka dla każdego, ułatwienia takie
+            jak tryb czytania pozostają aktywne.
           </p>
           <p>
-            Zastrzegamy jednak, że wszelkie próby nieautoryzowanego pobierania,
-            kopiowania i rozpowszechniania tych treści są ściśle monitorowane.
             Ten dokument został wygenerowany indywidualnie i jest trwale
-            przypisany do konta:{" "}
-            <strong>{session?.user?.email || "Nieznany użytkownik"}</strong>.
+            przypisany do konta: {session?.user?.email || "Nieznany użytkownik"}
+            .
           </p>
           <p>
-            Wykrycie udostępniania tego pliku osobom trzecim w internecie
-            skutkuje natychmiastową blokadą konta, utratą dostępu do platformy
-            oraz{" "}
-            <strong>zgłoszeniem sprawy do odpowiednich organów ścigania</strong>{" "}
-            w związku z naruszeniem praw autorskich.
+            Wykrycie udostępniania tego pliku skutkuje blokadą konta i
+            zgłoszeniem sprawy do odpowiednich organów ścigania w związku z
+            naruszeniem praw autorskich.
           </p>
-          <hr />
-        </div>
+        </article>
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-extrabold text-[#103830] leading-tight mb-2">
             {data.title}
