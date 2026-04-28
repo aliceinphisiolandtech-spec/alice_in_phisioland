@@ -261,7 +261,7 @@ export default async function ChapterPage({ params }: Props) {
 
       {/* TREŚĆ */}
       <div className="max-w-2xl mx-auto px-5 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 select-none">
-        <div className="absolute -left-[9999px] top-auto overflow-hidden w-[1px] h-[1px]">
+        <div className=" top-auto overflow-hidden w-[1px] h-[1px]">
           <h1>⚠️ UWAGA: Ochrona Praw Autorskich</h1>
           <p>
             W celu zapewnienia dostępności e-booka dla każdego (w tym osób
