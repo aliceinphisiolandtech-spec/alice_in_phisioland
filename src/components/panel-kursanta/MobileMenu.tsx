@@ -44,7 +44,7 @@ export const MobileMenu = ({ session }: MobileMenuProps) => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 min-[1024px]:hidden pointer-events-none">
-      <div className="hidden print:flex print:min-h-screen print:items-center print:justify-center print:text-center print:p-10 print:absolute print:h-screen print:w-screen print:bg-red-400  z-1000">
+      <div className="hidden print:fixed print:top-0 print:flex print:min-h-screen print:items-center print:justify-center print:text-center print:p-10  print:h-screen print:w-screen print:bg-red-400  print:z-1000">
         <h1 className="text-2xl font-bold text-gray-800">
           Drukowanie i zapisywanie do PDF jest zablokowane ze względu na prawa
           autorskie.
