@@ -12,11 +12,15 @@ import {
   Instagram,
   AlertTriangle,
 } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 // Upewnij się, że ścieżka do Twojego komponentu jest poprawna
 import { EbookInfoCard } from "@/components/panel-kursanta/czytnik/EbookInfoCard";
 import { ProgressTracker } from "@/components/panel-kursanta/czytnik/ProgressTracker";
 import { cn } from "@/lib/utils";
+import { DisableRightClick } from "@/components/panel-kursanta/czytnik/DisableRightClick";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 // --- 1. TWOJE STANDARDOWE KOMPONENTY ---
 const components = {
@@ -185,7 +189,22 @@ export default async function ChapterPage({ params }: Props) {
 
   const filename = `${decodedSlug}.mdx`;
   const filePath = path.join(contentDir, filename);
-
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    redirect("/logowanie");
+  }
+  const hasAccess = await prisma.purchase.findUnique({
+    where: {
+      userId_productId: {
+        userId: session.user.id,
+        productId: "ebook-tom-1", // Upewnij się, że to ID produktu jest poprawne
+      },
+    },
+  });
+  if (!hasAccess) {
+    console.log("⛔ Próba nieautoryzowanego dostępu do spisu treści");
+    redirect("/panel-kursanta"); // Lub np. "/oferta"
+  }
   if (!fs.existsSync(filePath)) {
     console.error(`❌ Błąd: Nie znaleziono pliku: ${filePath}`);
     return notFound();
@@ -220,6 +239,7 @@ export default async function ChapterPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-white pb-32">
+      <DisableRightClick />
       <ProgressTracker slug={decodedSlug} />
       <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-4 flex items-center justify-between">
         <Link
@@ -234,7 +254,7 @@ export default async function ChapterPage({ params }: Props) {
       </div>
 
       {/* TREŚĆ */}
-      <article className="max-w-2xl mx-auto px-5 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <article className="max-w-2xl mx-auto px-5 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 select-none">
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-extrabold text-[#103830] leading-tight mb-2">
             {data.title}

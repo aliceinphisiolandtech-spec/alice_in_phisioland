@@ -48,7 +48,12 @@ export default function ClientSidebar({ session }: ClientSidebarProps) {
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[280px] bg-white flex flex-col justify-between border-r border-gray-100 max-[1024px]:hidden z-50">
-      {/* --- LOGO --- */}
+      <div className="hidden print:flex print:min-h-screen print:items-center print:justify-center print:text-center print:p-10 print:absolute print:h-screen print:w-screen print:bg-red-400  z-1000">
+        <h1 className="text-2xl font-bold text-gray-800">
+          Drukowanie i zapisywanie do PDF jest zablokowane ze względu na prawa
+          autorskie.
+        </h1>
+      </div>
       <div className="px-8 py-8">
         <div className="flex items-center gap-3">
           {/* Logo AW */}

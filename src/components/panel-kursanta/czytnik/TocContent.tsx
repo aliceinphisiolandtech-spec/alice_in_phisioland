@@ -82,7 +82,7 @@ const RolodexHeader = ({ scrollTop }: { scrollTop: number }) => {
         willChange: "transform, opacity, filter",
         transformOrigin: "center bottom",
       }}
-      className="text-center mb-6 md:mb-10 mx-auto w-full max-w-md transition-transform duration-75 ease-linear pt-6 md:pt-10"
+      className="text-center mb-6 md:mb-10 mx-auto w-full max-w-md transition-transform duration-75 ease-linear pt-6 md:pt-10 select-none"
     >
       <div className="mx-auto w-12 h-12 md:w-16 md:h-16 bg-primary rounded-full flex items-center justify-center text-contrast mb-3 md:mb-4 shadow-sm">
         <BookOpen size={24} className="md:w-[32px] md:h-[32px]" />
@@ -226,7 +226,19 @@ export default function TocContent({
   };
 
   const topGradientOpacity = Math.min(Math.max((scrollTop - 50) / 150, 0), 1);
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
 
+    // Nasłuchuj kliknięcia na całym dokumencie
+    document.addEventListener("contextmenu", handleContextMenu);
+
+    // Sprzątanie po odmontowaniu komponentu
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, []);
   return (
     <div className="relative h-full w-full bg-[#F2F4F7] flex flex-col items-center justify-center overflow-hidden">
       <AnimatePresence>

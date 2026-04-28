@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { DisableRightClick } from "@/components/panel-kursanta/czytnik/DisableRightClick";
 
 export default async function TableOfContentsPage() {
   const contentDir = path.join(process.cwd(), "content");
@@ -61,6 +62,7 @@ export default async function TableOfContentsPage() {
   // 3. Przekazujemy wszystko do klienta
   return (
     <div className="h-full w-full overflow-hidden">
+      <DisableRightClick />
       <TocContent chapters={chapters} completedChapters={completedSlugs} />
     </div>
   );

@@ -9,6 +9,7 @@ import ClientSidebar from "@/components/panel-kursanta/ClientSidebar";
 import { MobileMenu } from "@/components/panel-kursanta/MobileMenu";
 import { PurchaseSuccessModal } from "@/components/panel-kursanta/dashboard/PurchaseSuccessModal";
 import { PWAWarning } from "@/components/PWAWarning";
+import { redirect } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -18,7 +19,9 @@ export default async function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const session = await getServerSession(authOptions);
-
+  if (!session?.user?.id) {
+    redirect("/logowanie");
+  }
   // 1. TYLKO ODCZYTUJEMY FLAGĘ (Nic nie zmieniamy!)
   let isFirstLogin = false;
   if (session?.user?.id) {
