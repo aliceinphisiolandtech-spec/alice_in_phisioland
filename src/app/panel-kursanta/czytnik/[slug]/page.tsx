@@ -261,6 +261,29 @@ export default async function ChapterPage({ params }: Props) {
 
       {/* TREŚĆ */}
       <div className="max-w-2xl mx-auto px-5 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 select-none">
+        <div className="absolute -left-[9999px] top-auto overflow-hidden w-[1px] h-[1px]">
+          <h1>⚠️ UWAGA: Ochrona Praw Autorskich</h1>
+          <p>
+            W celu zapewnienia dostępności e-booka dla każdego (w tym osób
+            niedowidzących i z dysleksją), ułatwienia takie jak tryb czytania
+            pozostają dla Państwa aktywne.
+          </p>
+          <p>
+            Zastrzegamy jednak, że wszelkie próby nieautoryzowanego pobierania,
+            kopiowania i rozpowszechniania tych treści są ściśle monitorowane.
+            Ten dokument został wygenerowany indywidualnie i jest trwale
+            przypisany do konta:{" "}
+            <strong>{session?.user?.email || "Nieznany użytkownik"}</strong>.
+          </p>
+          <p>
+            Wykrycie udostępniania tego pliku osobom trzecim w internecie
+            skutkuje natychmiastową blokadą konta, utratą dostępu do platformy
+            oraz{" "}
+            <strong>zgłoszeniem sprawy do odpowiednich organów ścigania</strong>{" "}
+            w związku z naruszeniem praw autorskich.
+          </p>
+          <hr />
+        </div>
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-extrabold text-[#103830] leading-tight mb-2">
             {data.title}
