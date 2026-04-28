@@ -296,7 +296,31 @@ export default async function ChapterPage({ params }: Props) {
         </div>
 
         <div className="prose prose-stone prose-lg max-w-none prose-headings:text-[#103830] prose-a:text-[#103830]">
-          {/* Przekazujemy naszą nową listę komponentów z danymi */}
+          <article className="overflow-hidden w-[1px] h-[1px]">
+            <h1>⚠️ UWAGA: Ochrona Praw Autorskich</h1>
+            <p>
+              W celu zapewnienia dostępności e-booka dla każdego (w tym osób
+              niedowidzących i z dysleksją), ułatwienia takie jak tryb czytania
+              pozostają dla Państwa aktywne.
+            </p>
+            <p>
+              Zastrzegamy jednak, że wszelkie próby nieautoryzowanego
+              pobierania, kopiowania i rozpowszechniania tych treści są ściśle
+              monitorowane. Ten dokument został wygenerowany indywidualnie i
+              jest trwale przypisany do konta:{" "}
+              <strong>{session?.user?.email || "Nieznany użytkownik"}</strong>.
+            </p>
+            <p>
+              Wykrycie udostępniania tego pliku osobom trzecim w internecie
+              skutkuje natychmiastową blokadą konta, utratą dostępu do platformy
+              oraz{" "}
+              <strong>
+                zgłoszeniem sprawy do odpowiednich organów ścigania
+              </strong>{" "}
+              w związku z naruszeniem praw autorskich.
+            </p>
+            <hr />
+          </article>
           <MDXRemote source={content} components={componentsWithData} />
         </div>
       </div>
