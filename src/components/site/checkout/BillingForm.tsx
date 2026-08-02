@@ -5,13 +5,59 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Session } from "next-auth";
 import { LoadingButton } from "@/components/ui/LoadingButton";
 import { cn } from "@/lib/utils/cn";
-import { User, Building2, Lock } from "lucide-react";
+import { User, Building2 } from "lucide-react";
 import { BillingFormData, BillingSchema } from "@/lib/validators/orders";
 
 interface BillingFormProps {
   session: Session;
   onSubmit: (data: BillingFormData) => void;
   isLoading: boolean;
+}
+
+// Sprawdzane w czasie builda — na produkcji cały blok wypada z bundle'a.
+const IS_DEV = process.env.NODE_ENV !== "production";
+
+const pick = <T,>(items: readonly T[]): T =>
+  items[Math.floor(Math.random() * items.length)];
+
+const IMIONA = ["Anna", "Katarzyna", "Magdalena", "Piotr", "Tomasz", "Zofia"];
+const NAZWISKA = [
+  "Kowalska",
+  "Nowak",
+  "Wiśniewska",
+  "Lewandowski",
+  "Zielińska",
+  "Kaczmarek",
+];
+const FIRMY = [
+  "Gabinet Fizjoterapii",
+  "RehaPunkt",
+  "Fizjo Klinika",
+  "Centrum Ruchu",
+];
+const ULICE = ["Kwiatowa", "Polna", "Leśna", "Słoneczna", "Ogrodowa", "Lipowa"];
+const MIASTA = ["Warszawa", "Kraków", "Gdańsk", "Wrocław", "Poznań", "Łódź"];
+
+/**
+ * NIP z poprawną sumą kontrolną. Sam formularz sprawdza tylko 10 cyfr, ale
+ * gdyby ktoś włączył FAKTUROWNIA_FORCE, losowy ciąg zostałby odrzucony przez
+ * API — a debugowanie takiego błędu to strata czasu.
+ */
+function randomNip(): string {
+  const weights = [6, 5, 7, 2, 3, 4, 5, 6, 7];
+
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const digits = Array.from({ length: 9 }, () =>
+      Math.floor(Math.random() * 10),
+    );
+    const checksum =
+      digits.reduce((sum, digit, i) => sum + digit * weights[i], 0) % 11;
+
+    if (checksum !== 10) return [...digits, checksum].join("");
+  }
+
+  // Znany poprawny NIP jako awaryjne wyjście — pętla praktycznie nigdy tu nie dojdzie.
+  return "1234563218";
 }
 
 // Helper dla Inputa
@@ -89,6 +135,37 @@ export const BillingForm = ({
     setValue("billingNip", value); // Aktualizuj stan formularza
   };
 
+  // --- DEV: wypełnienie losowymi danymi ---
+  // Osobne warianty, bo to typ konta decyduje, czy webhook w ogóle wejdzie
+  // w ścieżkę fakturową (NIP jest jej warunkiem).
+  const fillRandom = (type: "personal" | "company") => {
+    const options = { shouldValidate: true } as const;
+
+    setValue("billingType", type, options);
+    setValue(
+      "billingName",
+      type === "company"
+        ? `${pick(FIRMY)} ${pick(NAZWISKA)}`
+        : `${pick(IMIONA)} ${pick(NAZWISKA)}`,
+      options,
+    );
+    setValue(
+      "billingAddress",
+      `ul. ${pick(ULICE)} ${1 + Math.floor(Math.random() * 99)}/${1 + Math.floor(Math.random() * 20)}`,
+      options,
+    );
+    setValue("billingCity", pick(MIASTA), options);
+    setValue(
+      "billingPostalCode",
+      `${String(Math.floor(Math.random() * 100)).padStart(2, "0")}-${String(
+        Math.floor(Math.random() * 1000),
+      ).padStart(3, "0")}`,
+      options,
+    );
+    setValue("billingNip", type === "company" ? randomNip() : "", options);
+    setValue("billingCountry", "PL", options);
+  };
+
   // --- FORMATOWANIE KODU POCZTOWEGO (XX-XXX) ---
   const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, ""); // Usuń nie-cyfry
@@ -110,6 +187,36 @@ export const BillingForm = ({
         <h2 className="text-xl font-bold text-[#103830] flex items-center gap-2">
           1. Dane do faktury
         </h2>
+
+        {/* --- DEBUG (tylko lokalnie, nie buduje się na produkcji) --- */}
+        {IS_DEV && (
+          <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50 p-3">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+              Debug · wypełnij losowymi danymi
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => fillRandom("personal")}
+                className="flex-1 cursor-pointer rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-100"
+              >
+                Osoba prywatna
+              </button>
+              <button
+                type="button"
+                onClick={() => fillRandom("company")}
+                title="Wypełnia też NIP — webhook wejdzie w ścieżkę fakturową"
+                className="flex-1 cursor-pointer rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-100"
+              >
+                Firma (z NIP)
+              </button>
+            </div>
+            <p className="mt-2 text-[10px] leading-relaxed text-amber-700/80">
+              W dev faktura NIE jest wystawiana w Fakturowni — wywołanie jest
+              blokowane w src/app/actions/fakturownia.ts.
+            </p>
+          </div>
+        )}
 
         {/* Przełącznik Typu Konta */}
         <div className="grid grid-cols-2 gap-4">
@@ -222,7 +329,7 @@ export const BillingForm = ({
           type="submit"
           isLoading={isLoading}
           variant="primary"
-          className="w-full text-base text-sm font-semibold  rounded-xl"
+          className="w-full text-sm font-semibold rounded-xl"
         >
           Zapisz i przejdź do płatności
         </LoadingButton>

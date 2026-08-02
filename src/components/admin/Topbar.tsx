@@ -12,18 +12,22 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image"; // Do wyświetlania zdjęcia profilowego
+import NotificationsBell from "./NotificationsBell";
 
 // Definicja Propsów
 interface AdminTopbarProps {
   adminName?: string | null;
   adminEmail?: string | null;
   adminImage?: string | null;
+  /** Otwiera mobilny drawer nawigacji (hamburger). */
+  onMenuClick?: () => void;
 }
 
 export default function AdminTopbar({
   adminName,
   adminEmail,
   adminImage,
+  onMenuClick,
 }: AdminTopbarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -42,13 +46,21 @@ export default function AdminTopbar({
     <header className="sticky top-0 z-40 flex h-[80px] w-full items-center justify-between bg-white/80 backdrop-blur-md px-8 py-4 border-b border-gray-100/50 max-[980px]:bg-white max-[980px]:px-4 transition-all">
       {/* --- LEWA STRONA (Bez zmian) --- */}
       <div className="flex items-center gap-4 flex-1">
-        <button className="hidden max-[980px]:flex items-center justify-center p-2 rounded-lg bg-gray-100 text-gray-600">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label="Otwórz menu"
+          className="hidden max-[980px]:flex items-center justify-center p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 active:scale-95 transition-all"
+        >
           <Menu className="h-6 w-6" />
         </button>
       </div>
 
       {/* --- PRAWA STRONA --- */}
       <div className="flex items-center gap-6 max-[980px]:gap-3">
+        {/* Dzwonek powiadomień (sprzedaż / porzucony koszyk) */}
+        <NotificationsBell />
+
         <div className="h-8 w-[1px] bg-gray-200 max-[980px]:hidden"></div>
 
         {/* --- PROFIL UŻYTKOWNIKA (DYNAMICZNY) --- */}

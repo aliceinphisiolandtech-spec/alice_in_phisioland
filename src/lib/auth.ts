@@ -2,7 +2,72 @@
 import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
+
+const IS_DEV = process.env.NODE_ENV !== "production";
+
+/**
+ * Ilu osobnych klientów testowych udostępnia dev login.
+ * Każdy to inne konto, więc każdy może przejść własny zakup — jeden użytkownik
+ * kupi e-booka tylko raz (unikat userId+productId na tabeli Purchase).
+ */
+export const DEV_CLIENT_COUNT = 5;
+
+/**
+ * DEV-ONLY: szybkie logowanie "na klienta" / "na admina" bez OAuth.
+ * Tworzy (lub odświeża) deterministycznych użytkowników w bazie z PRAWDZIWĄ rolą,
+ * dzięki czemu cały realny pipeline ról (JWT -> session -> guardy /admin) jest
+ * testowany tak samo jak na produkcji. Potrójnie zabezpieczone przed produkcją:
+ * provider nie jest rejestrowany w prod, a authorize i tak zwraca null.
+ */
+const devProviders: NextAuthOptions["providers"] = IS_DEV
+  ? [
+      CredentialsProvider({
+        id: "dev-login",
+        name: "Dev Login",
+        credentials: {
+          role: { label: "Rola", type: "text" },
+          slot: { label: "Numer klienta", type: "text" },
+        },
+        async authorize(credentials) {
+          // Twardy bezpiecznik — nawet gdyby provider jakimś cudem trafił na prod.
+          if (process.env.NODE_ENV === "production") return null;
+
+          const requestedRole =
+            credentials?.role === "admin" ? "admin" : "client";
+
+          let email: string;
+          let name: string;
+
+          if (requestedRole === "admin") {
+            email = "dev-admin@local.dev";
+            name = "Dev Admin";
+          } else {
+            // Numer przycina się do dostępnego zakresu — z przeglądarki może
+            // przyjść dowolna wartość, a nie chcemy zakładać kont "dev-klient-99".
+            const parsed = Number(credentials?.slot);
+            const slot =
+              Number.isInteger(parsed) && parsed >= 1 && parsed <= DEV_CLIENT_COUNT
+                ? parsed
+                : 1;
+
+            email = `dev-klient-${slot}@local.dev`;
+            name = `Dev Klient ${slot}`;
+          }
+
+          // upsert => klik "Admin" zawsze daje realnego admina (rola zapisana w DB).
+          const user = await prisma.user.upsert({
+            where: { email },
+            update: { role: requestedRole },
+            create: { email, name, role: requestedRole },
+          });
+
+          return user;
+        },
+      }),
+    ]
+  : [];
 
 const CHAPTER_SLUGS = [
   "00-start",
@@ -31,6 +96,7 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
+    ...devProviders,
   ],
 
   // --- ZDARZENIA NEXT-AUTH ---

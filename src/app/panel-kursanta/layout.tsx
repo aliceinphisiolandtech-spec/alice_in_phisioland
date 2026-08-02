@@ -1,8 +1,14 @@
 // app/panel-kursanta/layout.tsx
 import { ReactNode, Suspense } from "react";
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma"; // Dodaj import Prismy
+
+export const metadata: Metadata = {
+  title: "Panel Kursanta",
+  robots: { index: false, follow: false },
+};
 
 import ClientTopbar from "@/components/panel-kursanta/ClientTopbar";
 import ClientSidebar from "@/components/panel-kursanta/ClientSidebar";

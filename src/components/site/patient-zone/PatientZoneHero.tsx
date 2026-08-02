@@ -1,7 +1,16 @@
+"use client";
+
 import Image from "next/image";
 import React from "react";
+import { motion } from "framer-motion";
 // 1. Importujemy konkretne ikony
 import { ScanSearch, UserCheck, BrainCircuit, CircleHelp } from "lucide-react";
+import {
+  fadeUp,
+  fadeUpSm,
+  staggerContainer,
+  staggerFast,
+} from "@/lib/animations";
 
 // 2. Definiujemy tablicę ikon w stałej kolejności (odpowiadającej kolejności w bazie/seedzie)
 const FEATURE_ICONS = [
@@ -20,34 +29,52 @@ export const PatientZoneHero = ({ content }: any) => {
       <div className="custom-container px-4 relative z-10 pt-32">
         <div className="flex flex-row items-center gap-20 max-[1150px]:flex-col max-[1150px]:gap-12 min-w-[1100px] max-[1150px]:min-w-full">
           {/* --- LEWA KOLUMNA: TREŚĆ --- */}
-          <div className="flex-1 w-full flex flex-col items-start gap-10 -mt-12 max-[1150px]:items-center">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="flex-1 w-full flex flex-col items-start gap-10 -mt-12 max-[1150px]:items-center"
+          >
             <div className="flex flex-col items-start gap-6 max-[1150px]:items-center">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-[#d4f0c8] text-[#0c493e] px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase shadow-sm max-[1150px]:text-center">
+              <motion.div
+                variants={fadeUpSm}
+                className="inline-flex items-center gap-2 bg-[#d4f0c8] text-[#0c493e] px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase shadow-sm max-[1150px]:text-center"
+              >
                 {content.badge}
-              </div>
+              </motion.div>
 
               {/* Nagłówek */}
-              <h1 className="heading text-white text-balance w-[120%] max-[1150px]:text-center max-[1150px]:w-full">
+              <motion.h1
+                variants={fadeUp}
+                className="heading text-white text-balance w-[120%] max-[1150px]:text-center max-[1150px]:w-full"
+              >
                 {content.title}
-              </h1>
+              </motion.h1>
 
               {/* Opis */}
-              <p className="paragraph text-white/90 max-w-xl max-[1150px]:text-center">
+              <motion.p
+                variants={fadeUp}
+                className="paragraph text-white/90 max-w-xl max-[1150px]:text-center"
+              >
                 {content.description}
-              </p>
+              </motion.p>
             </div>
 
             {/* --- KAFELKI INFORMACYJNE --- */}
-            <div className="grid grid-cols-3 gap-4 w-full max-w-2xl max-[700px]:grid-cols-1">
+            <motion.div
+              variants={staggerFast}
+              className="grid grid-cols-3 gap-4 w-full max-w-2xl max-[700px]:grid-cols-1"
+            >
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {content.features.map((feature: any, index: number) => {
                 // 3. Wybieramy ikonę na podstawie indeksu
                 const IconComponent = FEATURE_ICONS[index] || CircleHelp;
 
                 return (
-                  <div
+                  <motion.div
                     key={index}
+                    variants={fadeUpSm}
                     className="bg-[#d4f0c8]/5 border text-center border-[#d4f0c8]/20 p-4 rounded-2xl backdrop-blur-sm hover:bg-[#d4f0c8]/10 transition-colors pointer-cursor group max-[1150px]:text-center"
                   >
                     <div className="w-full flex items-center justify-center">
@@ -63,14 +90,19 @@ export const PatientZoneHero = ({ content }: any) => {
                       {feature.title}
                     </h3>
                     <p className="text-[#d4f0c8]/70 text-xs">{feature.desc}</p>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* --- PRAWA KOLUMNA: ZDJĘCIE (Bez zmian) --- */}
-          <div className="flex-1 w-full relative flex justify-end max-[1150px]:justify-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, ease: [0.21, 0.47, 0.32, 0.98], delay: 0.15 }}
+            className="flex-1 w-full relative flex justify-end max-[1150px]:justify-center"
+          >
             <div className="relative w-full max-w-[460px] aspect-[4/5] min-h-[500px] -left-12 max-[1150px]:left-0 max-[500px]:w-full min-h-auto">
               <Image
                 fill
@@ -107,7 +139,7 @@ export const PatientZoneHero = ({ content }: any) => {
               <div className="absolute -z-0 top-6 -right-6 w-full h-full border-2 border-[#d4f0c8]/20 rounded-3xl max-[1150px]:hidden" />
               <div className="absolute -z-10 -top-12 -right-12 w-24 h-24 bg-[#d4f0c8]/10 rounded-full blur-2xl max-[1150px]:hidden" />
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

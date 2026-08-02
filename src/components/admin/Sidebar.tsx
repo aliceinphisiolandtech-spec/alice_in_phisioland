@@ -12,43 +12,81 @@ import {
   FilePenLine,
   BellRing,
   Lock, // <--- IMPORT KŁÓDKI
+  TicketPercent, // <--- IMPORT IKONY DLA RABATÓW
   PlayCircle, // <--- IMPORT IKONY DLA KURSÓW WIDEO
+  X, // <--- IMPORT IKONY ZAMKNIĘCIA (mobile)
 } from "lucide-react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
+import { cn } from "@/lib/utils/cn";
 
 interface AdminSidebarProps {
   adminName?: string | null;
+  /** Czy mobilny drawer jest otwarty (ignorowane na desktopie). */
+  mobileOpen?: boolean;
+  /** Zamknięcie mobilnego drawera. */
+  onClose?: () => void;
 }
 
 const menuItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, locked: false },
   { label: "Aktualności", href: "/admin/news", icon: BellRing, locked: false },
   { label: "CMS", href: "/admin/cms", icon: FilePenLine, locked: false },
+  {
+    label: "Rabaty",
+    href: "/admin/rabaty",
+    icon: TicketPercent,
+    locked: false,
+  },
   { label: "Newsletter", href: "#", icon: MailboxIcon, locked: true },
   // NOWA ZAKŁADKA
   { label: "Kursy Video", href: "#", icon: PlayCircle, locked: true },
 ];
 
-export default function AdminSidebar({ adminName }: AdminSidebarProps) {
+export default function AdminSidebar({
+  adminName,
+  mobileOpen = false,
+  onClose,
+}: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[280px] bg-white flex flex-col justify-between border-r border-gray-100 max-[980px]:hidden z-50">
+    <aside
+      className={cn(
+        "fixed left-0 top-0 h-screen w-[280px] bg-white flex flex-col justify-between border-r border-gray-100 z-50",
+        // Mobile: drawer wjeżdżający z lewej; Desktop (>980px): zawsze widoczny.
+        "transition-transform duration-300 ease-out max-[980px]:shadow-2xl",
+        mobileOpen
+          ? "max-[980px]:translate-x-0"
+          : "max-[980px]:-translate-x-full",
+      )}
+    >
       {/* --- LOGO --- */}
       <div className="px-8 py-8">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center relative justify-center rounded-xl bg-[#0c493e] text-white font-bold text-lg">
-            <Image
-              src={"/AW-logo-negatyw.svg"}
-              fill
-              className="p-2"
-              alt="decorative"
-            />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center relative justify-center rounded-xl bg-[#0c493e] text-white font-bold text-lg">
+              <Image
+                src={"/AW-logo-negatyw.svg"}
+                fill
+                className="p-2"
+                alt="decorative"
+              />
+            </div>
+            <span className="text-xl font-bold text-[#0c493e] font-montserrat">
+              Panel Admin
+            </span>
           </div>
-          <span className="text-xl font-bold text-[#0c493e] font-montserrat">
-            Panel Admin
-          </span>
+
+          {/* Przycisk zamknięcia (tylko mobile) */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Zamknij menu"
+            className="hidden max-[980px]:flex items-center justify-center h-9 w-9 shrink-0 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
@@ -70,6 +108,7 @@ export default function AdminSidebar({ adminName }: AdminSidebarProps) {
                   {/* Zmiana klucza na label, bo href może się powtarzać np. "#" */}
                   <Link
                     href={item.href}
+                    onClick={onClose}
                     className={`group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300
                       ${item.locked ? "pointer-events-none opacity-50 grayscale" : ""} 
                       ${

@@ -12,6 +12,14 @@ import {
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { SecurePanelData } from "@/lib/types/landing";
+import {
+  fadeUp,
+  fadeUpSm,
+  fadeLeft,
+  scaleIn,
+  staggerContainer,
+  revealOnScroll,
+} from "@/lib/animations";
 
 // STAŁE ZASOBY (Hardcoded in Code)
 const FEATURE_ICONS = [FileX, Fingerprint, ShieldAlert, Printer];
@@ -71,10 +79,8 @@ export const SecurePanel = ({ data }: SecurePanelProps) => {
         <div className="flex flex-row items-center gap-16 max-[1024px]:flex-col-reverse max-[1024px]:gap-12">
           {/* LEWA STRONA: GRAFIKA (STATYCZNA) */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            variants={scaleIn}
+            {...revealOnScroll}
             className="relative w-[50%] max-[1024px]:w-full max-[1024px]:flex max-[1024px]:justify-center"
           >
             <div className="absolute left-1/2 top-1/2 -z-10 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#D4F0C8]/20 blur-[80px]" />
@@ -113,22 +119,26 @@ export const SecurePanel = ({ data }: SecurePanelProps) => {
           </motion.div>
 
           {/* PRAWA STRONA: TREŚĆ (DYNAMICZNA) */}
-          <div className="flex w-[50%] flex-col gap-8 max-[1024px]:w-full max-[1024px]:text-center max-[1024px]:items-center">
-            <div className="flex flex-col gap-4">
+          <motion.div
+            variants={staggerContainer}
+            {...revealOnScroll}
+            className="flex w-[50%] flex-col gap-8 max-[1024px]:w-full max-[1024px]:text-center max-[1024px]:items-center"
+          >
+            <motion.div variants={fadeLeft} className="flex flex-col gap-4">
               <h2 className="heading text-white">{renderHeadline()}</h2>
               <p className="paragraph text-gray-300">{data.description}</p>
-            </div>
+            </motion.div>
 
-            <div className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1 max-[640px]:w-full">
+            <motion.div
+              variants={staggerContainer}
+              className="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1 max-[640px]:w-full"
+            >
               {data.features.map((feature, index) => {
                 const Icon = FEATURE_ICONS[index % FEATURE_ICONS.length];
                 return (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    variants={fadeUpSm}
                     className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-5 transition-colors hover:bg-white/10 text-left"
                   >
                     <Icon className="text-[#D4F0C8]" size={24} />
@@ -143,9 +153,9 @@ export const SecurePanel = ({ data }: SecurePanelProps) => {
                   </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
 
-            <div className="pt-4">
+            <motion.div variants={fadeUp} className="pt-4">
               <Button
                 href={STATIC_BUTTON_URL}
                 bgColor="bg-[#D4F0C8]"
@@ -155,8 +165,8 @@ export const SecurePanel = ({ data }: SecurePanelProps) => {
               >
                 {data.button.label}
               </Button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>

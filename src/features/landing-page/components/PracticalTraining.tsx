@@ -1,10 +1,22 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { GraduationCap, Ticket, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { PracticalTrainingData } from "@/lib/types/landing";
+import {
+  fadeUp,
+  fadeUpSm,
+  fadeLeft,
+  scaleIn,
+  staggerContainer,
+  staggerFast,
+  revealOnScroll,
+} from "@/lib/animations";
+
+const MotionImage = motion.create(Image);
 
 // STAŁE ZASOBY
 const FEATURE_ICONS = [GraduationCap, Ticket];
@@ -59,16 +71,31 @@ export const PracticalTraining = ({ data }: PracticalTrainingProps) => {
   return (
     <section id="kursy" className="w-full py-40 pb-80 max-[1024px]:py-16">
       <div className="mx-auto grid max-w-[1200px] grid-cols-[0.9fr_1.1fr] gap-16 px-4 max-[1024px]:grid-cols-1 max-[1024px]:gap-20">
-        <div className="relative flex items-center justify-center">
+        <motion.div
+          variants={scaleIn}
+          {...revealOnScroll}
+          className="relative flex items-center justify-center"
+        >
           <div className="relative w-full max-w-[500px]">
-            <Image
+            <MotionImage
+              variants={scaleIn}
               src={STATIC_IMAGE_SRC}
               alt={STATIC_IMAGE_ALT}
               height={445}
               width={515}
             />
 
-            <div className="absolute  -bottom-8 right-8 z-10 flex h-[160px] w-[160px] flex-col items-center justify-center rounded-full bg-[#0e3f2d] text-center text-white shadow-[-12px_12px_0px_0px_#c5e1a5] max-[500px]:h-[130px] max-[500px]:w-[130px] max-[500px]:-bottom-4 max-[500px]:-right-2">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.4 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                type: "spring",
+                stiffness: 200,
+                damping: 14,
+                delay: 0.3,
+              }}
+              className="absolute  -bottom-8 right-8 z-10 flex h-[160px] w-[160px] flex-col items-center justify-center rounded-full bg-[#0e3f2d] text-center text-white shadow-[-12px_12px_0px_0px_#c5e1a5] max-[500px]:h-[130px] max-[500px]:w-[130px] max-[500px]:-bottom-4 max-[500px]:-right-2">
               <span className="text-[36px] font-bold leading-none max-[500px]:text-[28px]">
                 {data.badge.count}
               </span>
@@ -84,23 +111,36 @@ export const PracticalTraining = ({ data }: PracticalTrainingProps) => {
                   data.badge.label
                 )}
               </span>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-col justify-center gap-6  max-[1024px]:text-center  max-[520px]:gap-12">
-          <h2 className="heading">{renderHeadline()}</h2>
+        <motion.div
+          variants={staggerContainer}
+          {...revealOnScroll}
+          className="flex flex-col justify-center gap-6  max-[1024px]:text-center  max-[520px]:gap-12"
+        >
+          <motion.h2 variants={fadeLeft} className="heading">
+            {renderHeadline()}
+          </motion.h2>
 
-          <p className=" text-[16px] leading-relaxed text-[#4a4a4a] max-[500px]:text-[14px]">
+          <motion.p
+            variants={fadeUp}
+            className=" text-[16px] leading-relaxed text-[#4a4a4a] max-[500px]:text-[14px]"
+          >
             {data.description}
-          </p>
+          </motion.p>
 
-          <div className=" flex gap-8 max-[640px]:flex-col max-[640px]:gap-12 my-4 items-center max-[1024px]:justify-around  max-[1024px]:flex-wrap ">
+          <motion.div
+            variants={staggerFast}
+            className=" flex gap-8 max-[640px]:flex-col max-[640px]:gap-12 my-4 items-center max-[1024px]:justify-around  max-[1024px]:flex-wrap "
+          >
             {data.features.map((feature, index) => {
               const Icon = FEATURE_ICONS[index % FEATURE_ICONS.length];
               return (
-                <div
+                <motion.div
                   key={index}
+                  variants={fadeUpSm}
                   className="flex flex-1 flex-col gap-3  max-[1024px]:max-w-100  max-[1024px]:text-start  max-[800px]:max-w-[80%]"
                 >
                   <div className="flex items-center gap-3">
@@ -114,12 +154,12 @@ export const PracticalTraining = ({ data }: PracticalTrainingProps) => {
                   <p className="text-[13px] leading-6 text-[#4a4a4a]">
                     {feature.description}
                   </p>
-                </div>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div variants={fadeUp}>
             <Button
               href={STATIC_BUTTON_URL}
               bgColor="bg-[#0e3f2d]"
@@ -129,8 +169,8 @@ export const PracticalTraining = ({ data }: PracticalTrainingProps) => {
             >
               {data.button.label}
             </Button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );

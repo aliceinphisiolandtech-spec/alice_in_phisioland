@@ -14,6 +14,14 @@ import {
 import { cn } from "@/lib/utils/cn";
 import React, { useState } from "react";
 import { ContentPreviewData } from "@/lib/types/landing";
+import {
+  fadeUp,
+  fadeUpSm,
+  fadeLeft,
+  staggerContainer,
+  staggerFast,
+  revealOnScroll,
+} from "@/lib/animations";
 
 const FEATURE_ICONS = [Network, Microscope, Brain, ShieldCheck];
 
@@ -68,19 +76,25 @@ export const ContentPreview = ({ data }: ContentPreviewProps) => {
         <div className="flex flex-row items-center justify-between gap-16 max-[1024px]:flex-col max-[1024px]:gap-20">
           <div className="flex w-[45%] flex-col gap-12 max-[1024px]:w-full max-[1024px]:text-center max-[1024px]:items-center">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
+              variants={staggerContainer}
+              {...revealOnScroll}
               className="flex flex-col gap-12"
             >
-              <h2 className="heading">{renderHeadline()}</h2>
+              <motion.h2 variants={fadeUp} className="heading">
+                {renderHeadline()}
+              </motion.h2>
 
-              <p className="paragraph text-gray-600">{data.description}</p>
+              <motion.p variants={fadeUp} className="paragraph text-gray-600">
+                {data.description}
+              </motion.p>
 
-              <div className="flex flex-wrap gap-y-4 max-[1024px]:max-w-[500px] max-[1024px]:mx-auto max-[1024px]:pl-15  max-[500px]:pl-32 max-[450px]:pl-24  max-[380px]:pl-16">
+              <motion.div
+                variants={staggerFast}
+                className="flex flex-wrap gap-y-4 max-[1024px]:max-w-[500px] max-[1024px]:mx-auto max-[1024px]:pl-15  max-[500px]:pl-32 max-[450px]:pl-24  max-[380px]:pl-16"
+              >
                 {data.checklist.map((item, index) => (
-                  <div
+                  <motion.div
+                    variants={fadeUpSm}
                     key={index}
                     className="flex w-1/2 items-center gap-3 max-[500px]:w-full max-[1024px]:justify-start"
                   >
@@ -90,22 +104,23 @@ export const ContentPreview = ({ data }: ContentPreviewProps) => {
                     <span className="text-[15px] font-medium text-gray-700">
                       {item}
                     </span>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </motion.div>
           </div>
 
-          <div className="flex w-[50%] flex-col gap-6 max-[1024px]:w-full">
+          <motion.div
+            variants={staggerContainer}
+            {...revealOnScroll}
+            className="flex w-[50%] flex-col gap-6 max-[1024px]:w-full"
+          >
             {data.features.map((feature, index) => {
               const Icon = FEATURE_ICONS[index % FEATURE_ICONS.length];
               return (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  variants={fadeLeft}
                   className="group flex flex-row items-start gap-6 rounded-2xl bg-[#F6F8F7] p-6 transition-all hover:shadow-lg max-[600px]:flex-col max-[600px]:items-center max-[600px]:text-center"
                 >
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#103830] text-[#D4F0C8] shadow-sm transition-transform group-hover:scale-105">
@@ -123,12 +138,16 @@ export const ContentPreview = ({ data }: ContentPreviewProps) => {
                 </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       <section className="custom-container bg-white pt-24 pb-40 px-4">
-        <div className="mx-auto flex w-full max-w-[800px] flex-col gap-4">
+        <motion.div
+          variants={fadeUp}
+          {...revealOnScroll}
+          className="mx-auto flex w-full max-w-[800px] flex-col gap-4"
+        >
           {data.transformation.map((item) => {
             const isActive = activeId === item.id;
 
@@ -216,7 +235,7 @@ export const ContentPreview = ({ data }: ContentPreviewProps) => {
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </section>
     </>
   );

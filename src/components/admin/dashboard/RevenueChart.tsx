@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { formatNumberPl } from "@/lib/pricing";
 import { ChartDataPoint } from "./types";
 
 // Własny dymek (Tooltip) pojawiający się po najechaniu na słupek
@@ -22,7 +23,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           {label}
         </p>
         <p className="text-[#0c493e] font-extrabold text-lg">
-          {payload[0].value.toLocaleString()} PLN
+          {formatNumberPl(payload[0].value)} PLN
         </p>
       </div>
     );
@@ -32,8 +33,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export const RevenueChart = ({ data }: { data: ChartDataPoint[] }) => {
   return (
-    <div className="xl:col-span-2 bg-white rounded-[30px] p-8 shadow-sm border border-gray-100 flex flex-col h-full">
-      <div className="flex items-center justify-between mb-8">
+    <div className="xl:col-span-2 bg-white rounded-[30px] max-[640px]:rounded-3xl p-8 max-[640px]:p-5 shadow-sm border border-gray-100 flex flex-col h-full">
+      <div className="flex items-center justify-between mb-8 max-[640px]:mb-5">
         <div>
           <h2 className="text-xl font-bold text-gray-800">
             Analityka Sprzedaży

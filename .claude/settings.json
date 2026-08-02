@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx eslint *)",
+      "Bash(rm src/features/landing-page/lib/animations.ts)",
+      "Bash(rmdir src/features/landing-page/lib)",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue)",
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\"C:\\\\Users\\\\mkoci\\\\Desktop\\\\alice_in_physioland\\\\alice-in-phisioland\\\\public\\\\okładka.png\"\\); \"okładka.png: $\\($img.Width\\)x$\\($img.Height\\)\"; $img.Dispose\\(\\))"
+    ]
+  }
+}

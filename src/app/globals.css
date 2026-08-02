@@ -24,6 +24,19 @@
   --font-size-p-std: 12px;
   --font-size-p-lg: 14px;
 }
+/* Ukrywa pasek przewijania, zachowując możliwość przewijania.
+   Klasa była wcześniej deklarowana tylko w <style jsx global> wewnątrz
+   TocContent.tsx, więc działała jedynie na stronach, gdzie ten komponent był
+   zamontowany — w panelu admina nie robiła nic. Tutaj jest globalnie. */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer components {
   .text-highlight {
     @apply relative z-10 text-primary;

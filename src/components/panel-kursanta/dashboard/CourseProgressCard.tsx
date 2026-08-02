@@ -7,6 +7,7 @@ import { Lock, PlayCircle, ShoppingCart, RotateCcw, Star } from "lucide-react";
 import { ReviewInline } from "./ReviewInline";
 import { toast } from "sonner";
 import { resetUserProgressAction } from "@/app/actions/progress";
+import { formatPln } from "@/lib/pricing";
 
 interface CourseProgressCardProps {
   hasAccess: boolean;
@@ -19,6 +20,8 @@ interface CourseProgressCardProps {
     text: string;
     role: string;
   } | null;
+  /** Kwota w przycisku „Kup za…" (grosze). null, gdy dostęp już jest. */
+  checkoutPriceGrosze: number | null;
 }
 
 const itemVariants: Variants = {
@@ -36,6 +39,7 @@ export const CourseProgressCard = ({
   lastChapterSlug,
 
   existingReview,
+  checkoutPriceGrosze,
 }: CourseProgressCardProps) => {
   const [isReviewMode, setIsReviewMode] = useState(false);
 
@@ -185,7 +189,11 @@ export const CourseProgressCard = ({
                       className="flex w-full md:w-auto items-center justify-center gap-2 rounded-xl bg-[#D4F0C8] px-6 py-3 text-sm font-bold text-[#103830] transition-transform active:scale-95 hover:bg-[#c1e8b0] shadow-lg shadow-black/10"
                     >
                       <ShoppingCart size={16} />
-                      Kup za 109 zł
+                      {/* Kwota liczona na serwerze tym samym silnikiem co koszyk
+                          — z aktywną przeceną i zniżką mailową tej osoby. */}
+                      {checkoutPriceGrosze !== null
+                        ? `Kup za ${formatPln(checkoutPriceGrosze)}`
+                        : "Kup dostęp"}
                     </Link>
                   )}
                 </div>

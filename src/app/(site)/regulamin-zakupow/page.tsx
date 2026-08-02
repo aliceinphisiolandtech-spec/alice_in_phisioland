@@ -1,10 +1,12 @@
 import React from "react";
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Regulamin Zakupu Ebooka | Alice in Physioland",
-  description: "Regulamin zakupu treści cyfrowych w aplikacji.",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Regulamin zakupu e-booka",
+  description: "Regulamin zakupu treści cyfrowych w aplikacji Alice in Physioland.",
+  path: "/regulamin-zakupow",
+});
 
 export default function EbookTermsPage() {
   return (

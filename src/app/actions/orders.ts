@@ -22,6 +22,9 @@ export async function getOrdersPage(page: number, itemsPerPage: number = 5) {
   const skip = (page - 1) * itemsPerPage;
 
   const rawOrders = await prisma.order.findMany({
+    // Zakupy testowe z piaskownicy nie są sprzedażą — ten sam filtr co
+    // w statystykach dashboardu (src/app/admin/page.tsx).
+    where: { isSandbox: false },
     skip,
     take: itemsPerPage,
     orderBy: { createdAt: "desc" },
@@ -38,6 +41,8 @@ export async function getOrdersPage(page: number, itemsPerPage: number = 5) {
       status: order.status,
       amount: order.amount / 100,
       avatar: displayName.substring(0, 2).toUpperCase(),
+      discountCode: order.discountCode,
+      originalAmount: order.originalAmount ? order.originalAmount / 100 : null,
     };
   });
 }

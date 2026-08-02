@@ -54,9 +54,11 @@ export const RecentOrdersTable = ({ initialOrders, totalOrders }: Props) => {
   };
 
   return (
-    <div className="bg-white rounded-[30px] p-8 shadow-sm border border-gray-100 relative">
+    <div className="bg-white rounded-[30px] max-[640px]:rounded-3xl p-8 max-[640px]:p-5 shadow-sm border border-gray-100 relative">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Ostatnie Zamówienia</h2>
+        <h2 className="text-xl max-[640px]:text-lg font-bold text-gray-800">
+          Ostatnie Zamówienia
+        </h2>
         {isLoading && (
           <Loader2 className="animate-spin text-[#0c493e]" size={20} />
         )}
@@ -95,7 +97,25 @@ export const RecentOrdersTable = ({ initialOrders, totalOrders }: Props) => {
                     </span>
                   </div>
                 </td>
-                <td className="py-4 font-bold">{order.amount} PLN</td>
+                <td className="py-4 font-bold">
+                  <div className="flex flex-col">
+                    <span>{order.amount} PLN</span>
+
+                    {/* Zamówienie z kodem rabatowym: kod + cena sprzed rabatu. */}
+                    {order.discountCode && (
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[10px] font-bold whitespace-nowrap">
+                        <span className="rounded-full bg-[#D4F0C8]/50 px-2 py-0.5 text-[#0c493e] uppercase tracking-wide">
+                          {order.discountCode}
+                        </span>
+                        {order.originalAmount != null && (
+                          <span className="text-gray-400 line-through font-medium">
+                            {order.originalAmount} PLN
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td className="py-4">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusStyles(order.status)}`}

@@ -1,9 +1,14 @@
 import React from "react";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation"; // 1. Import redirect
-import AdminSidebar from "@/components/admin/Sidebar";
-import AdminTopbar from "@/components/admin/Topbar";
+import AdminShell from "@/components/admin/AdminShell";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+
+export const metadata: Metadata = {
+  title: "Panel administracyjny",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({
   children,
@@ -21,21 +26,14 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen w-full bg-[#F5F6F8] font-montserrat text-[#0c493e]">
-      {/* Sidebar - przekazujemy tylko Imię */}
-      <AdminSidebar adminName={user.name} />
-
-      <div className="pl-[280px] w-full flex flex-col min-h-screen transition-all duration-300 max-[980px]:pl-0">
-        {/* Topbar - przekazujemy Imię, Email i Zdjęcie */}
-        <AdminTopbar
-          adminName={user.name}
-          adminEmail={user.email}
-          adminImage={user.image}
-        />
-
-        <main className="flex-1 p-8 max-[980px]:p-4 overflow-x-hidden">
-          {children}
-        </main>
-      </div>
+      {/* Cała interaktywna powłoka (Sidebar + Topbar + drawer mobilny) */}
+      <AdminShell
+        adminName={user.name}
+        adminEmail={user.email}
+        adminImage={user.image}
+      >
+        {children}
+      </AdminShell>
     </div>
   );
 }

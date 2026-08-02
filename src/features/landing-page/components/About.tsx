@@ -1,9 +1,19 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import { Award, GraduationCap, Hourglass } from "lucide-react";
 import Image from "next/image";
 import { AboutData } from "@/lib/types/landing";
+import {
+  fadeUp,
+  fadeUpSm,
+  staggerContainer,
+  staggerFast,
+  revealOnScroll,
+} from "@/lib/animations";
+
+const MotionImage = motion.create(Image);
 
 // STAŁE ZASOBY
 const CARD_ICONS = [GraduationCap, Award, Hourglass];
@@ -61,16 +71,28 @@ export const About = ({ data }: AboutProps) => {
     <section className="flex flex-col mt-86  mb-40 gap-14 max-[1024px]:mt-20">
       <div className="grid grid-cols-[2fr_4fr] custom-container w-full max-[1170px]:grid-cols-[2fr_5fr] max-[1024px]:flex max-[1024px]:justify-center">
         <div className="max-[1024px]:hidden"></div>
-        <div className="flex flex-col gap-2.5 max-[1024px]:items-center max-[1024px]:text-center max-[1024px]:max-w-[70%] max-[1024px]:justify-center max-[1024px]:gap-6 max-[790px]:max-w-[90%]">
-          <h1 className="heading">{renderHeadline()}</h1>
-          <p className="paragraph">{data.description}</p>
-        </div>
+        <motion.div
+          variants={staggerContainer}
+          {...revealOnScroll}
+          className="flex flex-col gap-2.5 max-[1024px]:items-center max-[1024px]:text-center max-[1024px]:max-w-[70%] max-[1024px]:justify-center max-[1024px]:gap-6 max-[790px]:max-w-[90%]"
+        >
+          <motion.h1 variants={fadeUp} className="heading">
+            {renderHeadline()}
+          </motion.h1>
+          <motion.p variants={fadeUp} className="paragraph">
+            {data.description}
+          </motion.p>
+        </motion.div>
       </div>
 
       <div className="min-h-[350px] bg-primary relative flex items-center py-12 max-[1024px]:h-auto">
         <div className="grid grid-cols-[2fr_4fr] custom-container w-full max-[1170px]:grid-cols-[2fr_5fr] max-[1024px]:flex">
           <div className="relative max-[1024px]:hidden">
-            <Image
+            <MotionImage
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
               height={750}
               width={350}
               alt={STATIC_IMAGE_ALT}
@@ -79,13 +101,20 @@ export const About = ({ data }: AboutProps) => {
             />
           </div>
 
-          <div className="w-full flex items-start max-[1024px]:flex-wrap">
-            <div className="flex w-full flex-row justify-between max-[1024px]:!justify-around max-[790px]:flex-col max-[790px]:items-center max-[790px]:text-center  ">
+          <motion.div
+            {...revealOnScroll}
+            className="w-full flex items-start max-[1024px]:flex-wrap"
+          >
+            <motion.div
+              variants={staggerFast}
+              className="flex w-full flex-row justify-between max-[1024px]:!justify-around max-[790px]:flex-col max-[790px]:items-center max-[790px]:text-center  "
+            >
               {data.cards.map((card, index) => {
                 const Icon = CARD_ICONS[index % CARD_ICONS.length];
                 return (
-                  <div
+                  <motion.div
                     key={index}
+                    variants={fadeUpSm}
                     className="w-[244px] pr-2 flex flex-col items-start gap-4  min-h-full max-[1024px]:border-r-0  max-[1024px]:pb-8 max-[1024px]:pr-0 max-[1024px]:mb-8 max-[790px]:items-center"
                   >
                     <div className="text-[#c5e1a5] max-[790px]:self-center">
@@ -99,11 +128,11 @@ export const About = ({ data }: AboutProps) => {
                         {card.description}
                       </p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>

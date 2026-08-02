@@ -1,10 +1,12 @@
 import React from "react";
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Polityka Prywatności | Alice in Physioland",
-  description: "Polityka Prywatności aplikacji Alice in Physioland.",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Polityka prywatności",
+  description: "Polityka prywatności aplikacji Alice in Physioland.",
+  path: "/polityka-prywatnosci",
+});
 
 export default function PrivacyPolicyPage() {
   return (

@@ -1,10 +1,12 @@
 import React from "react";
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Regulamin | Alice in Physioland",
+export const metadata: Metadata = buildMetadata({
+  title: "Regulamin",
   description: "Regulamin korzystania z aplikacji Alice in Physioland.",
-};
+  path: "/regulamin",
+});
 
 export default function TermsOfServicePage() {
   return (

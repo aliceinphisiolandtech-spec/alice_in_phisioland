@@ -22,6 +22,8 @@ interface DashboardClientProps {
   } | null;
   latestNews: News[];
   hasInvoice: boolean;
+  /** Kwota w przycisku „Kup za…" (grosze). null, gdy dostęp już jest. */
+  checkoutPriceGrosze: number | null;
 }
 
 const containerVariants = {
@@ -40,6 +42,7 @@ export default function DashboardClient({
   existingReview, // <-- ZMIANA
   latestNews,
   hasInvoice,
+  checkoutPriceGrosze,
 }: DashboardClientProps) {
   return (
     <motion.div
@@ -55,6 +58,7 @@ export default function DashboardClient({
         progressPercent={progressPercent}
         lastChapterSlug={lastChapterSlug}
         existingReview={existingReview} // <-- ZMIANA: przekazujemy cały obiekt do karty
+        checkoutPriceGrosze={checkoutPriceGrosze}
       />
 
       <DocumentsSection hasAccess={hasAccess} hasInvoice={hasInvoice} />

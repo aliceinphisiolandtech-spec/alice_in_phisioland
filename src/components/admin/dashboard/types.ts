@@ -22,6 +22,10 @@ export interface RecentOrder {
   productId: string;
   amount: string | number;
   status: "succeeded" | "failed" | "pending" | string;
+  /** Kod rabatowy użyty przy zamówieniu (null gdy zakup bez rabatu). */
+  discountCode?: string | null;
+  /** Cena przed rabatem w PLN — pokazywana jako przekreślona. */
+  originalAmount?: number | null;
 }
 
 export interface GoalData {

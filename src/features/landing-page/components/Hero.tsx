@@ -7,13 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { HeroData } from "@/lib/types/landing";
 import React from "react";
 import { Session } from "next-auth";
-
-// ... (Twoje stałe STATIC_AVATARS, STATIC_HERO_IMAGES, STATIC_BLOB bez zmian) ...
-const STATIC_AVATARS = [
-  "https://images.pexels.com/photos/35967884/pexels-photo-35967884.jpeg?auto=compress&cs=tinysrgb&w=128",
-  "https://images.pexels.com/photos/6030282/pexels-photo-6030282.jpeg?auto=compress&cs=tinysrgb&w=128",
-  "https://images.pexels.com/photos/16845064/pexels-photo-16845064.jpeg?auto=compress&cs=tinysrgb&w=128",
-];
+import { fadeUp, fadeUpSm, scaleIn, staggerContainer } from "@/lib/animations";
 
 const STATIC_HERO_IMAGES = [
   "/landing-assets/hero-image-01.webp",
@@ -22,13 +16,24 @@ const STATIC_HERO_IMAGES = [
 ];
 const STATIC_BLOB = "/landing-assets/hero-blob.svg";
 
+export interface SocialProofAvatar {
+  src: string;
+  name: string;
+}
+
 interface HeroProps {
   data: HeroData;
   hasAccess: boolean; // Nowy prop
   session: Session | null; // Nowy prop
+  /**
+   * Zdjęcia autorek opinii — jedyne awatary, które wolno tu pokazać.
+   * Pusta tablica = nie renderujemy stosu (zamiast podstawiać zdjęcia ze stocka
+   * i sugerować, że to prawdziwe czytelniczki).
+   */
+  avatars: SocialProofAvatar[];
 }
 
-export const Hero = ({ data, hasAccess, session }: HeroProps) => {
+export const Hero = ({ data, hasAccess, session, avatars }: HeroProps) => {
   const getButtonConfig = () => {
     // Jeśli user ma dostęp (kupił ebooka) -> Panel Kursanta
     if (hasAccess) {
@@ -83,22 +88,31 @@ export const Hero = ({ data, hasAccess, session }: HeroProps) => {
     >
       <div className="flex flex-row ml-24 max-w-[70%] max-[1110px]:ml-12 max-[920px]:ml-6 max-[920px]:max-w-[75%] max-[860px]:flex-col max-[860px]:max-w-full max-[860px]:ml-0 max-[860px]:px-3 max-[550px]:overflow-hidden">
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
           className="flex flex-col justify-center gap-8 max-[1024px]:w-full"
         >
           {/* UŻYCIE FUNKCJI RENDERUJĄCEJ */}
-          <h1 className="heading mb-[-12px] max-w-[80%] max-[1070px]:max-w-[90%] max-[960px]:max-w-[110%] max-[860px]:self-center max-[860px]:text-center">
+          <motion.h1
+            variants={fadeUp}
+            className="heading mb-[-12px] max-w-[80%] max-[1070px]:max-w-[90%] max-[960px]:max-w-[110%] max-[860px]:self-center max-[860px]:text-center"
+          >
             {renderHeadline()}
-          </h1>
+          </motion.h1>
 
-          <p className="paragraph max-w-[60%] max-[860px]:max-w-full max-[860px]:px-12 max-[860px]:text-center max-[480px]:px-3">
+          <motion.p
+            variants={fadeUp}
+            className="paragraph max-w-[60%] max-[860px]:max-w-full max-[860px]:px-12 max-[860px]:text-center max-[480px]:px-3"
+          >
             {data.description}
-          </p>
+          </motion.p>
 
           {/* ... Reszta przycisków i avatarów bez zmian ... */}
-          <div className="flex flex-row gap-4 max-[860px]:justify-center flex-wrap">
+          <motion.div
+            variants={fadeUp}
+            className="flex flex-row gap-4 max-[860px]:justify-center flex-wrap"
+          >
             <Button
               href={primaryButton.href}
               icon={<ArrowUpRight size={14} strokeWidth={1} />}
@@ -108,26 +122,33 @@ export const Hero = ({ data, hasAccess, session }: HeroProps) => {
             <Button bgColor="bg-primary" href={"#kursy"}>
               {data.buttons.primary.label}
             </Button>
-          </div>
+          </motion.div>
 
           {/* ... Social Proof ... */}
-          <div className="flex items-center gap-4 max-[860px]:self-center">
+          <motion.div
+            variants={fadeUpSm}
+            className="flex items-center gap-4 max-[860px]:self-center"
+          >
             {/* ... kod avatarów i statystyk bez zmian ... */}
-            <div className="flex -space-x-4">
-              {STATIC_AVATARS.map((src, i) => (
-                <div
-                  key={i}
-                  className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-gray-200"
-                >
-                  <Image
-                    src={src}
-                    alt={`User ${i + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+            {avatars.length > 0 && (
+              <div className="flex -space-x-4">
+                {avatars.map((avatar) => (
+                  <div
+                    key={avatar.src}
+                    title={avatar.name}
+                    className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-gray-200"
+                  >
+                    <Image
+                      src={avatar.src}
+                      alt={avatar.name}
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="flex flex-col">
               <span className="text-2xl font-bold text-black">
                 {data.socialProof.stats.count}
@@ -137,14 +158,15 @@ export const Hero = ({ data, hasAccess, session }: HeroProps) => {
                 {data.socialProof.stats.labelLine2}
               </span>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* ... Prawa strona z obrazkami (blob) bez zmian ... */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          variants={scaleIn}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.2 }}
           className="relative ml-12 flex items-center justify-center max-[860px]:ml-0 max-[860px]:mt-12 max-[860px]:w-full"
         >
           {/* ... Tu wklej zawartość prawej kolumny (Images) z poprzedniego kodu ... */}

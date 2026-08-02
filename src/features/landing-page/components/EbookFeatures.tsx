@@ -8,6 +8,16 @@ import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/Button";
 import { EbookFeaturesData, FaqItem } from "@/lib/types/landing";
+import {
+  fadeUp,
+  fadeUpSm,
+  scaleIn,
+  staggerContainer,
+  staggerFast,
+  revealOnScroll,
+} from "@/lib/animations";
+
+const MotionImage = motion.create(Image);
 
 // --- STAŁE ŚCIEŻKI I ZASOBY (Hardcoded in Code) ---
 const DECORATIVE_ARROW = "/landing-assets/E-book-presentation-arrow.svg";
@@ -72,7 +82,7 @@ export const EbookFeatures = ({ data, hasAccess }: EbookFeaturesProps) => {
       <motion.div
         key={index}
         layout
-        initial={false}
+        variants={fadeUpSm}
         onClick={() => setOpenIndex(isOpen ? null : index)}
         className={cn(
           "cursor-pointer overflow-hidden rounded-xl border border-transparent transition-colors duration-300",
@@ -130,18 +140,31 @@ export const EbookFeatures = ({ data, hasAccess }: EbookFeaturesProps) => {
     <section className="custom-container relative bg-white pt-24 pb-40 px-4 max-[1130px]:flex max-[1130px]:flex-col">
       <div className="flex flex-row items-start justify-between gap-8 max-[1130px]:justify-center max-[1130px]:gap-24 max-[750px]:flex-col">
         {/* LEWA KOLUMNA: TREŚĆ */}
-        <div className="flex w-[33%] flex-col gap-6 max-[1130px]:w-[395px] max-[750px]:text-center max-[750px]:w-[80%] max-[750px]:self-center max-[415px]:w-full">
+        <motion.div
+          variants={staggerContainer}
+          {...revealOnScroll}
+          className="flex w-[33%] flex-col gap-6 max-[1130px]:w-[395px] max-[750px]:text-center max-[750px]:w-[80%] max-[750px]:self-center max-[415px]:w-full"
+        >
           {/* Użycie renderHeadline zamiast line1/line2 */}
-          <h2 className="heading">{renderHeadline()}</h2>
+          <motion.h2 variants={fadeUp} className="heading">
+            {renderHeadline()}
+          </motion.h2>
 
-          <p className="paragraph text-gray-600">{data.description}</p>
-        </div>
+          <motion.p variants={fadeUp} className="paragraph text-gray-600">
+            {data.description}
+          </motion.p>
+        </motion.div>
 
         {/* ŚRODKOWA KOLUMNA: GRAFIKA I PRZYCISK */}
-        <div className="flex w-[30%] flex-col items-center justify-center relative max-[1130px]:w-[300px] max-[750px]:self-center">
+        <motion.div
+          variants={staggerContainer}
+          {...revealOnScroll}
+          className="flex w-[30%] flex-col items-center justify-center relative max-[1130px]:w-[300px] max-[750px]:self-center"
+        >
           <div className="relative w-full flex justify-center">
             {/* STATIC_IMAGE_SRC - Obrazek na sztywno */}
-            <Image
+            <MotionImage
+              variants={scaleIn}
               src={STATIC_IMAGE_SRC}
               alt={STATIC_IMAGE_ALT}
               width={500}
@@ -158,36 +181,50 @@ export const EbookFeatures = ({ data, hasAccess }: EbookFeaturesProps) => {
             className="absolute bottom-8 -left-4 max-[975]:w-[50px]"
           />
 
-          <div className="mt-16">
+          <motion.div variants={fadeUp} className="mt-16">
             {/* STATIC_BUTTON_URL - Link na sztywno, Label z CMS */}
             <Button bgColor="bg-primary" href={ctaButton.href}>
               {ctaButton.label}
             </Button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* PRAWA KOLUMNA: FAQ (DESKTOP) */}
-        <div className="flex w-[30%] flex-col gap-3 max-[1130px]:hidden">
-          <h3 className="mb-4 text-lg font-bold text-black">
+        <motion.div
+          variants={staggerFast}
+          {...revealOnScroll}
+          className="flex w-[30%] flex-col gap-3 max-[1130px]:hidden"
+        >
+          <motion.h3
+            variants={fadeUpSm}
+            className="mb-4 text-lg font-bold text-black"
+          >
             {data.faq.title}
-          </h3>
-          <div className="flex flex-col gap-3">
+          </motion.h3>
+          <motion.div variants={staggerFast} className="flex flex-col gap-3">
             {data.faq.items.map((item, index) => renderFAQItem(item, index))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* FAQ (MOBILE/TABLET) */}
-      <div className="flex-col gap-3 hidden max-[1130px]:flex mx-24 max-[750px]:mx-3">
+      <motion.div
+        variants={staggerFast}
+        {...revealOnScroll}
+        className="flex-col gap-3 hidden max-[1130px]:flex mx-24 max-[750px]:mx-3"
+      >
         {/* Wyświetlamy tytuł prosto z CMS, bez replace */}
-        <h3 className="text-3xl font-bold text-black text-center mt-36 mb-12">
+        <motion.h3
+          variants={fadeUpSm}
+          className="text-3xl font-bold text-black text-center mt-36 mb-12"
+        >
           {data.faq.title}
-        </h3>
+        </motion.h3>
 
         <div className="flex flex-col gap-3">
           {data.faq.items.map((item, index) => renderFAQItem(item, index))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 };

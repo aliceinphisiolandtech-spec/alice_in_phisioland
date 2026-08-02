@@ -5,8 +5,9 @@ import { getServerSession } from "next-auth"; // 1. Import
 import { authOptions } from "@/lib/auth"; // 1. Import
 
 export const metadata: Metadata = {
-  title: "Zaloguj się | Alicja Wójcik",
-  description: "Dostęp do panelu wiedzy",
+  title: "Zaloguj się",
+  description: "Zaloguj się, aby uzyskać dostęp do panelu wiedzy.",
+  robots: { index: false, follow: false },
 };
 
 // 2. Dodajemy 'async' do komponentu

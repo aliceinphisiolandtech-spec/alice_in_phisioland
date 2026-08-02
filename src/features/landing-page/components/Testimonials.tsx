@@ -6,6 +6,13 @@ import { Star, Quote, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils/cn";
 import React from "react";
+import {
+  fadeUp,
+  fadeRight,
+  fadeLeft,
+  staggerContainer,
+  revealOnScroll,
+} from "@/lib/animations";
 
 // Zaktualizuj interfejsy (jeśli nie importujesz z lib/types)
 interface TestimonialReview {
@@ -80,13 +87,21 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
   return (
     <section className="bg-white py-40 ">
       <div className="custom-container px-4">
-        <div className="mb-16 text-center">
+        <motion.div
+          variants={fadeUp}
+          {...revealOnScroll}
+          className="mb-16 text-center"
+        >
           <h2 className="heading text-[#103830]">{renderHeadline()}</h2>
-        </div>
+        </motion.div>
 
         <div className="flex flex-row items-stretch gap-8 max-[1024px]:flex-col">
           {/* LEWA KOLUMNA: Aktywna opinia (Karta) */}
-          <div className="relative flex w-[60%] flex-col justify-between rounded-3xl bg-[#103830] p-10 text-white shadow-xl max-[1024px]:w-full max-[640px]:p-6">
+          <motion.div
+            variants={fadeRight}
+            {...revealOnScroll}
+            className="relative flex w-[60%] flex-col justify-between rounded-3xl bg-[#103830] p-10 text-white shadow-xl max-[1024px]:w-full max-[640px]:p-6"
+          >
             <Quote
               className="absolute right-6 top-6 text-white/10 max-[450]:w-[50px] max-[450]:top-1"
               size={80}
@@ -144,18 +159,22 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
                 </div>
               </motion.div>
             </AnimatePresence>
-          </div>
+          </motion.div>
 
           {/* PRAWA KOLUMNA: Lista do wyboru */}
-          <div className="flex w-[40%] flex-col gap-4 max-[1024px]:w-full">
+          <motion.div
+            variants={staggerContainer}
+            {...revealOnScroll}
+            className="flex w-[40%] flex-col gap-4 max-[1024px]:w-full"
+          >
             {reviews.map((item, index) => {
               const isActive = index === activeIndex;
               return (
+                <motion.div key={item.id} variants={fadeLeft}>
                 <button
-                  key={item.id}
                   onClick={() => setActiveIndex(index)}
                   className={cn(
-                    "group relative flex items-center gap-4 rounded-2xl p-4 text-left transition-all duration-300 overflow-hidden cursor-pointer",
+                    "group relative flex w-full items-center gap-4 rounded-2xl p-4 text-left transition-all duration-300 overflow-hidden cursor-pointer",
                     isActive
                       ? "bg-white shadow-md scale-[1.02]"
                       : "bg-white/50 hover:bg-white hover:shadow-sm",
@@ -211,9 +230,10 @@ export const Testimonials = ({ data }: TestimonialsProps) => {
                     )}
                   />
                 </button>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

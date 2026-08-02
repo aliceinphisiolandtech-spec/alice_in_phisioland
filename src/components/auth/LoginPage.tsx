@@ -159,6 +159,53 @@ export const LoginPage = ({ data }: LoginPageProps) => {
                   />
                 </div>
 
+                {/* --- DEV LOGIN (tylko lokalnie, nie buduje się na produkcji) --- */}
+                {process.env.NODE_ENV !== "production" && (
+                  <div className="mt-6 w-full rounded-xl border border-dashed border-amber-300 bg-amber-50 p-4 text-left">
+                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                      Dev login · prawdziwe role
+                    </p>
+
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-600/80">
+                      Klienci — każdy to osobne konto
+                    </p>
+                    <div className="mb-3 grid grid-cols-5 gap-2">
+                      {/* Musi się zgadzać z DEV_CLIENT_COUNT w src/lib/auth.ts.
+                          Nie importujemy stamtąd, bo auth.ts ciągnie prismę. */}
+                      {[1, 2, 3, 4, 5].map((slot) => (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() =>
+                            signIn("dev-login", {
+                              role: "client",
+                              slot: String(slot),
+                              callbackUrl: "/panel-kursanta",
+                            })
+                          }
+                          title={`Zaloguj jako Dev Klient ${slot}`}
+                          className="cursor-pointer rounded-lg border border-amber-300 bg-white py-2 text-sm font-bold text-amber-800 transition-colors hover:bg-amber-100"
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        signIn("dev-login", {
+                          role: "admin",
+                          callbackUrl: "/admin",
+                        })
+                      }
+                      className="w-full cursor-pointer rounded-lg bg-[#0c493e] px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-[#09362e]"
+                    >
+                      Admin
+                    </button>
+                  </div>
+                )}
+
                 <div className="mt-8 flex items-center flex-col gap-3 justify-center text-md font-medium text-gray-500 w-full">
                   <label className="flex items-center gap-2 cursor-pointer hover:text-[#0c493e] transition-colors">
                     <input

@@ -1,14 +1,33 @@
 // src/lib/fakturownia.ts
 
-import { Order } from "@/generated/prisma";
+// `Order` to wyłącznie typ — import wartościowy zostawał w wynikowym module
+// i wywracał się poza webpackiem (Prisma nie eksportuje takiego runtime'u).
+import type { Order } from "@/generated/prisma";
 
 const API_TOKEN = process.env.FAKTUROWNIA_API_TOKEN;
 const DOMAIN = process.env.FAKTUROWNIA_DOMAIN; // np. "twojaklientka.fakturownia.pl" (bez https)
+
+const IS_DEV = process.env.NODE_ENV !== "production";
+/** Awaryjne wymuszenie realnego wystawienia faktury poza produkcją. */
+const FORCE_IN_DEV = process.env.FAKTUROWNIA_FORCE === "true";
 
 export async function createFakturowniaInvoice(
   order: Order,
   productName: string,
 ) {
+  // Bezpiecznik na dev: testowy zakup z NIP-em wystawiłby PRAWDZIWĄ fakturę
+  // w Fakturowni, której nie da się po prostu cofnąć. Blokada siedzi tutaj,
+  // a nie w webhooku, żeby chroniła też każde przyszłe wywołanie.
+  if (IS_DEV && !FORCE_IN_DEV) {
+    console.warn(
+      `🧾 [DEV] Pomijam wystawienie faktury w Fakturowni dla zamówienia ${order.id}` +
+        ` (NIP: ${order.billingNip ?? "brak"}, kwota: ${order.amount} gr).` +
+        ` Ustaw FAKTUROWNIA_FORCE=true w .env, żeby wystawić ją mimo wszystko.`,
+    );
+
+    return { id: null, number: null };
+  }
+
   if (!API_TOKEN || !DOMAIN) {
     throw new Error("Brak konfiguracji Fakturowni w .env");
   }

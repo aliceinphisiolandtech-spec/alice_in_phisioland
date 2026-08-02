@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Script from "next/script";
+import { motion } from "framer-motion";
 import { Star, MapPin } from "lucide-react";
+import {
+  fadeUp,
+  fadeUpSm,
+  staggerContainer,
+  staggerFast,
+  revealOnScroll,
+} from "@/lib/animations";
 
 export const ZnanyLekarzWidget = ({ content }: { content: any }) => {
   const [loaded, setLoaded] = useState(false);
@@ -125,20 +133,25 @@ export const ZnanyLekarzWidget = ({ content }: { content: any }) => {
 
           {/* PRAWA STRONA: OPINIE */}
           {/* Padding top tylko na desktopie (>1024px) */}
-          <div className="flex flex-col gap-8 pt-8 max-[1024px]:pt-0">
-            <div className="mb-2">
+          <motion.div
+            variants={staggerContainer}
+            {...revealOnScroll}
+            className="flex flex-col gap-8 pt-8 max-[1024px]:pt-0"
+          >
+            <motion.div variants={fadeUp} className="mb-2">
               <h3 className="text-3xl font-bold text-[#0c493e] mb-2 max-[1024px]:text-center">
                 {content.sectionTitle}
               </h3>
               <p className="text-gray-500 text-lg max-[1024px]:text-center">
                 {content.sectionSubtitle}
               </p>
-            </div>
+            </motion.div>
 
-            <div className="flex flex-col gap-6">
+            <motion.div variants={staggerFast} className="flex flex-col gap-6">
               {content.reviews.map((review: any, idx: number) => (
-                <div
+                <motion.div
                   key={idx}
+                  variants={fadeUpSm}
                   className="bg-[#f8f9fa] border border-gray-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300"
                 >
                   <div className="flex justify-between items-center mb-3">
@@ -158,12 +171,15 @@ export const ZnanyLekarzWidget = ({ content }: { content: any }) => {
                   <p className="text-gray-600 text-sm leading-relaxed italic">
                     &quot;{review.text}&quot;
                   </p>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {/* Link */}
-            <div className="mt-2 text-left max-[1024px]:text-center">
+            <motion.div
+              variants={fadeUp}
+              className="mt-2 text-left max-[1024px]:text-center"
+            >
               <a
                 href={content.allReviewsHref}
                 target="_blank"
@@ -172,8 +188,8 @@ export const ZnanyLekarzWidget = ({ content }: { content: any }) => {
               >
                 {content.allReviewsLink}
               </a>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>

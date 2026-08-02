@@ -1,4 +1,5 @@
 // app/page.tsx
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { About } from "@/features/landing-page/components/About";
@@ -10,6 +11,20 @@ import { PracticalTraining } from "@/features/landing-page/components/PracticalT
 import { SecurePanel } from "@/features/landing-page/components/SecurePanel";
 import { Testimonials } from "@/features/landing-page/components/Testimonials";
 import { prisma } from "@/lib/prisma";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+  buildMetadata,
+  ebookSchema,
+  organizationSchema,
+  websiteSchema,
+} from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Diagnostyka różnicowa w fizjoterapii — e-book i szkolenia",
+  description:
+    "Naucz się fizjoterapeutycznej diagnostyki różnicowej w ujęciu klinicznym. E-book Alicji Wójcik (Tom 1) oraz praktyczne szkolenia dla fizjoterapeutów. Pewna diagnoza, lepsze efekty terapii.",
+  path: "/",
+});
 
 async function getLandingData() {
   const sections = await prisma.section.findMany();
@@ -67,17 +82,43 @@ async function getFeaturedReviews() {
   }));
 }
 
+/**
+ * Awatary do dowodu społecznego w hero.
+ *
+ * Świadomie WYŁĄCZNIE autorki opinii, a nie wszyscy kupujący: ich zdjęcia są
+ * już publiczne w sekcji opinii, więc hero nie dokłada żadnej nowej ekspozycji
+ * danych osobowych. Pokazanie tam wizerunku każdej klientki razem z informacją
+ * o zakupie byłoby publikacją danych bez jej zgody.
+ *
+ * Wyróżnione opinie idą pierwsze, bo są kuratorowane.
+ */
+async function getSocialProofAvatars() {
+  const reviews = await prisma.review.findMany({
+    where: { user: { image: { not: null } } },
+    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+    take: 3,
+    select: { user: { select: { name: true, image: true } } },
+  });
+
+  return reviews.map((review) => ({
+    src: review.user.image as string,
+    name: review.user.name ?? "Czytelniczka",
+  }));
+}
+
 export default async function Home() {
   const landingDataPromise = getLandingData();
   const sessionPromise = getServerSession(authOptions);
   // Pobieramy opinie równolegle
   const featuredReviewsPromise = getFeaturedReviews();
 
-  const [landingData, session, featuredReviews] = await Promise.all([
-    landingDataPromise,
-    sessionPromise,
-    featuredReviewsPromise,
-  ]);
+  const [landingData, session, featuredReviews, socialProofAvatars] =
+    await Promise.all([
+      landingDataPromise,
+      sessionPromise,
+      featuredReviewsPromise,
+      getSocialProofAvatars(),
+    ]);
 
   const hasAccess = await checkUserAccess(session?.user?.id);
 
@@ -90,8 +131,14 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <JsonLd data={[organizationSchema(), websiteSchema(), ebookSchema()]} />
       <main className="flex-grow">
-        <Hero data={landingData.hero} hasAccess={hasAccess} session={session} />
+        <Hero
+          data={landingData.hero}
+          hasAccess={hasAccess}
+          session={session}
+          avatars={socialProofAvatars}
+        />
         <div id="o-ebooku">
           <EbookFeatures
             data={landingData.ebookFeatures}

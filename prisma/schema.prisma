@@ -162,10 +162,187 @@ model Order {
 
   ksefNumber        String?
 
+  // Znacznik wysłania powiadomienia o porzuconym koszyku (dedup dla crona)
+  abandonedNotifiedAt DateTime?
+
+  /// Zamówienie złożone w trybie piaskownicy (zakup testowy admina).
+  /// Nie liczy się do statystyk sprzedaży ani nie wywołuje powiadomień o
+  /// porzuconym koszyku — patrz src/app/admin/page.tsx.
+  isSandbox Boolean @default(false)
+
+  // --- RABAT (SNAPSHOT) ---
+  // Trzymamy sam tekst kodu, a nie relację do DiscountCode: admin może zmienić
+  // nazwę kodu w panelu, a historyczne zamówienia mają pokazywać to, co realnie
+  // zostało użyte w momencie zakupu.
+  discountCode   String? // np. "ALICJA10"
+  discountAmount Int? // obniżka Z SAMEGO KODU w groszach
+  originalAmount Int? // cena bazowa przed wszystkimi obniżkami
+
+  // Pozostałe źródła obniżki (przecena i zniżka dla puli maili). Trzymamy nazwę
+  // i kwotę osobno, żeby raport "ile kosztowała ta akcja" dało się zrobić bez
+  // rozbijania jednej zbiorczej liczby.
+  saleName            String?
+  saleAmount          Int?
+  /// ID przeceny — potrzebne, by naliczyć jej zużycie po udanej płatności
+  /// nawet po zmianie nazwy. Bez relacji FK, tak jak przy discountCodeId.
+  saleId              String?
+  emailDiscountName   String?
+  emailDiscountAmount Int?
+  /// ID zniżki mailowej — analogicznie do saleId.
+  emailDiscountId     String?
+  /// Suma wszystkich obniżek (originalAmount - amount).
+  totalDiscountAmount Int?
+  // Świadomie bez relacji FK: kod może zostać usunięty z panelu, a zamówienie
+  // ma zachować pełny ślad. ID służy do naliczenia zużycia właściwemu kodowi
+  // nawet po zmianie jego nazwy.
+  discountCodeId String?
+
 
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
+// Kod rabatowy. W systemie może żyć dowolna liczba kodów jednocześnie —
+// każdy z własnym typem rabatu, limitem użyć i oknem czasowym.
+model DiscountCode {
+  id   String @id @default(cuid())
+  code String @unique // zawsze UPPERCASE
+
+  // --- WARTOŚĆ RABATU ---
+  // type = "percent" -> używamy percentOff; type = "amount" -> amountOff.
+  // Drugie pole jest wtedy NULL, żeby nie dało się zapisać sprzecznych danych.
+  type       String @default("percent") // "percent" | "amount"
+  percentOff Int? // 1-95
+  amountOff  Int? // grosze
+
+  // --- WŁĄCZNIK ---
+  isActive Boolean @default(false)
+
+  // Czy kod wolno naliczyć NA WIERZCH aktywnej przeceny / zniżki mailowej.
+  // Domyślnie nie — wtedy system wybiera wariant korzystniejszy dla klientki
+  // zamiast sumować obniżki.
+  stackableWithSale Boolean @default(false)
+
+  /// Utworzony lub zmieniony w piaskownicy — działa tylko dla admina,
+  /// dopóki piaskownica nie zostanie wyłączona (co publikuje zmiany).
+  isSandbox Boolean @default(false)
+
+  // --- LIMIT ILOŚCIOWY ---
+  // usageLimit = null oznacza brak limitu. usedCount rośnie dopiero po UDANEJ
+  // płatności (webhook), żeby porzucone koszyki nie zjadały puli.
+  usageLimit Int?
+  usedCount  Int  @default(0)
+
+  // --- OKNO CZASOWE ---
+  // null z obu stron = kod bezterminowy.
+  validFrom  DateTime?
+  validUntil DateTime?
+
+  // Dedup powiadomienia o wyczerpaniu limitu (ustawiane atomowo w webhooku).
+  exhaustedNotifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// Ustawienia cenowe — jeden wiersz na całą aplikację (id = "singleton").
+// Zastępuje stałe zaszyte w kodzie, żeby cenę dało się zmienić z panelu.
+model PricingSettings {
+  id String @id @default("singleton")
+
+  /// Cena, którą realnie płacą klientki (grosze).
+  basePriceGrosze Int
+  /// Cena przekreślona w podsumowaniu (grosze).
+  regularPriceGrosze Int
+
+  // --- PIASKOWNICA ---
+  // Tryb testowy dla admina. Nie wyłącza trwających promocji — izoluje to, co
+  // w nim powstanie lub zostanie zmienione (patrz pole isSandbox przy rabatach).
+  sandboxEnabled Boolean @default(false)
+  /// Cena bazowa podstawiana WYŁĄCZNIE adminowi w piaskownicy (grosze).
+  /// null = piaskownica liczy od normalnej ceny sprzedaży.
+  sandboxBasePriceGrosze Int?
+
+  updatedAt DateTime @updatedAt
+}
+
+// Przecena — obniżka globalna, działa bez wpisywania czegokolwiek.
+// W danym momencie powinna działać jedna; gdyby aktywnych było więcej,
+// silnik cenowy wybiera tę korzystniejszą dla klientki.
+model Sale {
+  id   String @id @default(cuid())
+  name String // np. "Promocja premierowa" — widoczne dla klientki w koszyku
+
+  // type = "percent" -> percentOff; type = "fixed_price" -> fixedPrice (cena docelowa)
+  type       String @default("percent") // "percent" | "fixed_price"
+  percentOff Int? // 1-95
+  fixedPrice Int? // grosze — ile ma kosztować w promocji
+
+  isActive   Boolean   @default(false)
+  validFrom  DateTime?
+  validUntil DateTime?
+
+  // --- LIMIT ILOŚCIOWY ---
+  // Tak jak przy kodach: usageLimit = null oznacza brak limitu, a usedCount
+  // rośnie dopiero po UDANEJ płatności (webhook).
+  usageLimit          Int?
+  usedCount           Int       @default(0)
+  exhaustedNotifiedAt DateTime?
+
+  /// Patrz DiscountCode.isSandbox.
+  isSandbox Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// Zniżka dla wybranej puli osób — nalicza się automatycznie, gdy zalogowany
+// adres e-mail znajduje się na liście.
+model EmailDiscount {
+  id   String @id @default(cuid())
+  name String // np. "Lista VIP"
+
+  type       String @default("percent") // "percent" | "amount"
+  percentOff Int?
+  amountOff  Int? // grosze
+
+  isActive   Boolean   @default(false)
+  validFrom  DateTime?
+  validUntil DateTime?
+
+  // --- LIMIT ILOŚCIOWY ---
+  // Liczy się LICZBA ZAKUPÓW, nie liczba adresów na liście: lista 50 osób
+  // z limitem 10 oznacza, że zniżkę wykorzysta pierwsze 10 kupujących.
+  usageLimit          Int?
+  usedCount           Int       @default(0)
+  exhaustedNotifiedAt DateTime?
+
+  /// Patrz DiscountCode.isSandbox.
+  isSandbox Boolean @default(false)
+
+  members EmailDiscountMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model EmailDiscountMember {
+  id         String @id @default(cuid())
+  email      String // zawsze lowercase
+  discountId String
+
+  discount EmailDiscount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([discountId, email])
+  @@index([email])
 }
 
 model UserProgress {
@@ -268,4 +445,20 @@ model NewsletterSubscriber {
   id        String   @id @default(cuid())
   email     String   @unique
   createdAt DateTime @default(now())
+}
+
+// Historia powiadomień administracyjnych (sprzedaż, porzucony koszyk itd.)
+// Zasilana przez src/lib/notifications.ts — zapisujemy każde wysłane powiadomienie,
+// żeby admin miał audyt nawet gdy nie miał włączonych pushy na danym urządzeniu.
+model AdminNotification {
+  id        String   @id @default(cuid())
+  type      String // "sale" | "abandoned_cart"
+  title     String
+  body      String   @db.Text
+  url       String?
+  metadata  Json? // np. { orderId, amount }
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read, createdAt])
 }

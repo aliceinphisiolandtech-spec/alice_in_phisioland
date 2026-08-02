@@ -49,7 +49,8 @@ export async function createNewsAction(
         headers: {
           accept: "application/json",
           "content-type": "application/json",
-          Authorization: `Basic ${process.env.ONESIGNAL_API_KEY}`,
+          // Ta sama nazwa co w lib/notifications.ts — patrz komentarz tam.
+          Authorization: `Basic ${process.env.ONESIGNAL_REST_API_KEY || process.env.ONESIGNAL_API_KEY}`,
         },
         body: JSON.stringify({
           app_id: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,

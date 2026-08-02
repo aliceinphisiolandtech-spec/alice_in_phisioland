@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { motion } from "framer-motion";
 import { ArrowRight, MessageSquare, Quote } from "lucide-react";
+import {
+  fadeUp,
+  fadeUpSm,
+  fadeLeft,
+  staggerContainer,
+  staggerFast,
+  revealOnScroll,
+} from "@/lib/animations";
 
 export const FaqSection = ({ content }: { content: any }) => {
   const [activeId, setActiveId] = useState<number>(1);
@@ -28,24 +37,38 @@ export const FaqSection = ({ content }: { content: any }) => {
     <section className="bg-gray-50 py-44 relative overflow-hidden">
       <div className="custom-container px-4">
         {/* Nagłówek */}
-        <div className="mb-16">
-          <span className="text-[#0c493e] font-bold tracking-widest uppercase text-xs mb-3 block opacity-80">
+        <motion.div
+          variants={staggerContainer}
+          {...revealOnScroll}
+          className="mb-16"
+        >
+          <motion.span
+            variants={fadeUp}
+            className="text-[#0c493e] font-bold tracking-widest uppercase text-xs mb-3 block opacity-80"
+          >
             {content.badge}
-          </span>
-          <h2 className="text-4xl font-bold text-[#0c493e] max-[1024px]:text-3xl">
+          </motion.span>
+          <motion.h2
+            variants={fadeUp}
+            className="text-4xl font-bold text-[#0c493e] max-[1024px]:text-3xl"
+          >
             {content.title}
-          </h2>
-        </div>
+          </motion.h2>
+        </motion.div>
 
         {/* Layout: Wiersz na desktopie, Kolumna poniżej 1024px */}
         <div className="flex flex-row gap-16 max-[1024px]:flex-col max-[1024px]:gap-8">
           {/* --- LEWA KOLUMNA: Lista Pytań --- */}
-          <div className="flex-1 flex flex-col gap-2">
+          <motion.div
+            variants={staggerFast}
+            {...revealOnScroll}
+            className="flex-1 flex flex-col gap-2"
+          >
             {content.items.map((item: any) => (
+              <motion.div key={item.id} variants={fadeUpSm}>
               <button
-                key={item.id}
                 onClick={() => handleQuestionClick(item.id)}
-                className={`group flex items-center cursor-pointer justify-between p-6 rounded-2xl text-left transition-all duration-300 border-2 pointer-cursor ${
+                className={`group flex w-full items-center cursor-pointer justify-between p-6 rounded-2xl text-left transition-all duration-300 border-2 pointer-cursor ${
                   activeId === item.id
                     ? "bg-white border-[#0c493e] shadow-md scale-[1.02]"
                     : "bg-white border-transparent hover:border-gray-200 hover:bg-white/80 text-gray-600"
@@ -68,13 +91,18 @@ export const FaqSection = ({ content }: { content: any }) => {
                   }`}
                 />
               </button>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* --- PRAWA KOLUMNA: Karta Odpowiedzi (Sticky) --- */}
           {/* Ref podpięty tutaj do scrollowania */}
           <div className="flex-1" ref={answerRef}>
-            <div className="sticky top-32">
+            <motion.div
+              variants={fadeLeft}
+              {...revealOnScroll}
+              className="sticky top-32"
+            >
               <div className="relative bg-[#0c493e] rounded-[2rem] p-12 shadow-2xl overflow-hidden min-h-[400px] flex flex-col justify-center max-[1024px]:p-8">
                 {/* Dekoracje tła */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#d4f0c8] opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -109,7 +137,7 @@ export const FaqSection = ({ content }: { content: any }) => {
                   }}
                 />
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

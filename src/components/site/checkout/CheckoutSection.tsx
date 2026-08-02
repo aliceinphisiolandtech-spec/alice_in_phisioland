@@ -7,38 +7,64 @@ import { Session } from "next-auth";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
-import { CheckCircle2, Pencil, Lock, ShieldAlert } from "lucide-react";
+import {
+  CheckCircle2,
+  Pencil,
+  Lock,
+  ShieldAlert,
+  FlaskConical,
+} from "lucide-react";
 
 import { OrderSummary } from "./OrderSummary";
 import { CheckoutForm } from "./CheckoutForm";
 import { LoginPrompt } from "./LoginPrompt";
 import { BillingForm } from "./BillingForm";
 import { BillingFormData } from "@/lib/validators/orders";
+import { formatPln, isTesterEmail } from "@/lib/pricing";
+import { COUPON_ERROR_MESSAGES } from "@/lib/validators/coupon";
+import type { PriceResult } from "@/lib/pricing-engine";
+import type { SandboxInfo } from "@/lib/checkout-pricing";
+import type { CouponApplyResult } from "./CouponField";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
 );
 
 const IS_TESTING_WEEK = process.env.NEXT_PUBLIC_IS_TESTING_WEEK === "true";
-const TESTERS_WHITELIST = [
-  "juszczakmat@gmail.com",
-  "aleksandra.kozlowska38@gmail.com",
-  "mlech.pan@gmail.com",
-  "gaskaula9@gmail.com",
-  "kosminskanatalia95@gmail.com",
-  "biuro@kocikdev.com",
-];
 
-export const CheckoutSection = ({ session }: { session: Session | null }) => {
+// Podstawiane w czasie builda. Warunek musi stać TUTAJ, a nie tylko w
+// LoginPrompt: gdyby handler powstawał bezwarunkowo, samo wywołanie
+// signIn("dev-login") lądowałoby w produkcyjnym bundle jako martwy kod.
+const IS_DEV = process.env.NODE_ENV !== "production";
+
+interface CheckoutSectionProps {
+  session: Session | null;
+  /** Wycena bez kodu (przecena + zniżka mailowa), policzona na serwerze. */
+  initialPricing: PriceResult;
+  sandbox: SandboxInfo;
+}
+
+export const CheckoutSection = ({
+  session,
+  initialPricing,
+  sandbox,
+}: CheckoutSectionProps) => {
   const [clientSecret, setClientSecret] = useState("");
   const [isInitializing, setIsInitializing] = useState(false);
   const [savedBillingData, setSavedBillingData] =
     useState<BillingFormData | null>(null);
 
+  // Wycena trzymana tutaj, bo potrzebują jej i podsumowanie (wyświetlenie kwot),
+  // i wywołanie tworzące PaymentIntent. Każda kwota pochodzi z serwera.
+  const [pricing, setPricing] = useState<PriceResult>(initialPricing);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  // Kod poprawny, ale przebity korzystniejszą promocją — trzymamy go osobno,
+  // żeby pokazać wyjaśnienie zamiast udawać, że nic nie wpisano.
+  const [outrankedCode, setOutrankedCode] = useState<string | null>(null);
+
   // Zabezpieczenie na poziomie wyświetlania
   const userEmail = session?.user?.email?.toLowerCase();
-  const isTester = userEmail && TESTERS_WHITELIST.includes(userEmail);
-  const isLockedForNonTesters = IS_TESTING_WEEK && !isTester;
+  const isLockedForNonTesters = IS_TESTING_WEEK && !isTesterEmail(userEmail);
 
   const handleBillingSubmit = async (data: BillingFormData) => {
     setIsInitializing(true);
@@ -46,7 +72,9 @@ export const CheckoutSection = ({ session }: { session: Session | null }) => {
       const res = await fetch("/api/checkout/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        // Kod jest tylko sugestią — serwer liczy całą wycenę od nowa i sam
+        // przekazuje kwotę do Stripe.
+        body: JSON.stringify({ ...data, couponCode: appliedCode }),
       });
 
       const result = await res.json();
@@ -57,7 +85,20 @@ export const CheckoutSection = ({ session }: { session: Session | null }) => {
 
       setSavedBillingData(data);
       setClientSecret(result.clientSecret);
-      toast.success("Dane zapisane. Możesz dokonać płatności.");
+      // Płatność powstała na podstawie tej wyceny — pokazujemy dokładnie ją.
+      if (result.pricing) setPricing(result.pricing as PriceResult);
+      setAppliedCode(result.appliedCode ?? null);
+
+      // Kod przestał być ważny między dodaniem go w koszyku a przejściem do
+      // płatności (np. promocja została wyłączona w panelu).
+      if (result.couponRejected) {
+        setOutrankedCode(null);
+        toast.error(
+          `${COUPON_ERROR_MESSAGES[result.couponRejected as keyof typeof COUPON_ERROR_MESSAGES] ?? "Kod rabatowy został odrzucony."} Do zapłaty: ${formatPln(result.pricing?.finalAmount ?? 0)}.`,
+        );
+      } else {
+        toast.success("Dane zapisane. Możesz dokonać płatności.");
+      }
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Wystąpił błąd połączenia.");
@@ -68,6 +109,47 @@ export const CheckoutSection = ({ session }: { session: Session | null }) => {
 
   const handleEditBilling = () => {
     setClientSecret("");
+  };
+
+  /**
+   * PaymentIntent powstaje już przy zapisaniu danych do faktury, a jego kwoty nie
+   * da się zmienić po fakcie. Dlatego każda zmiana kodu unieważnia utworzoną
+   * płatność — klientka potwierdza dane ponownie i dostaje intent z nową kwotą.
+   */
+  const handleCouponApplied = (result: CouponApplyResult) => {
+    setPricing(result.pricing);
+    setAppliedCode(result.appliedCode);
+    setOutrankedCode(result.outranked ? result.enteredCode : null);
+
+    if (result.outranked) {
+      toast.info(
+        "Kod jest poprawny, ale Twoja obecna promocja daje lepszą cenę — zostawiliśmy niższą kwotę.",
+      );
+    } else if (clientSecret) {
+      setClientSecret("");
+      toast.success(
+        `Kod ${result.appliedCode} zastosowany. Potwierdź dane do faktury, aby przeliczyć płatność.`,
+      );
+    } else {
+      toast.success(`Kod ${result.appliedCode} zastosowany.`);
+    }
+  };
+
+  const handleCouponRemoved = () => {
+    // Bez kodu wracamy do wyceny wyjściowej — przecena i zniżka mailowa
+    // działają niezależnie od tego, co klientka wpisała w polu kodu.
+    setPricing(initialPricing);
+    setAppliedCode(null);
+    setOutrankedCode(null);
+
+    if (clientSecret) {
+      setClientSecret("");
+      toast.info(
+        "Kod usunięty. Potwierdź dane do faktury, aby przeliczyć płatność.",
+      );
+    } else {
+      toast.info("Kod rabatowy usunięty.");
+    }
   };
 
   const appearance = {
@@ -85,12 +167,57 @@ export const CheckoutSection = ({ session }: { session: Session | null }) => {
           Finalizacja Zamówienia
         </h1>
 
+        {/* --- PIASKOWNICA ---
+            `sandbox.active` liczy się na serwerze i jest true wyłącznie dla
+            admina oraz — poza produkcją — kont testowych @local.dev.
+            Klientka nigdy tego nie zobaczy. */}
+        {sandbox.active && (
+          <div className="mb-8 flex items-start gap-4 rounded-2xl border-2 border-dashed border-amber-400 bg-amber-50 p-5 animate-in fade-in">
+            <div className="shrink-0 rounded-xl bg-amber-400/20 p-2.5 text-amber-700">
+              <FlaskConical size={22} />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-amber-900">
+                System działa w piaskownicy
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-amber-800">
+                Widzisz wersję testową cennika —{" "}
+                <strong>rabaty i ceny poniżej są fikcyjne</strong> i nie
+                działają dla klientek. Płatność przejdzie normalnie (Stripe w
+                trybie testowym), ale takie zamówienie nie liczy się do
+                statystyk sprzedaży i <strong>nie wystawi faktury</strong>.
+                {sandbox.usesSandboxPrice && (
+                  <> Cena bazowa pochodzi z testowej ceny piaskownicy.</>
+                )}
+              </p>
+              <p className="mt-2 text-xs text-amber-700">
+                Tryb wyłączysz w panelu Rabaty, w kafelku „Klientka płaci
+                teraz”.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row items-start gap-12">
           {/* LEWA KOLUMNA */}
           <div className="flex-1 w-full space-y-6">
             {!session ? (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <LoginPrompt onGoogleLogin={() => signIn("google")} />
+                <LoginPrompt
+                  onGoogleLogin={() => signIn("google")}
+                  // callbackUrl wraca na /zakup, żeby dev login nie wyrzucał
+                  // z koszyka do panelu w środku testu płatności.
+                  onDevLogin={
+                    IS_DEV
+                      ? ({ role, slot }) =>
+                          signIn("dev-login", {
+                            role,
+                            slot: slot ? String(slot) : undefined,
+                            callbackUrl: "/zakup",
+                          })
+                      : undefined
+                  }
+                />
               </div>
             ) : (
               <>
@@ -198,13 +325,25 @@ export const CheckoutSection = ({ session }: { session: Session | null }) => {
                         ${!clientSecret ? "opacity-50 grayscale pointer-events-none select-none" : "opacity-100"}
                       `}
                     >
-                      <div className="flex justify-between items-center mb-6">
+                      <div className="flex justify-between items-center gap-3 mb-6">
                         <h2 className="text-lg font-bold text-[#103830] flex items-center gap-2">
                           2. Metoda płatności
                           {!clientSecret && (
                             <Lock className="w-4 h-4 text-gray-400" />
                           )}
                         </h2>
+
+                        {/* Kwota przy przycisku płatności — na mobile podsumowanie
+                            jest dopiero pod formularzem, więc bez tego klientka
+                            nie widziałaby ceny po rabacie w momencie płacenia. */}
+                        <div className="text-right shrink-0">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            Do zapłaty
+                          </p>
+                          <p className="font-bold text-[#103830] leading-tight">
+                            {formatPln(pricing.finalAmount)}
+                          </p>
+                        </div>
                       </div>
                       {clientSecret ? (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -230,7 +369,16 @@ export const CheckoutSection = ({ session }: { session: Session | null }) => {
           {/* PRAWA KOLUMNA */}
           <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 lg:sticky lg:top-32">
             {/* Poprawione wywołanie z przekazaniem maila */}
-            <OrderSummary />
+            <OrderSummary
+              pricing={pricing}
+              appliedCode={appliedCode}
+              outrankedCode={outrankedCode}
+              onCouponApplied={handleCouponApplied}
+              onCouponRemoved={handleCouponRemoved}
+              // Kod można wpisać tylko wtedy, gdy zakup jest w ogóle możliwy.
+              showCoupon={!!session && !isLockedForNonTesters}
+              couponDisabled={isInitializing}
+            />
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"; // Zmień na swój prawdziwy import instancji Prisma
 
+import { formatNumberPl } from "@/lib/pricing";
 import DashboardAdmin from "@/components/admin/dashboard/DashboardAdmin";
 import { StatData } from "@/components/admin/dashboard/types";
 
@@ -23,19 +24,28 @@ export default async function AdminDashboardPage() {
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const sevenDaysAgo = new Date(now.setDate(now.getDate() - 6)); // Z ostatnich 7 dni
 
+  // Zakupy testowe z piaskownicy nie są sprzedażą — nie mogą podbijać przychodu
+  // ani liczby klientów. Dokładamy ten filtr do KAŻDEGO zapytania o zamówienia.
+  const REAL = { isSandbox: false } as const;
+
   // --- PRZYCHÓD (Suma z Orders w groszach -> konwersja na PLN) ---
   const totalRevenueData = await prisma.order.aggregate({
-    where: { status: "succeeded" },
+    where: { ...REAL, status: "succeeded" },
     _sum: { amount: true },
   });
 
   const currentMonthRevenue = await prisma.order.aggregate({
-    where: { status: "succeeded", createdAt: { gte: startOfThisMonth } },
+    where: {
+      ...REAL,
+      status: "succeeded",
+      createdAt: { gte: startOfThisMonth },
+    },
     _sum: { amount: true },
   });
 
   const lastMonthRevenue = await prisma.order.aggregate({
     where: {
+      ...REAL,
       status: "succeeded",
       createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
     },
@@ -63,15 +73,20 @@ export default async function AdminDashboardPage() {
   // --- KLIENCI (Unikalni użytkownicy z sukcesywnym zamówieniem) ---
   const totalCustomers = await prisma.order.groupBy({
     by: ["userId"],
-    where: { status: "succeeded" },
+    where: { ...REAL, status: "succeeded" },
   });
   const currentMonthCustomers = await prisma.order.groupBy({
     by: ["userId"],
-    where: { status: "succeeded", createdAt: { gte: startOfThisMonth } },
+    where: {
+      ...REAL,
+      status: "succeeded",
+      createdAt: { gte: startOfThisMonth },
+    },
   });
   const lastMonthCustomers = await prisma.order.groupBy({
     by: ["userId"],
     where: {
+      ...REAL,
       status: "succeeded",
       createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
     },
@@ -83,13 +98,14 @@ export default async function AdminDashboardPage() {
 
   // --- BŁĘDY / FAILED ORDERS ---
   const totalFails = await prisma.order.count({
-    where: { status: "failed" },
+    where: { ...REAL, status: "failed" },
   });
   const currentMonthFails = await prisma.order.count({
-    where: { status: "failed", createdAt: { gte: startOfThisMonth } },
+    where: { ...REAL, status: "failed", createdAt: { gte: startOfThisMonth } },
   });
   const lastMonthFails = await prisma.order.count({
     where: {
+      ...REAL,
       status: "failed",
       createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
     },
@@ -100,7 +116,7 @@ export default async function AdminDashboardPage() {
   const statsData: StatData[] = [
     {
       title: "Całkowity Przychód",
-      value: `${totalRevenue.toLocaleString()} PLN`,
+      value: `${formatNumberPl(totalRevenue)} PLN`,
       change: formatChangeText(revenueTrend),
       trend: revenueTrend >= 0 ? "up" : "down",
       bg: "bg-[#0c493e]",
@@ -146,7 +162,11 @@ export default async function AdminDashboardPage() {
 
   // --- WYKRES - Ostatnie 7 dni ---
   const recentOrdersForChart = await prisma.order.findMany({
-    where: { status: "succeeded", createdAt: { gte: sevenDaysAgo } },
+    where: {
+      ...REAL,
+      status: "succeeded",
+      createdAt: { gte: sevenDaysAgo },
+    },
     select: { amount: true, createdAt: true },
   });
 
@@ -169,9 +189,10 @@ export default async function AdminDashboardPage() {
   const chartData = Array.from(chartMap, ([name, value]) => ({ name, value }));
 
   // --- OSTATNIE ZAMÓWIENIA TABELA ---
-  const totalOrdersCount = await prisma.order.count(); // <--- NOWE: Liczymy wszystkie zamówienia
+  const totalOrdersCount = await prisma.order.count({ where: REAL });
 
   const rawRecentOrders = await prisma.order.findMany({
+    where: REAL,
     take: 5, // <--- Zostawiamy 5 (inicjalne załadowanie)
     orderBy: { createdAt: "desc" },
     include: { user: true },
@@ -188,6 +209,8 @@ export default async function AdminDashboardPage() {
       status: order.status,
       amount: order.amount / 100,
       avatar: displayName.substring(0, 2),
+      discountCode: order.discountCode,
+      originalAmount: order.originalAmount ? order.originalAmount / 100 : null,
     };
   });
 

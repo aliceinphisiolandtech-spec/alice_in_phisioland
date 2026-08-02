@@ -1,8 +1,15 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 // Importujemy ikony tutaj, wewnątrz komponentu wyświetlającego
 import { FileText, Shirt, Coffee, CircleHelp } from "lucide-react";
+import {
+  fadeUp,
+  staggerContainer,
+  staggerFast,
+  revealOnScroll,
+} from "@/lib/animations";
 
 // Mapa ikon dostępnych dla CMS
 const ICON_MAP: Record<string, any> = {
@@ -20,27 +27,44 @@ export const PreparationSection = ({ content }: { content: any }) => {
 
       <div className="custom-container px-4 relative z-10">
         {/* Nagłówek */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-[#d4f0c8] font-bold tracking-widest uppercase text-xs mb-3 block opacity-80">
+        <motion.div
+          variants={staggerContainer}
+          {...revealOnScroll}
+          className="text-center max-w-2xl mx-auto mb-16"
+        >
+          <motion.span
+            variants={fadeUp}
+            className="text-[#d4f0c8] font-bold tracking-widest uppercase text-xs mb-3 block opacity-80"
+          >
             {content.badge}
-          </span>
-          <h2 className="text-4xl font-bold text-white mb-6 max-[768px]:text-3xl">
+          </motion.span>
+          <motion.h2
+            variants={fadeUp}
+            className="text-4xl font-bold text-white mb-6 max-[768px]:text-3xl"
+          >
             {content.title}
-          </h2>
-          <p className="text-white/70 leading-relaxed font-light text-lg">
+          </motion.h2>
+          <motion.p
+            variants={fadeUp}
+            className="text-white/70 leading-relaxed font-light text-lg"
+          >
             {content.description}
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* --- KROKI (GLASS CARDS) --- */}
-        <div className="grid grid-cols-3 gap-8 max-[1024px]:grid-cols-1 max-[1024px]:gap-6">
+        <motion.div
+          variants={staggerFast}
+          {...revealOnScroll}
+          className="grid grid-cols-3 gap-8 max-[1024px]:grid-cols-1 max-[1024px]:gap-6"
+        >
           {content.steps.map((item: any, index: number) => {
             // Wybieramy ikonę na podstawie stringa z CMS
             // Jeśli string nie pasuje do klucza w ICON_MAP, używamy CircleHelp jako fallback
             const IconComponent = ICON_MAP[item.icon] || CircleHelp;
 
             return (
-              <div key={index} className="relative group">
+              <motion.div key={index} variants={fadeUp} className="relative group">
                 {/* Ikona w tle */}
                 <div className="absolute -top-6 -right-6 text-[#d4f0c8] opacity-5 group-hover:opacity-10 transition-opacity duration-500 rotate-12 pointer-events-none">
                   <IconComponent className="w-32 h-32" />
@@ -68,10 +92,10 @@ export const PreparationSection = ({ content }: { content: any }) => {
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
 
         {/* Opcjonalnie: Linia łącząca na dole */}
         <div className="mt-16 flex justify-center opacity-30">

@@ -11,7 +11,7 @@ export default async function AdminNewsPage() {
   });
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-8 max-[768px]:p-0 max-w-6xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
         <div className="p-3 bg-[#0c493e] rounded-xl text-white">
           <BellRing size={24} />
