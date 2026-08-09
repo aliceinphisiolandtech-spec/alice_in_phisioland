@@ -139,13 +139,22 @@ z domeny `@local.dev`. Logika: `isSandboxActiveFor` w
 [`pricing-settings.ts`](../src/lib/pricing-settings.ts). Na produkcji `IS_DEV`
 jest `false`, więc jedynym wejściem zostaje rola admina.
 
-**Zamówienia testowe** (`Order.isSandbox`):
+**Płatność w piaskownicy przechodzi normalnie** (Stripe w trybie testowym) —
+blokady nie ma celowo, bo sens trybu polega na sprawdzeniu całej ścieżki od ceny
+po nadanie dostępu.
+
+**Zamówienia testowe** (`Order.isSandbox`) i nadany nimi dostęp
+(`Purchase.isSandbox`):
 
 - nie liczą się do żadnej statystyki (przychód, klienci, wykres, tabela zamówień,
-  sumy rabatów)
+  sumy rabatów, licznik „Sprzedane E-booki")
 - nie wywołują powiadomień o porzuconym koszyku
 - **nie generują faktury** — niezależnie od środowiska
 - nie konsumują limitu użyć prawdziwej promocji
+
+Flagę dostępu ustawia webhook wprost z zamówienia (`isSandbox: order.isSandbox`).
+Dostęp nadany z listy oczekujących (`events.createUser` w `lib/auth.ts`) zostaje
+przy `false` — to prawdziwy dostęp, tylko nadany poza sprzedażą.
 
 ---
 
@@ -262,7 +271,37 @@ tworzenia wartości**, nie tylko w renderze. Inaczej martwy kod (np. wywołanie
 
 ---
 
-## 11. Mapa plików
+## 11. Testy
+
+```
+npm test         # jednorazowy przebieg
+npm run test:watch
+```
+
+Vitest, konfiguracja w [`vitest.config.ts`](../vitest.config.ts) (alias `@`
+zduplikowany z `tsconfig.json`). Testy leżą obok testowanego modułu jako
+`*.test.ts`.
+
+Testujemy **wyłącznie czystą domenę** — moduły bez importów serwerowych:
+
+| Plik | Co pilnuje |
+|---|---|
+| `pricing-engine.test.ts` | reguły nakładania (§3), niezmienniki wyniku, próg Stripe |
+| `discounts.test.ts` | `computeDiscount`, statusy `evaluateDiscount`, kolejność powodów |
+| `date-input.test.ts` | pełne doby okna, domknięcie `:59.999` |
+| `waitlist-status.test.ts` | okno zapisów na listę oczekujących |
+
+Każdy test silnika cenowego przechodzi przez `expectConsistent` — wspólne
+sprawdzenie trzech niezmienników z §3. Dodając nową regułę nakładania, dopisz
+przypadek tam, a nie osobny zestaw asercji.
+
+Warstwa serwerowa (Prisma, sesja, Stripe) nie jest testowana jednostkowo —
+to świadomy podział: cała logika decydująca o kwocie do zapłaty jest wolna od
+importów serwerowych właśnie po to, żeby dało się ją sprawdzić bez bazy.
+
+---
+
+## 12. Mapa plików
 
 **Logika (czysta, testowalna):**
 - `src/lib/pricing.ts` — stałe, `formatPln`, cena bazowa
@@ -290,16 +329,25 @@ w `_shared.tsx`
 
 **Akcje:** `src/app/actions/{discounts,sales,email-discounts,pricing-settings}.ts`
 
+**Konfiguracja:** [`.env.example`](../.env.example) — pełna lista zmiennych
+z opisem, co się psuje przy braku każdej z nich. `.gitignore` ignoruje `.env*`,
+ale ma wyjątek na sam szablon.
+
 ---
 
-## 12. Stan otwarty
+## 13. Stan otwarty
 
-- `CRON_SECRET` **nie jest ustawiony** w `.env` — wszystkie endpointy `/api/cron`
-  zwracają 500 („Not configured"), łącznie ze zbiorczym `/api/cron/daily`.
-- `ONESIGNAL_REST_API_KEY` w `.env` vs `ONESIGNAL_API_KEY` czytane
-  w `src/lib/notifications.ts` — push z cronów nie wychodzi, zostaje sam wpis
-  `AdminNotification` w bazie.
-- Licznik „Sprzedane E-booki" na dashboardzie liczy wiersze `Purchase`, a ta
-  tabela nie ma flagi piaskownicy — zakup testowy podbija go o 1.
+- **`CRON_SECRET` trzeba ustawić w `.env`** (wzór w `.env.example`). Bez niego
+  wszystkie endpointy `/api/cron` zwracają 500 („Not configured"), łącznie ze
+  zbiorczym `/api/cron/daily` — wygasłe kody nie są sprzątane, a porzucone
+  koszyki nie są zgłaszane.
+- **Migracja `20260807140000_purchase_sandbox_flag` czeka na zastosowanie.**
+  Dodaje `Purchase.isSandbox` i przepisuje flagę na dostępy, które powstały
+  z zamówień testowych. Procedura jak przy pozostałych migracjach (§10):
+  `prisma db execute --file` → `prisma migrate resolve --applied`. Do czasu
+  zastosowania dashboard będzie się wywracał na nieistniejącej kolumnie.
 - Pełna ścieżka zakupu (Stripe → webhook → dostęp) nie została zweryfikowana
-  end-to-end; sprawdzono logikę, typy, build i zapytania do bazy.
+  end-to-end; sprawdzono logikę, typy, testy jednostkowe i zapytania do bazy.
+- `npm run lint` zgłasza kilkaset błędów z `src/generated/prisma` — kod
+  generowany przez Prismę nie jest wyłączony z konfiguracji ESLinta, więc
+  polecenie jest w praktyce nieczytelne. Kod aplikacji jest czysty.

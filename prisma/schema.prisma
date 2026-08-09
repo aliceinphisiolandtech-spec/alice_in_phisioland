@@ -98,13 +98,17 @@ model Purchase {
 
   createdAt DateTime @default(now())
 
-
+  /// Dostęp nadany zakupem testowym z piaskownicy (patrz Order.isSandbox).
+  /// Statystyki sprzedaży filtrują po tej kolumnie — bez niej zakup testowy
+  /// admina podbijał licznik "Sprzedane E-booki".
+  isSandbox Boolean  @default(false)
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
 
 
   @@unique([userId, productId]) // Zabezpieczenie: Jeden użytkownik może mieć tylko jedną sztukę danego produktu
+  @@index([isSandbox])
 
 }
 
@@ -461,4 +465,126 @@ model AdminNotification {
   createdAt DateTime @default(now())
 
   @@index([read, createdAt])
+}
+
+// ===========================================================================
+// LISTA OCZEKUJĄCYCH (waiting list)
+// ===========================================================================
+// Strona zapisów pod konkretną akcję marketingową — link z posta prowadzi na
+// /zapisy/<slug>, a wpisany adres ląduje w wybranej grupie w MailerLite.
+//
+// Etap 1 uruchamia jedną kampanię (rekord zakładany skryptem seed), ale treść
+// trzymamy już w bazie zamiast w kodzie. Dzięki temu kreator z panelu (Etap 2)
+// dokłada tylko formularz nad tą tabelą — pierwsza kampania nie będzie wymagać
+// przepisywania ani migracji danych.
+
+model WaitlistPage {
+  id   String @id @default(cuid())
+  // Końcówka adresu: /zapisy/<slug>. Unikalna, bo to jest link wklejany w post.
+  slug String @unique
+  // Nazwa robocza — widoczna tylko w panelu, nie na stronie.
+  name String
+
+  // --- Treść strony ---
+  headline    String
+  // Fragment nagłówka do podświetlenia akcentem (jak .text-highlight na LP).
+  highlight   String?
+  description String  @db.Text
+  ctaLabel    String  @default("Zapisz się")
+  // Drobny tekst pod formularzem, np. „Bez spamu. Wypisujesz się jednym kliknięciem."
+  footnote    String?
+
+  // --- Ekran po zapisaniu ---
+  successTitle   String @default("Jesteś na liście!")
+  successMessage String @db.Text
+
+  // --- Integracja z MailerLite ---
+  // ID grupy w MailerLite. Puste = zbieramy wyłącznie do naszej bazy
+  // (tryb awaryjny: strona działa, nawet gdy konto nie jest jeszcze podpięte).
+  mailerliteGroupId String?
+
+  // --- Zakres zbieranych danych ---
+  collectName Boolean @default(false)
+
+  // --- Wygląd ---
+  // Wariant układu i motyw kolorystyczny wybierane w kreatorze. Trzymamy tu
+  // KLUCZ, nie gotowe klasy CSS: gdyby w bazie siedziały klasy Tailwinda,
+  // każda zmiana designu wymagałaby migracji danych, a kampanie sprzed zmiany
+  // wyglądałyby inaczej niż nowe. Nieznany klucz spada na wariant domyślny.
+  layoutVariant String @default("card") // "card" | "split" | "hero"
+  theme         String @default("forest") // "forest" | "light" | "ink"
+
+  // Grafika nagłówka. Adres URL, nie plik — w projekcie nie ma magazynu plików,
+  // a dokładanie go pod jedno pole byłoby nieproporcjonalne. Renderujemy ją
+  // zwykłym <img>, dzięki czemu działa dowolny host bez wpisu w next.config.
+  heroImageUrl String?
+
+  // Zdjęcie WYPEŁNIAJĄCE kartę z treścią (inaczej niż heroImageUrl, które jest
+  // osobnym blokiem nad tekstem). Nad zdjęciem kładziemy nakładkę w kolorze
+  // marki — bez niej tekst na zdjęciu jest nieczytelny.
+  backgroundImageUrl String?
+  // Krycie nakładki w procentach (0–100). Im wyżej, tym mocniej kolor marki
+  // przykrywa zdjęcie: 0 = samo zdjęcie, 100 = sam kolor.
+  overlayOpacity     Int     @default(50)
+  // Obrazek podglądu przy wklejeniu linku na Instagramie/Facebooku.
+  // Puste = globalny obrazek strony (siteConfig.ogImage).
+  ogImageUrl   String?
+
+  // --- Okno zapisów ---
+  isActive      Boolean   @default(true)
+  opensAt       DateTime?
+  closesAt      DateTime?
+  // Twardy limit liczby zapisów. null = bez limitu.
+  // Po jego osiągnięciu strona sama przestaje przyjmować adresy — to jedyny
+  // sposób, żeby akcja z ograniczoną liczbą miejsc zamknęła się sama, także
+  // w środku nocy, bez czyjejkolwiek interwencji.
+  maxSignups    Int?
+  // Co zobaczy ktoś, kto wejdzie przed startem lub po zamknięciu zapisów.
+  closedMessage String?   @db.Text
+
+  // --- Zgoda marketingowa ---
+  // Treść zapisujemy przy stronie, a jej kopię przy każdym zapisie — RODO wymaga
+  // wykazania, na co dokładnie zgodziła się dana osoba w chwili zapisu, a treść
+  // na stronie może się później zmienić.
+  consentText String @db.Text
+
+  subscribers WaitlistSubscriber[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model WaitlistSubscriber {
+  id     String       @id @default(cuid())
+  pageId String
+  page   WaitlistPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  email String
+  name  String?
+
+  // --- Ślad zgody (RODO — zasada rozliczalności) ---
+  consentText String   @db.Text
+  consentAt   DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?  @db.Text
+
+  // --- Synchronizacja z MailerLite ---
+  // Zapis do naszej bazy jest źródłem prawdy: idzie pierwszy i to on decyduje
+  // o sukcesie dla użytkownika. Wysyłka do MailerLite może się nie udać
+  // (awaria, limit, zły klucz) — wtedy rekord zostaje w stanie "pending"
+  // i dobowy cron próbuje ponownie. Żaden kontakt nie przepada.
+  syncStatus   String    @default("pending") // "pending" | "synced" | "failed" | "skipped"
+  syncedAt     DateTime?
+  syncError    String?   @db.Text
+  syncAttempts Int       @default(0)
+
+  createdAt DateTime @default(now())
+
+  // Ta sama osoba nie dubluje się w obrębie jednej kampanii, ale może zapisać
+  // się na kilka różnych akcji — stąd klucz złożony, nie unikalny sam e-mail.
+  @@unique([pageId, email])
+  @@index([syncStatus, syncAttempts])
+  @@index([pageId, createdAt])
 }

@@ -136,6 +136,9 @@ export async function POST(req: Request) {
           data: {
             userId: order.userId,
             productId: "ebook-tom-1",
+            // Dostęp z zakupu testowego dziedziczy flagę zamówienia — inaczej
+            // licznik "Sprzedane E-booki" liczyłby testy jako sprzedaż.
+            isSandbox: order.isSandbox,
           },
         }),
       ]);

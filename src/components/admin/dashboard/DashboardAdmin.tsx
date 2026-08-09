@@ -5,6 +5,8 @@ import { StatData, ChartDataPoint, RecentOrder, GoalData } from "./types";
 import { StatCard } from "./StatCard";
 import { RevenueChart } from "./RevenueChart";
 import { GoalWidget } from "./GoalWidget";
+import { RetentionWidget } from "./RetentionWidget";
+import type { RetentionOverview } from "@/lib/waitlist-retention-data";
 
 import { RecentOrdersTable } from "./RecentOrdersTable";
 
@@ -14,6 +16,8 @@ export interface DashboardClientProps {
   recentOrders: RecentOrder[];
   goalData: GoalData;
   totalOrdersCount: number;
+  /** Przypomnienie o okresie przechowywania adresów z list zapisów. */
+  retention: RetentionOverview;
 }
 
 export default function DashboardAdmin({
@@ -22,6 +26,7 @@ export default function DashboardAdmin({
   recentOrders,
   goalData,
   totalOrdersCount,
+  retention,
 }: DashboardClientProps) {
   return (
     <div className="w-full max-w-[1600px] mx-auto space-y-8">
@@ -48,6 +53,7 @@ export default function DashboardAdmin({
 
         <div className="space-y-6">
           <GoalWidget data={goalData} />
+          <RetentionWidget data={retention} />
         </div>
       </div>
 

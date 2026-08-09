@@ -4,6 +4,7 @@ import {
   runAbandonedCarts,
   runDiscountCodes,
 } from "@/lib/cron-tasks";
+import { runWaitlistSync } from "@/lib/waitlist";
 
 /**
  * Zbiorcze zadanie dobowe — jeden wpis w schedulerze zamiast dwóch.
@@ -65,15 +66,19 @@ async function handle(req: Request) {
   // i przewidywalne — niech zdąży, zanim koszyki zaczną odpytywać OneSignal.
   const discountCodes = await runTask("discount-codes", runDiscountCodes);
   const abandonedCarts = await runTask("abandoned-carts", runAbandonedCarts);
+  // Dosyłka zapisów, których nie udało się od razu przekazać do MailerLite.
+  // Na końcu, bo to zadanie sieciowe — najdłuższe i najbardziej podatne na
+  // timeout, a nie chcemy, żeby blokowało dwa pozostałe.
+  const waitlistSync = await runTask("waitlist-sync", runWaitlistSync);
 
-  const allOk = discountCodes.ok && abandonedCarts.ok;
+  const allOk = discountCodes.ok && abandonedCarts.ok && waitlistSync.ok;
 
   return NextResponse.json(
     {
       ok: allOk,
       startedAt: startedAt.toISOString(),
       durationMs: Date.now() - startedAt.getTime(),
-      tasks: { discountCodes, abandonedCarts },
+      tasks: { discountCodes, abandonedCarts, waitlistSync },
     },
     { status: allOk ? 200 : 500 },
   );

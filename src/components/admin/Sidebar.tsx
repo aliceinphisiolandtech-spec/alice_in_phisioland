@@ -9,12 +9,15 @@ import {
   HelpCircle,
   LogOut,
   MailboxIcon,
+  MailPlus, // <--- IKONA DLA STRON ZAPISÓW
   FilePenLine,
   BellRing,
   Lock, // <--- IMPORT KŁÓDKI
   TicketPercent, // <--- IMPORT IKONY DLA RABATÓW
   PlayCircle, // <--- IMPORT IKONY DLA KURSÓW WIDEO
   X, // <--- IMPORT IKONY ZAMKNIĘCIA (mobile)
+  PanelLeftClose, // <--- ZWIJANIE NAWIGACJI DO IKON
+  PanelLeftOpen,
 } from "lucide-react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
@@ -26,6 +29,18 @@ interface AdminSidebarProps {
   mobileOpen?: boolean;
   /** Zamknięcie mobilnego drawera. */
   onClose?: () => void;
+  /**
+   * Zwinięcie do kolumny samych ikon. Dotyczy WYŁĄCZNIE desktopu — poniżej
+   * 981 px nawigacja jest wysuwanym drawerem na całą szerokość i zwężanie jej
+   * do ikon nie miałoby sensu.
+   *
+   * Dlatego wszystkie klasy zależne od tego stanu są zakwalifikowane
+   * `min-[981px]:`, a klasy mobilne `max-[980px]:`. Zakresy się nie pokrywają,
+   * więc nie ma konfliktu specyficzności i nie trzeba zgadywać szerokości
+   * okna w JavaScripcie.
+   */
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const menuItems = [
@@ -38,6 +53,7 @@ const menuItems = [
     icon: TicketPercent,
     locked: false,
   },
+  { label: "Zapisy na listę", href: "/admin/zapisy", icon: MailPlus, locked: false },
   { label: "Newsletter", href: "#", icon: MailboxIcon, locked: true },
   // NOWA ZAKŁADKA
   { label: "Kursy Video", href: "#", icon: PlayCircle, locked: true },
@@ -47,25 +63,39 @@ export default function AdminSidebar({
   adminName,
   mobileOpen = false,
   onClose,
+  collapsed = false,
+  onToggleCollapse,
 }: AdminSidebarProps) {
   const pathname = usePathname();
+
+  /** Chowa element tylko na desktopie po zwinięciu — na mobile zostaje. */
+  const hideWhenCollapsed = collapsed ? "min-[981px]:hidden" : "";
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 h-screen w-[280px] bg-white flex flex-col justify-between border-r border-gray-100 z-50",
+        "fixed left-0 top-0 h-screen bg-white flex flex-col justify-between border-r border-gray-100 z-50",
         // Mobile: drawer wjeżdżający z lewej; Desktop (>980px): zawsze widoczny.
-        "transition-transform duration-300 ease-out max-[980px]:shadow-2xl",
+        "transition-[transform,width] duration-300 ease-out max-[980px]:shadow-2xl",
+        "max-[980px]:w-[280px]",
+        collapsed ? "min-[981px]:w-[76px]" : "min-[981px]:w-[280px]",
         mobileOpen
           ? "max-[980px]:translate-x-0"
           : "max-[980px]:-translate-x-full",
       )}
     >
       {/* --- LOGO --- */}
-      <div className="px-8 py-8">
-        <div className="flex items-center justify-between gap-3">
+      <div
+        className={cn("py-8", collapsed ? "min-[981px]:px-4 px-8" : "px-8")}
+      >
+        <div
+          className={cn(
+            "flex items-center justify-between gap-3",
+            collapsed && "min-[981px]:justify-center",
+          )}
+        >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center relative justify-center rounded-xl bg-[#0c493e] text-white font-bold text-lg">
+            <div className="flex h-10 w-10 items-center relative justify-center rounded-xl bg-[#0c493e] text-white font-bold text-lg shrink-0">
               <Image
                 src={"/AW-logo-negatyw.svg"}
                 fill
@@ -73,7 +103,12 @@ export default function AdminSidebar({
                 alt="decorative"
               />
             </div>
-            <span className="text-xl font-bold text-[#0c493e] font-montserrat">
+            <span
+              className={cn(
+                "text-xl font-bold text-[#0c493e] font-montserrat whitespace-nowrap",
+                hideWhenCollapsed,
+              )}
+            >
               Panel Admin
             </span>
           </div>
@@ -90,11 +125,44 @@ export default function AdminSidebar({
         </div>
       </div>
 
+      {/* --- ZWIJANIE (tylko desktop) --- */}
+      <div
+        className={cn(
+          "flex max-[980px]:hidden",
+          collapsed ? "min-[981px]:justify-center px-4" : "justify-end px-6",
+        )}
+      >
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          title={collapsed ? "Rozwiń menu" : "Zwiń menu do ikon"}
+          aria-label={collapsed ? "Rozwiń menu" : "Zwiń menu do ikon"}
+          aria-expanded={!collapsed}
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#0c493e]"
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="h-[18px] w-[18px]" />
+          ) : (
+            <PanelLeftClose className="h-[18px] w-[18px]" />
+          )}
+        </button>
+      </div>
+
       {/* --- NAWIGACJA --- */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div
+        className={cn(
+          "flex-1 overflow-y-auto py-4",
+          collapsed ? "min-[981px]:px-3 px-6" : "px-6",
+        )}
+      >
         {/* Sekcja MENU */}
         <div className="mb-8">
-          <p className="mb-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+          <p
+            className={cn(
+              "mb-4 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider",
+              hideWhenCollapsed,
+            )}
+          >
             Menu
           </p>
           <ul className="space-y-2">
@@ -109,13 +177,20 @@ export default function AdminSidebar({
                   <Link
                     href={item.href}
                     onClick={onClose}
-                    className={`group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300
-                      ${item.locked ? "pointer-events-none opacity-50 grayscale" : ""} 
-                      ${
-                        isActive
-                          ? "text-[#0c493e] bg-[#c5e96b]/20"
-                          : "text-gray-500 hover:bg-gray-50 hover:text-[#0c493e]"
-                      }`}
+                    // Po zwinięciu etykiety znikają, więc nazwa musi być
+                    // dostępna inaczej: `title` daje dymek myszy, a zawinięcie
+                    // jej w `sr-only` zostawia ją czytnikom ekranu.
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      "group relative flex items-center gap-3 rounded-xl py-3 text-sm font-medium transition-all duration-300",
+                      collapsed
+                        ? "min-[981px]:justify-center min-[981px]:px-0 px-4"
+                        : "px-4",
+                      item.locked && "pointer-events-none opacity-50 grayscale",
+                      isActive
+                        ? "text-[#0c493e] bg-[#c5e96b]/20"
+                        : "text-gray-500 hover:bg-gray-50 hover:text-[#0c493e]",
+                    )}
                   >
                     {/* Zielony pasek aktywnego elementu */}
                     {isActive && (
@@ -123,14 +198,31 @@ export default function AdminSidebar({
                     )}
 
                     <item.icon
-                      className={`h-5 w-5 ${isActive ? "text-[#0c493e]" : "text-gray-400 group-hover:text-[#0c493e]"}`}
+                      className={cn(
+                        "h-5 w-5 shrink-0",
+                        isActive
+                          ? "text-[#0c493e]"
+                          : "text-gray-400 group-hover:text-[#0c493e]",
+                      )}
                     />
 
-                    {item.label}
+                    <span
+                      className={cn(
+                        "whitespace-nowrap",
+                        collapsed && "min-[981px]:sr-only",
+                      )}
+                    >
+                      {item.label}
+                    </span>
 
                     {/* IKONA KŁÓDKI - Wyrównana do prawej dzięki ml-auto */}
                     {item.locked && (
-                      <Lock className="ml-auto h-4 w-4 text-gray-400" />
+                      <Lock
+                        className={cn(
+                          "ml-auto h-4 w-4 text-gray-400",
+                          hideWhenCollapsed,
+                        )}
+                      />
                     )}
                   </Link>
                 </li>
@@ -141,8 +233,13 @@ export default function AdminSidebar({
       </div>
 
       {/* --- WIDGET NA DOLE --- */}
-      <div className="p-6">
-        <div className="rounded-2xl bg-[#0c493e] p-4 text-white relative overflow-hidden">
+      <div className={cn("p-6", collapsed && "min-[981px]:px-3")}>
+        <div
+          className={cn(
+            "rounded-2xl bg-[#0c493e] p-4 text-white relative overflow-hidden",
+            hideWhenCollapsed,
+          )}
+        >
           {/* Dekoracja tła */}
           <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-[#c5e96b] opacity-20 blur-xl"></div>
 
@@ -159,6 +256,23 @@ export default function AdminSidebar({
             Wyloguj
           </button>
         </div>
+
+        {/*
+          Po zwinięciu z widgetu zostaje samo wylogowanie. Karta z nazwiskiem
+          nie zmieści się w 76 px, ale wyjście z panelu musi być osiągalne
+          bez rozwijania menu — to jedyna akcja, której szuka się w pośpiechu.
+        */}
+        {collapsed && (
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/logowanie" })}
+            title={`Wyloguj${adminName ? ` (${adminName})` : ""}`}
+            aria-label="Wyloguj"
+            className="hidden min-[981px]:flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-[#0c493e] text-white transition-colors hover:bg-[#0a3b32]"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </aside>
   );

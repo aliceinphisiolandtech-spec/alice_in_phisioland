@@ -97,13 +97,97 @@ export default function PrivacyPolicyPage() {
               §5 Udostępnianie danych
             </h3>
             <p className="mb-2">
-              Dane mogą być przekazywane podmiotom świadczącym usługi:
+              Dane mogą być przekazywane podmiotom przetwarzającym je na
+              zlecenie Administratora:
             </p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>obsługi płatności Stripe</li>
-              <li>dostawcom infrastruktury IT i hostingu</li>
-              <li>dostawcom usług analitycznych</li>
+              <li>obsługa płatności — Stripe</li>
+              <li>wystawianie faktur — Fakturownia</li>
+              <li>hosting aplikacji i baza danych (serwery w Unii Europejskiej)</li>
+              <li>
+                wysyłka wiadomości e-mail i obsługa list adresowych — MailerLite
+                (MailerLite Limited, Irlandia / MailerLite UAB, Litwa)
+              </li>
+              <li>monitorowanie błędów aplikacji — Sentry (region UE)</li>
+              <li>powiadomienia push — OneSignal</li>
+              <li>logowanie kontem Google — Google</li>
             </ul>
+            <p className="mt-4">
+              Dane nie są przekazywane poza Europejski Obszar Gospodarczy, chyba
+              że dostawca zapewnia odpowiedni stopień ochrony na podstawie
+              standardowych klauzul umownych.
+            </p>
+          </section>
+
+          {/*
+            Lista oczekujących ma własny paragraf, a nie wzmiankę w §8, bo
+            zbiera inny komplet danych niż newsletter (dowód zgody: jej treść,
+            moment, adres IP) i na innej podstawie niż konto użytkownika.
+            RODO wymaga, żeby osoba zapisująca się wiedziała dokładnie, co
+            i po co zapisujemy — a te dane są zapisywane właśnie po to,
+            by móc później wykazać, na co się zgodziła.
+          */}
+          <section>
+            <h3 className="mb-4 text-xl font-bold text-gray-900">
+              §5a Lista oczekujących (zapisy na akcje i promocje)
+            </h3>
+
+            <p className="mb-2">
+              Na stronach zapisów (adresy w formie{" "}
+              <span className="font-mono text-sm">/zapisy/…</span>) Administrator
+              zbiera dane osób zainteresowanych nadchodzącymi akcjami,
+              promocjami i premierami.
+            </p>
+
+            <p className="mt-4 mb-2 font-medium text-gray-800">
+              Zakres zbieranych danych:
+            </p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>adres e-mail</li>
+              <li>imię — wyłącznie, jeśli formularz o nie pyta</li>
+              <li>
+                dowód udzielonej zgody: jej dokładna treść, data i godzina
+                zapisu, adres IP oraz informacja o przeglądarce
+              </li>
+            </ul>
+
+            <p className="mt-4 mb-2 font-medium text-gray-800">
+              Cel i podstawa prawna:
+            </p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                wysyłka informacji handlowych o zapowiadanej akcji — zgoda osoby,
+                której dane dotyczą (art. 6 ust. 1 lit. a RODO)
+              </li>
+              <li>
+                zapisanie treści zgody, daty i adresu IP — prawnie uzasadniony
+                interes Administratora polegający na możliwości wykazania, że
+                zgoda została udzielona (art. 6 ust. 1 lit. f w związku z art. 7
+                ust. 1 RODO)
+              </li>
+            </ul>
+
+            <p className="mt-4 mb-2 font-medium text-gray-800">
+              Okres przechowywania:
+            </p>
+            <p>
+              Do momentu wycofania zgody, a jeżeli zgoda nie zostanie wycofana —
+              nie dłużej niż 3 lata od ostatniego kontaktu. Dowód udzielenia
+              zgody jest przechowywany przez okres przedawnienia ewentualnych
+              roszczeń.
+            </p>
+
+            <p className="mt-4">
+              Zgodę można wycofać w każdej chwili, klikając link rezygnacji
+              w stopce wiadomości albo pisząc na adres e-mail Administratora.
+              Wycofanie zgody nie wpływa na zgodność z prawem przetwarzania,
+              którego dokonano przed jej wycofaniem.
+            </p>
+
+            <p className="mt-4">
+              Zebrane adresy są przekazywane do systemu MailerLite, który
+              obsługuje wysyłkę wiadomości na zlecenie Administratora.
+            </p>
           </section>
 
           <section>

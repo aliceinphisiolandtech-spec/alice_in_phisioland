@@ -13,7 +13,12 @@ import { Session } from "next-auth";
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 
 /* Sekcja: Linki nawigacyjne */
-const navLinks = [
+/**
+ * Eksportowane, bo tej samej listy używa atrapa navbara na kanwie kreatora
+ * (src/components/admin/waitlist/NavbarPreview.tsx). Jedna lista = linki
+ * w podglądzie nie mogą rozjechać się z prawdziwą nawigacją.
+ */
+export const navLinks = [
   { name: "Strona główna", href: "/" },
   { name: "O e-booku", href: "/#o-ebooku" },
   { name: "Kursy", href: "/#kursy" },

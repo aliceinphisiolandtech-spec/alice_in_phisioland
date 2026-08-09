@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Szablon bez sekretów — musi trafiać do repo, inaczej nie ma skąd wiedzieć,
+# jakich zmiennych aplikacja w ogóle potrzebuje.
+!.env.example
 
 # vercel
 .vercel

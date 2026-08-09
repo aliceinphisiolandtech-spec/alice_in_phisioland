@@ -14,6 +14,10 @@ export default function robots(): MetadataRoute.Robots {
           "/logowanie",
           "/zakup",
           "/api/",
+          // Strony kampanijne (lista oczekujących) są tymczasowe — zaindeksowana
+          // zamknięta promocja to martwy wynik konkurujący ze stroną główną.
+          // Link z posta działa niezależnie od tego wpisu.
+          "/zapisy",
         ],
       },
     ],

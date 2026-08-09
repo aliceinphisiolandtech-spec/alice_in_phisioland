@@ -13,7 +13,11 @@ import {
  *   zmienione przy włączonej piaskownicy, dostaje `isSandbox = true` i działa
  *   wyłącznie na kontach admina,
  * - wyłączenie piaskownicy publikuje te zmiany (zdejmuje flagę),
- * - admin w piaskownicy nie może utworzyć płatności — patrz /api/checkout/intent.
+ * - admin w piaskownicy PRZECHODZI normalną ścieżkę płatności (Stripe w trybie
+ *   testowym) — blokady nie ma celowo, bo sens piaskownicy polega na sprawdzeniu
+ *   całego zakupu od ceny po nadanie dostępu. Powstałe zamówienie i dostęp są
+ *   oznaczone `isSandbox`, więc nie liczą się do statystyk, nie generują faktury
+ *   i nie konsumują limitów promocji (patrz /api/checkout/intent i webhook).
  */
 
 export const PRICING_SETTINGS_ID = "singleton";

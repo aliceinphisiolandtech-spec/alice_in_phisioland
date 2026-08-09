@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"; // Zmień na swój prawdziwy import insta
 import { formatNumberPl } from "@/lib/pricing";
 import DashboardAdmin from "@/components/admin/dashboard/DashboardAdmin";
 import { StatData } from "@/components/admin/dashboard/types";
+import { loadRetentionOverview } from "@/lib/waitlist-retention-data";
 
 // Funkcja pomocnicza do obliczania procentów
 const calculateChange = (current: number, previous: number) => {
@@ -58,12 +59,17 @@ export default async function AdminDashboardPage() {
   const revenueTrend = calculateChange(currentMonthRevPLN, lastMonthRevPLN);
 
   // --- E-BOOKI (Ilość wpisów w Purchase) ---
-  const totalPurchases = await prisma.purchase.count();
+  // Ten sam filtr co przy zamówieniach: dostęp nadany zakupem testowym
+  // z piaskownicy nie jest sprzedażą (patrz Purchase.isSandbox).
+  const totalPurchases = await prisma.purchase.count({ where: REAL });
   const currentMonthPurchases = await prisma.purchase.count({
-    where: { createdAt: { gte: startOfThisMonth } },
+    where: { ...REAL, createdAt: { gte: startOfThisMonth } },
   });
   const lastMonthPurchases = await prisma.purchase.count({
-    where: { createdAt: { gte: startOfLastMonth, lt: startOfThisMonth } },
+    where: {
+      ...REAL,
+      createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
+    },
   });
   const purchasesTrend = calculateChange(
     currentMonthPurchases,
@@ -218,9 +224,14 @@ export default async function AdminDashboardPage() {
   const GOAL_TARGET = 50000; // Np. 50k PLN
   const goalPercentage = (totalRevenue / GOAL_TARGET) * 100;
 
+  // Przypomnienie o okresie przechowywania danych z list zapisów — obietnica
+  // z polityki prywatności musi mieć pokrycie w tym, co widzi administratorka.
+  const retention = await loadRetentionOverview();
+
   return (
     <DashboardAdmin
       statsData={statsData}
+      retention={retention}
       totalOrdersCount={totalOrdersCount}
       chartData={chartData}
       recentOrders={recentOrders}

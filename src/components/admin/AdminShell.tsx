@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { cn } from "@/lib/utils/cn";
 import AdminSidebar from "./Sidebar";
 import AdminTopbar from "./Topbar";
 
@@ -23,6 +24,18 @@ export default function AdminShell({
   children,
 }: AdminShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  /**
+   * Zwinięcie nawigacji do kolumny ikon (tylko desktop).
+   *
+   * Stan siedzi tutaj, a nie w `Sidebar`, bo szerokość nawigacji wpływa na
+   * odstęp treści obok niej — obie rzeczy muszą zmieniać się razem.
+   *
+   * Świadomie bez zapamiętywania w `localStorage`: odczyt z niego przy
+   * pierwszym renderowaniu rozjechałby się z tym, co wyrenderował serwer
+   * (hydration mismatch). Panel jest aplikacją jednostronicową, więc wybór
+   * i tak utrzymuje się przy przechodzeniu między podstronami.
+   */
+  const [navCollapsed, setNavCollapsed] = useState(false);
 
   // Gdy drawer otwarty: blokada scrolla tła + zamykanie klawiszem Escape.
   useEffect(() => {
@@ -48,6 +61,8 @@ export default function AdminShell({
         adminName={adminName}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
+        collapsed={navCollapsed}
+        onToggleCollapse={() => setNavCollapsed((open) => !open)}
       />
 
       {/* Przyciemnione tło (tylko mobile, gdy drawer otwarty) */}
@@ -59,7 +74,18 @@ export default function AdminShell({
         />
       )}
 
-      <div className="pl-[280px] w-full flex flex-col min-h-screen transition-all duration-300 max-[980px]:pl-0">
+      {/*
+        Odstęp podajemy WYŁĄCZNIE klasami z zakresami medialnymi, bez wartości
+        bazowej. Zakresy `max-[980px]` i `min-[981px]` się nie pokrywają, więc
+        nie ma konfliktu specyficzności — przy wartości bazowej obok wariantu
+        o tej samej wadze o wyniku decydowałaby kolejność w wygenerowanym CSS.
+      */}
+      <div
+        className={cn(
+          "w-full flex flex-col min-h-screen transition-[padding] duration-300 max-[980px]:pl-0",
+          navCollapsed ? "min-[981px]:pl-[76px]" : "min-[981px]:pl-[280px]",
+        )}
+      >
         <AdminTopbar
           adminName={adminName}
           adminEmail={adminEmail}
