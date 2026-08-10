@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { cn } from "@/lib/utils/cn";
 import { navLinks } from "@/components/common/Navbar";
 
 /**
@@ -13,46 +14,65 @@ import { navLinks } from "@/components/common/Navbar";
  * W ramce podglądu oznaczałoby to pasek wyjeżdżający na panel administracyjny
  * i zablokowany scroll po jednym kliknięciu.
  *
- * Odwzorowujemy więc sam wygląd stanu spoczynkowego (biały pasek z logo
- * i linkami), a listę linków bierzemy z prawdziwego navbara, żeby nie mogła
- * się rozjechać. Wysokość i odstępy odpowiadają `Navbar` przy `isScrolled=false`.
+ * Odwzorowujemy więc sam wygląd stanu spoczynkowego, a listę linków bierzemy
+ * z prawdziwego navbara, żeby nie mogła się rozjechać. Wysokość i odstępy
+ * odpowiadają `Navbar` przy `isScrolled=false`.
+ *
+ * Na stronie kampanii navbar jest przezroczysty (`transparent`), więc atrapa
+ * też nie maluje tła — prześwituje przez nią tło kanwy, dokładnie jak na
+ * stronie prześwituje tło kampanii.
  */
-export function NavbarPreview() {
+export function NavbarPreview({ onDark = true }: { onDark?: boolean }) {
   return (
     <div
       // Dekoracja podglądu: żadnych linków do klikania i nic do złapania
       // tabulatorem — kanwa ma pokazywać, nie nawigować.
       aria-hidden
-      className="relative w-full border-b border-gray-100 bg-white py-4"
+      className="relative w-full bg-transparent py-4"
     >
       <div className="custom-container mx-auto flex h-20 w-full items-center justify-between max-[1200px]:px-3">
         <Image
-          src="/AW-logo.svg"
+          src={onDark ? "/AW-logo-negatyw.svg" : "/AW-logo.svg"}
           alt=""
           width={120}
           height={40}
           className="h-10 w-auto"
         />
 
-        <div className="flex items-center gap-8 max-[890px]:hidden">
+        <div
+          className={cn(
+            "flex items-center gap-8 text-[14px] font-medium max-[890px]:hidden",
+            onDark ? "text-white/80" : "text-[#0c493e]",
+          )}
+        >
           {navLinks.map((link) => (
-            <span
-              key={link.href}
-              className="text-[14px] font-medium text-[#0c493e]"
-            >
-              {link.name}
-            </span>
+            <span key={link.href}>{link.name}</span>
           ))}
         </div>
 
-        <span className="rounded-[8px] bg-[#0c493e] px-5 py-2.5 text-[14px] font-bold text-white max-[890px]:hidden">
-          Kup e-book
+        <span
+          className={cn(
+            "rounded-[8px] px-5 py-2.5 text-[14px] font-bold max-[890px]:hidden",
+            onDark ? "bg-contrast text-[#0c493e]" : "bg-[#0c493e] text-white",
+          )}
+        >
+          Zaloguj
         </span>
 
         {/* Hamburger — na wąskich ekranach zastępuje linki, tak jak w oryginale. */}
         <span className="flex flex-col gap-1.5 min-[890px]:hidden">
-          <span className="h-0.5 w-6 rounded bg-[#0c493e]" />
-          <span className="h-0.5 w-6 rounded bg-[#0c493e]" />
+          <span
+            className={cn(
+              "h-0.5 w-6 rounded",
+              onDark ? "bg-white" : "bg-[#0c493e]",
+            )}
+          />
+          <span
+            className={cn(
+              "h-0.5 w-6 rounded",
+              onDark ? "bg-white" : "bg-[#0c493e]",
+            )}
+          />
         </span>
       </div>
     </div>

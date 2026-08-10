@@ -1,8 +1,9 @@
 import React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
+import { CenterCardOnLoad } from "./CenterCardOnLoad";
 import {
-  resolveSurfaceTokens,
+  resolveOnImageTokens,
   type ThemeTokens,
   type WaitlistLayout,
   type WaitlistTheme,
@@ -18,13 +19,21 @@ import {
  * się doprowadzić do sytuacji, w której podgląd kłamie.
  *
  * Nagłówek, opis i obszar formularza to FUNKCJE przyjmujące tokeny, a nie
- * gotowe węzły. Powód: karta ze zdjęciem w tle wymusza jasną treść, a w układzie
- * „dwie kolumny" tekst leży POZA kartą i musi zostać w kolorach motywu. Tylko
+ * gotowe węzły. Powód: treść w karcie leży na jej własnym, nieprzezroczystym
+ * tle i zostaje w kolorach motywu, a w układzie „dwie kolumny" tekst leży POZA
+ * kartą — czyli wprost na zdjęciu z nakładką — i musi przejść na jasny. Tylko
  * powłoka wie, co jest w środku karty, a co obok — więc to ona rozdaje tokeny.
  */
 
 /** Slot treści — dostaje tokeny właściwe dla swojego miejsca na stronie. */
 type Slot = (tokens: ThemeTokens) => React.ReactNode;
+
+/**
+ * Kotwica bloku z kartą — po wejściu przewijamy do niej widok.
+ * Jedna stała, bo `id` w znaczniku i cel przewijania muszą być tym samym
+ * napisem, a rozjechałyby się przy pierwszej zmianie któregokolwiek z nich.
+ */
+const CARD_ANCHOR_ID = "karta-kampanii";
 
 export interface CampaignSurfaceProps {
   layout: WaitlistLayout;
@@ -33,7 +42,7 @@ export interface CampaignSurfaceProps {
 
   /** Grafika jako osobny blok (góra karty w „hero", lewa kolumna w „split"). */
   heroImageUrl?: string | null;
-  /** Zdjęcie wypełniające kartę, pod nakładką w kolorze marki. */
+  /** Zdjęcie wypełniające tło CAŁEJ STRONY, pod kartą i pod nakładką w kolorze marki. */
   backgroundImageUrl?: string | null;
   /** Krycie nakładki w procentach (0–100). */
   overlayOpacity?: number;
@@ -67,86 +76,119 @@ export function CampaignSurface({
   body,
   embedded = false,
 }: CampaignSurfaceProps) {
-  // Tokeny treści wewnątrz karty. Ze zdjęciem w tle przechodzą na „jasne na
-  // ciemnym", bo nakładka jest zawsze ciemna.
-  const surfaceTokens = resolveSurfaceTokens(
+  // Tokeny treści leżącej POZA kartą — ta jako jedyna ląduje wprost na zdjęciu
+  // z nakładką, więc przechodzi na „jasne na ciemnym". Treść w karcie zostaje
+  // przy kolorach motywu: karta ma własne, nieprzezroczyste tło.
+  const pageTokens = resolveOnImageTokens(
     tokens,
     theme,
     Boolean(backgroundImageUrl),
   );
 
-  const card = {
-    tokens: surfaceTokens,
-    backgroundImageUrl,
-    overlayOpacity,
-  };
-
   return (
     <div className={cn("flex flex-col", embedded ? "min-h-full" : "contents")}>
-      <div
-        aria-hidden
-        className={cn(
-          embedded ? "absolute inset-0" : "fixed inset-0 -z-10",
-          tokens.page,
-        )}
+      <PageBackground
+        tokens={tokens}
+        imageUrl={backgroundImageUrl}
+        overlayOpacity={overlayOpacity}
+        embedded={embedded}
       />
+
+      {/* Kanwa kreatora siedzi w panelu — przewijanie tam ruszyłoby cały panel. */}
+      {!embedded && <CenterCardOnLoad targetId={CARD_ANCHOR_ID} />}
 
       {navbar && <div className="relative">{navbar}</div>}
 
-      <main className="relative flex flex-grow items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+      {/*
+        Kontener karty ma pełną wysokość okna, więc karta siedzi na środku
+        ekranu niezależnie od tego, ile miejsca zajął navbar. Konsekwencja jest
+        zamierzona: navbar nad nim i stopka pod nim wystają poza okno, więc
+        strona zawsze daje się przewinąć.
+
+        `dvh`, a nie `vh`: na telefonie `100vh` to wysokość BEZ paska adresu,
+        więc dopóki pasek jest widoczny, kawałek kontenera siedzi poza ekranem
+        i karta wypada poniżej środka. `dvh` liczy to, co faktycznie widać.
+
+        Wyśrodkowanie w pionie robi `m-auto` na karcie, a NIE `items-center`
+        na kontenerze. Różnica wychodzi na niskich ekranach: przy `items-center`
+        treść wyższa niż kontener wystaje GÓRĄ poza obszar przewijania i nie da
+        się jej doczytać — scroll idzie tylko w dół. Automatyczne marginesy
+        rozdzielają nadmiar tak, że karta zostaje na środku, dopóki się mieści,
+        a gdy przestaje — po prostu się przewija.
+      */}
+      <main
+        className={cn(
+          "relative flex flex-grow justify-center px-4 py-6 sm:px-6 sm:py-12",
+          // Na kanwie kreatora wysokość daje panel podglądu — `dvh` rozepchałoby
+          // ją na całe okno panelu administracyjnego.
+          embedded ? "min-h-full" : "min-h-dvh",
+        )}
+      >
         {layout === "split" ? (
-          <div className="w-full max-w-[1000px]">
+          <div id={CARD_ANCHOR_ID} className="m-auto w-full max-w-[1000px]">
             <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
-              {/* Tekst leży na tle STRONY, nie na karcie — zostaje w kolorach motywu. */}
-              <div className="max-lg:text-center">
+              {/* Tekst leży na tle STRONY, nie na karcie — to jego dotyczy zdjęcie. */}
+              <div className="max-lg:text-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-3 motion-safe:duration-700 motion-safe:ease-out">
                 {heroImageUrl && (
                   <HeroImage
                     url={heroImageUrl}
                     className="mb-6 rounded-[16px]"
                   />
                 )}
-                {headline(tokens)}
-                {description(tokens)}
+                {headline(pageTokens)}
+                {description(pageTokens)}
               </div>
 
-              <SurfaceCard {...card} className="px-6 py-8 sm:px-9">
-                {body(surfaceTokens)}
+              <SurfaceCard tokens={tokens} className="px-6 py-8 sm:px-9">
+                {body(tokens)}
               </SurfaceCard>
             </div>
           </div>
         ) : layout === "hero" ? (
-          <div className="w-full max-w-[620px]">
-            <SurfaceCard {...card}>
+          <div id={CARD_ANCHOR_ID} className="m-auto w-full max-w-[620px]">
+            <SurfaceCard tokens={tokens}>
               {heroImageUrl && (
                 <HeroImage
                   url={heroImageUrl}
-                  className="h-[200px] sm:h-[260px]"
+                  className="h-[160px] sm:h-[260px]"
                 />
               )}
 
-              <div className="px-6 py-8 sm:px-10 sm:py-10">
-                {headline(surfaceTokens)}
-                {description(surfaceTokens)}
-                <div className="mt-8">{body(surfaceTokens)}</div>
+              <div className="px-5 py-7 sm:px-10 sm:py-10">
+                {/*
+                  Na wąskim ekranie tekst wyśrodkowany: przy jednej kolumnie
+                  wyrównanie do lewej zostawia poszarpaną prawą krawędź tuż
+                  przy krawędzi karty i całość wygląda na ściśniętą.
+                */}
+                <div className="max-sm:text-center">
+                  {headline(tokens)}
+                  {description(tokens)}
+                </div>
+                <div className="mt-7 sm:mt-8">{body(tokens)}</div>
               </div>
             </SurfaceCard>
           </div>
         ) : (
-          <div className="w-full max-w-[560px]">
-            <SurfaceCard {...card} className="px-6 py-9 sm:px-10 sm:py-12">
-              {headline(surfaceTokens)}
-              {description(surfaceTokens)}
-              <div className="mt-8">{body(surfaceTokens)}</div>
+          <div id={CARD_ANCHOR_ID} className="m-auto w-full max-w-[560px]">
+            <SurfaceCard
+              tokens={tokens}
+              className="px-5 py-7 sm:px-10 sm:py-12"
+            >
+              <div className="max-sm:text-center">
+                {headline(tokens)}
+                {description(tokens)}
+              </div>
+              <div className="mt-7 sm:mt-8">{body(tokens)}</div>
             </SurfaceCard>
           </div>
         )}
       </main>
 
-      <footer className="relative px-6 pt-4 pb-8 text-center">
+      <footer className="relative px-6 pt-4 pb-6 text-center sm:pb-8">
         <nav
           className={cn(
             "flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[12px]",
-            tokens.footerLink,
+            pageTokens.footerLink,
           )}
         >
           <FooterLink href="/polityka-prywatnosci" embedded={embedded}>
@@ -165,33 +207,68 @@ export function CampaignSurface({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Karta                                                                       */
+/* Tło strony                                                                  */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Karta z treścią, opcjonalnie ze zdjęciem w tle i nakładką.
+ * Tło pod całą stroną: kolor motywu, na nim opcjonalne zdjęcie, na nim nakładka
+ * w kolorze marki. Karta pływa nad tym wszystkim i zdjęcia nie dotyka.
  *
- * Kolejność warstw ma znaczenie i jest jedynym powodem, dla którego to jest
- * osobny komponent:
+ * Kolor motywu jest warstwą najniższą nieprzypadkowo — gdy zdjęcie się nie
+ * wczyta (zły adres, host offline), strona wygląda dokładnie tak, jak wyglądała
+ * przed dodaniem zdjęcia. Awaria degraduje wygląd, nie treść.
  *
- *   1. tło karty (`tokens.surface` — przy zdjęciu jest to kolor nakładki),
- *   2. zdjęcie,
- *   3. nakładka o zadanym kryciu,
- *   4. treść (`relative`, więc nad wszystkim).
- *
- * Warstwa 1 jest zabezpieczeniem: gdy zdjęcie się nie wczyta, karta zostaje
- * ciemna i jasny tekst nadal da się przeczytać.
+ * Poza kanwą kreatora warstwa jest `fixed`: strona bywa wyższa niż okno, a
+ * zdjęcie ma wtedy wypełniać widok, a nie rozciągać się na całą jej długość.
  */
+function PageBackground({
+  tokens,
+  imageUrl,
+  overlayOpacity,
+  embedded,
+}: {
+  tokens: ThemeTokens;
+  imageUrl?: string | null;
+  overlayOpacity: number;
+  embedded: boolean;
+}) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "overflow-hidden",
+        embedded ? "absolute inset-0" : "fixed inset-0 -z-10",
+        tokens.page,
+      )}
+    >
+      {imageUrl && (
+        // Zdjęcie wchodzi wolniej niż karta — najpierw jest tło, potem treść
+        // na nim. Odwrotna kolejność wygląda jak doładowywanie się strony.
+        <div className="absolute inset-0 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-1000">
+          <BackgroundImage url={imageUrl} />
+          <div
+            // Krycie jest liczbą z suwaka, więc idzie stylem — Tailwind skanuje
+            // klasy statycznie i `opacity-[${x}]` nie trafiłoby do builda.
+            style={{ opacity: clampOpacity(overlayOpacity) / 100 }}
+            className={cn("absolute inset-0", tokens.overlay)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Karta                                                                       */
+/* -------------------------------------------------------------------------- */
+
+/** Karta z treścią — nieprzezroczyste tło motywu, żeby tekst nie leżał na zdjęciu. */
 function SurfaceCard({
   tokens,
-  backgroundImageUrl,
-  overlayOpacity,
   className,
   children,
 }: {
   tokens: ThemeTokens;
-  backgroundImageUrl?: string | null;
-  overlayOpacity: number;
   /** Odstępy wewnętrzne karty. Układ „hero" ich nie ma — grafika idzie do krawędzi. */
   className?: string;
   children: React.ReactNode;
@@ -200,29 +277,13 @@ function SurfaceCard({
     <section
       className={cn(
         "relative overflow-hidden rounded-[20px] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.45)]",
+        // Wejście: karta pojawia się i lekko unosi. Pod `motion-safe`, bo dla
+        // kogoś z włączoną redukcją ruchu ma po prostu od razu być.
+        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-4 motion-safe:duration-700 motion-safe:ease-out",
         tokens.surface,
       )}
     >
-      {backgroundImageUrl && (
-        <>
-          <BackgroundImage url={backgroundImageUrl} />
-          <div
-            aria-hidden
-            // Krycie jest liczbą z suwaka, więc idzie stylem — Tailwind skanuje
-            // klasy statycznie i `opacity-[${x}]` nie trafiłoby do builda.
-            style={{ opacity: clampOpacity(overlayOpacity) / 100 }}
-            className={cn("absolute inset-0", tokens.overlay)}
-          />
-        </>
-      )}
-
-      {/*
-        Odstępy siedzą TUTAJ, a nie na `<section>`. Gdyby były wyżej, zdjęcie
-        i nakładka (pozycjonowane do krawędzi sekcji) i tak wypełniłyby całość,
-        ale treść nie miałaby własnego kontekstu `relative` i schowałaby się
-        pod nakładką.
-      */}
-      <div className={cn("relative", className)}>{children}</div>
+      <div className={className}>{children}</div>
     </section>
   );
 }

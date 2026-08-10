@@ -323,58 +323,58 @@ export function CampaignEditor({
       }
 
       return (
-        <>
-          {/* Ten sam pasek co na stronie — kanwa ma pokazywać komplet treści. */}
-          <SeatsMeter
-            signupCount={row?.subscriberCount ?? 0}
-            maxSignups={
-              form.maxSignups.trim() === "" ? null : Number(form.maxSignups)
-            }
-            tokens={slotTokens}
-          />
-
-          <WaitlistFormShell
-            preview
-            tokens={slotTokens}
-            collectName={form.collectName}
-            ctaLabel={
-              <InlineEdit
-                value={form.ctaLabel}
-                onChange={(value) => set("ctaLabel", value)}
-                label="Napis na przycisku"
-                align="center"
-                className="text-[15px] font-bold"
-                placeholder="Zapisz się"
-              >
-                <span>{form.ctaLabel}</span>
-              </InlineEdit>
-            }
-            consentText={
-              <InlineEdit
-                value={form.consentText}
-                onChange={(value) => set("consentText", value)}
-                label="Treść zgody marketingowej"
-                multiline
-                className="text-[12px] leading-[160%]"
-                placeholder="Treść zgody na otrzymywanie informacji handlowych"
-              >
-                <span>{form.consentText}</span>
-              </InlineEdit>
-            }
-            footnote={
-              <InlineEdit
-                value={form.footnote}
-                onChange={(value) => set("footnote", value)}
-                label="Drobny tekst pod przyciskiem"
-                align="center"
-                className="text-[12px]"
-                placeholder="Drobny tekst pod przyciskiem (opcjonalny)"
-              >
-                <span>{form.footnote}</span>
-              </InlineEdit>
-            }
-          />
-        </>
+        <WaitlistFormShell
+          preview
+          tokens={slotTokens}
+          collectName={form.collectName}
+          // Ten sam licznik i w tym samym miejscu co na stronie — pod polem
+          // e-mail. Kanwa ma pokazywać komplet treści.
+          seats={
+            <SeatsMeter
+              signupCount={row?.subscriberCount ?? 0}
+              maxSignups={
+                form.maxSignups.trim() === "" ? null : Number(form.maxSignups)
+              }
+              tokens={slotTokens}
+            />
+          }
+          ctaLabel={
+            <InlineEdit
+              value={form.ctaLabel}
+              onChange={(value) => set("ctaLabel", value)}
+              label="Napis na przycisku"
+              align="center"
+              className="text-[15px] font-bold"
+              placeholder="Zapisz się"
+            >
+              <span>{form.ctaLabel}</span>
+            </InlineEdit>
+          }
+          consentText={
+            <InlineEdit
+              value={form.consentText}
+              onChange={(value) => set("consentText", value)}
+              label="Treść zgody marketingowej"
+              multiline
+              className="text-[12px] leading-[160%]"
+              placeholder="Treść zgody na otrzymywanie informacji handlowych"
+            >
+              <span>{form.consentText}</span>
+            </InlineEdit>
+          }
+          footnote={
+            <InlineEdit
+              value={form.footnote}
+              onChange={(value) => set("footnote", value)}
+              label="Drobny tekst pod przyciskiem"
+              align="center"
+              className="text-[12px]"
+              placeholder="Drobny tekst pod przyciskiem (opcjonalny)"
+            >
+              <span>{form.footnote}</span>
+            </InlineEdit>
+          }
+        />
       );
     },
     [canvasView, form, set, row],
@@ -496,7 +496,13 @@ export function CampaignEditor({
                 heroImageUrl={form.heroImageUrl || null}
                 backgroundImageUrl={form.backgroundImageUrl || null}
                 overlayOpacity={form.overlayOpacity}
-                navbar={<NavbarPreview />}
+                navbar={
+                  <NavbarPreview
+                    onDark={
+                      Boolean(form.backgroundImageUrl) || form.theme !== "light"
+                    }
+                  />
+                }
                 headline={canvasHeadline}
                 description={canvasDescription}
                 body={canvasBody}

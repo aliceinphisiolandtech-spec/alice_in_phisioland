@@ -5,16 +5,22 @@ import type { ThemeTokens } from "@/lib/waitlist-appearance";
 import { resolveSeats } from "@/lib/waitlist-scarcity";
 
 /**
- * Pasek „zostało X z Y miejsc" nad formularzem.
+ * Licznik „zostało X miejsc z Y" — jedna linijka pod polem e-mail.
+ *
+ * Był tu wcześniej ramkowany kafelek nad formularzem i to był błąd: pierwszą
+ * rzeczą na karcie ma być miejsce na adres, a nie skrzynka z liczbami.
+ * Licznik nie sprzedaje sam z siebie — jest powodem, żeby wpisać adres TERAZ,
+ * więc czyta się go zaraz po polu, jak podpowiedź. Stąd brak ramki i tła:
+ * cały ciężar wizualny zostaje przy polu i przycisku.
  *
  * Liczby bierze z `lib/waitlist-scarcity` — przy ustawionym prawdziwym limicie
  * są prawdziwe, bez limitu wyliczane. Ten komponent tylko je wyświetla;
  * zastrzeżenia do wariantu wyliczanego opisano w tamtym pliku i w dokumentacji.
  *
- * Kolory idą z tokenów motywu, więc pasek działa też na karcie ze zdjęciem,
- * gdzie treść przechodzi na jasną. `bg-current` bierze kolor z klasy tekstu
- * nałożonej na ten sam element — dzięki temu nie trzeba osobnego tokenu na
- * wypełnienie i pasek nie może rozjechać się z resztą karty.
+ * Kolory idą z tokenów motywu, więc licznik działa na każdym z nich.
+ * `bg-current` bierze kolor z klasy tekstu nałożonej na ten sam element —
+ * dzięki temu nie trzeba osobnego tokenu na wypełnienie paska i nie może on
+ * rozjechać się z resztą karty.
  */
 export function SeatsMeter({
   signupCount,
@@ -36,43 +42,53 @@ export function SeatsMeter({
 
   return (
     <div
-      className={cn("mb-5 rounded-[12px] border px-4 py-3", tokens.notice)}
+      className="flex items-center gap-3"
       // Licznik zmienia się w tle wraz z zapisami innych osób. `aria-live` nie
       // ma tu sensu (nie zmienia się w reakcji na działanie użytkownika), ale
       // treść musi być czytelna dla czytnika ekranu jako jedno zdanie.
       role="status"
     >
-      <div className="flex items-baseline justify-between gap-3">
-        <span
-          className={cn("text-[13px] font-semibold", tokens.heading)}
-        >
-          {isLastFew && (
-            <Flame
-              size={13}
-              className="mr-1 inline-block shrink-0 align-[-1px]"
-              aria-hidden
-            />
-          )}
-          Zostało {left} {seatWord(left)}
-        </span>
-
-        <span className={cn("text-[12px] whitespace-nowrap", tokens.muted)}>
-          z {total}
-        </span>
-      </div>
-
+      {/*
+        Pasek bez własnej ramki i tła kafelka — ciężar niesie sam wypełniony
+        fragment, dlatego jest grubszy niż typowy separator i w kolorze tekstu
+        nagłówka. Wypełnienie wchodzi płynnie, żeby wzrok trafił tam po polu
+        e-mail, a nie przed nim.
+      */}
       <div
         className={cn(
-          "mt-2 h-1.5 w-full overflow-hidden rounded-full",
+          "h-1.5 min-w-0 flex-1 overflow-hidden rounded-full",
           tokens.muted,
-          "bg-current/15",
+          "bg-current/20",
         )}
       >
         <div
-          className={cn("h-full rounded-full bg-current", tokens.heading)}
+          className={cn(
+            "h-full rounded-full bg-current",
+            "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-1000 motion-safe:ease-out",
+            isLastFew ? "text-red-500" : tokens.heading,
+          )}
           style={{ width: `${filledPercent}%` }}
         />
       </div>
+
+      <span
+        className={cn(
+          "shrink-0 text-[13px] leading-none font-semibold whitespace-nowrap",
+          // Ostatnie miejsca dostają czerwień — to jedyny moment, w którym
+          // licznik ma prawo krzyknąć głośniej niż przycisk.
+          isLastFew ? "text-red-500" : tokens.heading,
+        )}
+      >
+        {isLastFew && (
+          <Flame
+            size={13}
+            className="mr-1 inline-block shrink-0 align-[-1px]"
+            aria-hidden
+          />
+        )}
+        Zostało {left} {seatWord(left)}
+        <span className={cn("ml-1 font-normal", tokens.muted)}>z {total}</span>
+      </span>
     </div>
   );
 }

@@ -93,9 +93,19 @@ export default async function WaitlistCampaignPage({ params }: PageProps) {
       heroImageUrl={page.heroImageUrl}
       backgroundImageUrl={page.backgroundImageUrl}
       overlayOpacity={page.overlayOpacity}
-      navbar={<Navbar session={session} />}
-      // Sloty dostają tokeny od powłoki: wewnątrz karty ze zdjęciem są inne
-      // (jasne na ciemnym) niż na tle strony.
+      // Nawigacja bez własnego tła, w flow strony — tło kampanii ma sięgać
+      // samej góry okna. Ciemna jest zawsze, gdy leży na zdjęciu (nakładka jest
+      // ciemna) albo gdy motyw sam ma ciemne tło; jasny motyw to jedyny
+      // przypadek, w którym pod navbarem jest jasno.
+      navbar={
+        <Navbar
+          session={session}
+          transparent
+          onDark={Boolean(page.backgroundImageUrl) || theme !== "light"}
+        />
+      }
+      // Sloty dostają tokeny od powłoki: treść na tle strony ze zdjęciem jest
+      // jasna, a ta w karcie zostaje w kolorach motywu.
       headline={(slotTokens) => (
         <CampaignHeadline
           headline={page.headline}
@@ -113,23 +123,23 @@ export default async function WaitlistCampaignPage({ params }: PageProps) {
       )}
       body={(slotTokens) =>
         status === "open" ? (
-          <>
-            <SeatsMeter
-              signupCount={signupCount}
-              maxSignups={page.maxSignups}
-              tokens={slotTokens}
-            />
-            <WaitlistForm
-              slug={page.slug}
-              ctaLabel={page.ctaLabel}
-              collectName={page.collectName}
-              consentText={page.consentText}
-              footnote={page.footnote}
-              successTitle={page.successTitle}
-              successMessage={page.successMessage}
-              tokens={slotTokens}
-            />
-          </>
+          <WaitlistForm
+            slug={page.slug}
+            ctaLabel={page.ctaLabel}
+            collectName={page.collectName}
+            consentText={page.consentText}
+            footnote={page.footnote}
+            successTitle={page.successTitle}
+            successMessage={page.successMessage}
+            tokens={slotTokens}
+            seats={
+              <SeatsMeter
+                signupCount={signupCount}
+                maxSignups={page.maxSignups}
+                tokens={slotTokens}
+              />
+            }
+          />
         ) : (
           <ClosedNotice
             status={status}

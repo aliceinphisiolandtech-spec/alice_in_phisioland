@@ -519,9 +519,10 @@ model WaitlistPage {
   // zwykłym <img>, dzięki czemu działa dowolny host bez wpisu w next.config.
   heroImageUrl String?
 
-  // Zdjęcie WYPEŁNIAJĄCE kartę z treścią (inaczej niż heroImageUrl, które jest
-  // osobnym blokiem nad tekstem). Nad zdjęciem kładziemy nakładkę w kolorze
-  // marki — bez niej tekst na zdjęciu jest nieczytelny.
+  // Zdjęcie WYPEŁNIAJĄCE tło strony, pod kartą z treścią (inaczej niż
+  // heroImageUrl, które jest osobnym blokiem nad tekstem). Nad zdjęciem
+  // kładziemy nakładkę w kolorze marki — bez niej tekst leżący poza kartą
+  // jest nieczytelny.
   backgroundImageUrl String?
   // Krycie nakładki w procentach (0–100). Im wyżej, tym mocniej kolor marki
   // przykrywa zdjęcie: 0 = samo zdjęcie, 100 = sam kolor.

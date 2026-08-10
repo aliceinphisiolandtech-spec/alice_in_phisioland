@@ -22,7 +22,8 @@ export const WAITLIST_LAYOUTS = [
   {
     value: "card",
     label: "Karta",
-    description: "Wyśrodkowana karta z formularzem. Uniwersalna, działa zawsze.",
+    description:
+      "Wyśrodkowana karta z formularzem. Uniwersalna, działa zawsze.",
   },
   {
     value: "split",
@@ -47,7 +48,9 @@ const LAYOUT_VALUES = WAITLIST_LAYOUTS.map((layout) => layout.value);
  * wylądować cokolwiek — po ręcznej edycji w bazie albo po usunięciu wariantu
  * z kodu. Strona kampanii ma się wtedy wyświetlić, a nie wywalić.
  */
-export function resolveLayout(value: string | null | undefined): WaitlistLayout {
+export function resolveLayout(
+  value: string | null | undefined,
+): WaitlistLayout {
   return LAYOUT_VALUES.includes(value as WaitlistLayout)
     ? (value as WaitlistLayout)
     : "card";
@@ -98,7 +101,7 @@ export interface ThemeTokens {
   /** Linki w stopce layoutu. */
   footerLink: string;
   /**
-   * Kolor nakładki kładzionej na zdjęcie w tle karty. Zawsze ciemny — to od
+   * Kolor nakładki kładzionej na zdjęcie w tle strony. Zawsze ciemny — to od
    * niego zależy, czy tekst na zdjęciu da się przeczytać.
    */
   overlay: string;
@@ -161,19 +164,19 @@ export const THEME_TOKENS: Record<WaitlistTheme, ThemeTokens> = {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Karta ze zdjęciem w tle                                                     */
+/* Treść leżąca na zdjęciu w tle                                               */
 /* -------------------------------------------------------------------------- */
 
 /**
  * Nadpisania kolorów dla treści leżącej NA zdjęciu z nakładką.
  *
  * Nakładka jest zawsze ciemna (kolor marki albo grafit), więc treść musi
- * przejść na jasną — niezależnie od motywu. Bez tego karta z motywem „Zielony"
- * miałaby ciemnozielony napis na ciemnozielonej nakładce.
+ * przejść na jasną — niezależnie od motywu. Bez tego nagłówek w motywie
+ * „Zielony" byłby ciemnozielonym napisem na ciemnozielonej nakładce.
  *
- * `surface` celowo dostaje kolor nakładki: to jest warstwa POD zdjęciem, więc
- * gdy zdjęcie się nie wczyta (zły adres, host offline), karta zostaje ciemna
- * i jasny tekst nadal da się przeczytać. Awaria degraduje wygląd, nie treść.
+ * Dotyczy WYŁĄCZNIE treści poza kartą (nagłówek w układzie „dwie kolumny",
+ * stopka). Karta ma własne, nieprzezroczyste tło i zostaje przy kolorach
+ * motywu — zdjęcie leży pod nią, nie w niej.
  */
 const ON_IMAGE_OVERRIDES: Partial<Record<WaitlistTheme, Partial<ThemeTokens>>> =
   {};
@@ -189,16 +192,19 @@ const ON_IMAGE_COMMON = {
     "border-white/25 bg-white/10 text-white placeholder:text-white/50 focus:border-accent focus:ring-accent/40",
   notice: "border-white/20 bg-white/10",
   noticeIcon: "bg-accent text-[#0c493e]",
+  // Motyw „Jasny" ma linki stopki w kolorze marki — na ciemnej nakładce
+  // zniknęłyby, więc one też przechodzą na jasne.
+  footerLink: "text-white/55 hover:text-accent",
 } as const;
 
 /**
- * Tokeny dla treści wewnątrz karty.
+ * Tokeny dla treści leżącej na tle strony.
  *
  * Bez zdjęcia to zwykłe tokeny motywu. Ze zdjęciem — wersja „na ciemnym".
  * Funkcja istnieje po to, żeby decyzja zapadała w JEDNYM miejscu: strona,
  * kanwa kreatora i formularz pytają o to samo i nie mogą się rozjechać.
  */
-export function resolveSurfaceTokens(
+export function resolveOnImageTokens(
   tokens: ThemeTokens,
   theme: WaitlistTheme,
   hasBackgroundImage: boolean,
@@ -209,7 +215,6 @@ export function resolveSurfaceTokens(
     ...tokens,
     ...ON_IMAGE_COMMON,
     ...ON_IMAGE_OVERRIDES[theme],
-    surface: tokens.overlay,
   };
 }
 
@@ -222,10 +227,10 @@ export function resolveSurfaceTokens(
  * nic o długości linii na stronie.
  */
 export const HEADLINE_CLASSES =
-  "text-[30px] leading-[125%] font-bold sm:text-[38px]";
+  "text-[26px] leading-[125%] font-bold sm:text-[38px]";
 
 export const DESCRIPTION_CLASSES =
-  "mt-4 text-[15px] leading-[165%] whitespace-pre-line";
+  "mt-3 text-[14px] leading-[160%] whitespace-pre-line sm:mt-4 sm:text-[15px] sm:leading-[165%]";
 
 /**
  * Miniatura motywu do kreatora — trzy kropki pokazujące tło, powierzchnię

@@ -222,7 +222,7 @@ export function CampaignSettings({
 
           <div>
             <label htmlFor={`${fieldId}-background`} className={labelClass}>
-              Zdjęcie w tle karty
+              Zdjęcie w tle strony
             </label>
             <input
               id={`${fieldId}-background`}
@@ -232,8 +232,9 @@ export function CampaignSettings({
               className={cn(inputClass, "font-mono text-xs")}
             />
             <p className="mt-1 text-xs text-gray-500">
-              Wypełnia całą kartę. Treść przechodzi wtedy na jasną, żeby dało
-              się ją przeczytać na zdjęciu.
+              Leży pod całą stroną — karta z formularzem zostaje na wierzchu,
+              nietknięta. Tekst POZA kartą przechodzi wtedy na jasny, żeby dało
+              się go przeczytać na zdjęciu.
             </p>
           </div>
 
@@ -260,8 +261,8 @@ export function CampaignSettings({
                 <span>Sam kolor</span>
               </div>
               <p className="mt-1.5 text-xs text-gray-500">
-                Im wyżej, tym mocniej kolor marki przykrywa zdjęcie. Poniżej
-                mniej więcej 40% tekst zaczyna ginąć na jaśniejszych zdjęciach —
+                Im wyżej, tym mocniej kolor marki przykrywa zdjęcie. Przy niskim
+                kryciu tekst poza kartą zaczyna ginąć na jaśniejszych zdjęciach —
                 sprawdź efekt na podglądzie obok.
               </p>
             </div>

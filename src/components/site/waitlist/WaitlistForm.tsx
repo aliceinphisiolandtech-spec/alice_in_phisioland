@@ -28,6 +28,8 @@ interface WaitlistFormProps {
   successTitle: string;
   successMessage: string;
   tokens: ThemeTokens;
+  /** Licznik wolnych miejsc — powłoka wstawia go pod polem e-mail. */
+  seats?: React.ReactNode;
 }
 
 type FormState = "idle" | "submitting" | "success";
@@ -41,6 +43,7 @@ export function WaitlistForm({
   successTitle,
   successMessage,
   tokens,
+  seats,
 }: WaitlistFormProps) {
   const [state, setState] = useState<FormState>("idle");
   const [email, setEmail] = useState("");
@@ -134,6 +137,7 @@ export function WaitlistForm({
       ctaLabel={ctaLabel}
       consentText={consentText}
       footnote={footnote}
+      seats={seats}
       ids={ids}
       name={name}
       email={email}

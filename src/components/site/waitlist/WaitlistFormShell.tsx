@@ -25,6 +25,13 @@ export interface WaitlistFormShellProps {
   consentText: React.ReactNode;
   /** Drobny tekst pod przyciskiem. `null` = brak. */
   footnote?: React.ReactNode;
+  /**
+   * Licznik wolnych miejsc. Leży POD polem e-mail, a nie nad formularzem:
+   * pierwsze, co ma przyciągnąć wzrok, to miejsce na adres — licznik jest
+   * powodem, żeby go wpisać teraz, więc czyta się go zaraz po nim, jak
+   * podpowiedź do pola. `null` = kampania bez licznika.
+   */
+  seats?: React.ReactNode;
 
   /**
    * Tryb makiety: pola są wyłączone, a kliknięcia nie wywołują wysyłki.
@@ -59,6 +66,7 @@ export function WaitlistFormShell({
   ctaLabel,
   consentText,
   footnote,
+  seats,
   preview = false,
   ids,
   name = "",
@@ -85,7 +93,7 @@ export function WaitlistFormShell({
       onSubmit={onSubmit}
       // Wyłącza angielskie dymki przeglądarki — walidację komunikujemy sami, po polsku.
       noValidate
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-3.5 sm:gap-4"
       // Na kanwie kreatora formularz jest dekoracją: nie da się w niego wejść
       // tabulatorem ani nic wysłać, żeby nie konkurował z polami edycji treści.
       {...(preview ? { inert: true } : {})}
@@ -131,6 +139,8 @@ export function WaitlistFormShell({
           aria-describedby={error ? ids?.error : undefined}
           className={inputClasses}
         />
+
+        {seats && <div className="mt-1">{seats}</div>}
       </div>
 
       {/*

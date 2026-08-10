@@ -27,9 +27,24 @@ export const navLinks = [
 
 interface NavbarProps {
   session: Session | null;
+  /**
+   * Nawigacja bez własnego tła i bez przyklejania się przy przewijaniu —
+   * zostaje w normalnym flow strony, na jej tle.
+   *
+   * Używa tego strona zapisów: tło kampanii (kolor motywu albo zdjęcie
+   * z nakładką) ma sięgać samej góry okna, a biały pasek ucinałby je paskiem
+   * w poprzek. Przyklejony navbar byłby tam zresztą bez sensu — strona mieści
+   * się w jednym ekranie i nie ma od czego uciekać.
+   */
+  transparent?: boolean;
+  /**
+   * Tło pod przezroczystą nawigacją jest ciemne → logo w negatywie i jasne
+   * napisy. Bez tego granatowe logo znika na ciemnozielonym tle kampanii.
+   */
+  onDark?: boolean;
 }
 
-export const Navbar = ({ session }: NavbarProps) => {
+export const Navbar = ({ session, transparent, onDark }: NavbarProps) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -37,7 +52,13 @@ export const Navbar = ({ session }: NavbarProps) => {
   const pathname = usePathname();
   const isZakupPage = pathname === "/zakup";
   const isLoginPage = pathname === "/logowanie";
-  const isSticky = isScrolled && !isZakupPage && !isLoginPage;
+  const isSticky = isScrolled && !isZakupPage && !isLoginPage && !transparent;
+  /**
+   * Kurczenie się paska przy przewijaniu (niższy pasek, mniejsze logo).
+   * Wariant przezroczysty stoi w miejscu, więc nie ma czego kurczyć —
+   * animacja bez ruchu wyglądałaby jak usterka.
+   */
+  const isCompact = isScrolled && !transparent;
   useEffect(() => {
     if (pathname !== "/") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -108,9 +129,13 @@ export const Navbar = ({ session }: NavbarProps) => {
   }, [isMobileMenuOpen]);
 
   const isAbsolutePosition =
-    (pathname === "/" || pathname === "/strefa-pacjenta") && !isScrolled;
+    (pathname === "/" || pathname === "/strefa-pacjenta") &&
+    !isScrolled &&
+    !transparent;
 
-  const isLightVersion = pathname === "/strefa-pacjenta" && !isScrolled;
+  const isLightVersion =
+    (pathname === "/strefa-pacjenta" && !isScrolled) ||
+    Boolean(transparent && onDark);
   const isDarkVersion = !isLightVersion;
 
   /* Sekcja: Animacje Framer Motion */
@@ -160,18 +185,25 @@ export const Navbar = ({ session }: NavbarProps) => {
       <nav
         className={cn(
           "top-0 z-[100] w-full transition-all duration-500 ease-in-out",
-          isSticky
-            ? "fixed bg-white/80 backdrop-blur-md shadow-sm py-2"
-            : "py-4",
-          isAbsolutePosition
-            ? "absolute"
-            : !isSticky && "relative bg-white border-b border-gray-100 pb-4",
+          transparent
+            ? // Niższy pasek na wąskim ekranie: na stronie kampanii liczy się
+              // każdy piksel wysokości, żeby karta zmieściła się bez przewijania.
+              "relative bg-transparent py-3 sm:py-4"
+            : cn(
+                isSticky
+                  ? "fixed bg-white/80 backdrop-blur-md shadow-sm py-2"
+                  : "py-4",
+                isAbsolutePosition
+                  ? "absolute"
+                  : !isSticky &&
+                      "relative bg-white border-b border-gray-100 pb-4",
+              ),
         )}
       >
         <div
           className={cn(
             "mx-auto flex w-full custom-container items-center justify-between transition-all duration-500",
-            isScrolled ? "h-14" : "h-20",
+            transparent ? "h-16 sm:h-20" : isCompact ? "h-14" : "h-20",
             "max-[1200px]:px-3",
           )}
         >
@@ -183,8 +215,8 @@ export const Navbar = ({ session }: NavbarProps) => {
           >
             <Image
               src={isLightVersion ? "/AW-logo-negatyw.svg" : "/AW-logo.svg"}
-              height={isScrolled ? 40 : 50}
-              width={isScrolled ? 40 : 50}
+              height={isCompact ? 40 : 50}
+              width={isCompact ? 40 : 50}
               alt="Logo"
               priority
               className="opacity-100 transition-all duration-300 hover:opacity-80"
@@ -197,7 +229,7 @@ export const Navbar = ({ session }: NavbarProps) => {
               "hidden items-center rounded-full border p-1 backdrop-blur-sm transition-colors duration-300",
               isLightVersion
                 ? "border-white/10 bg-white/5"
-                : isScrolled
+                : isCompact
                   ? "border-gray-100 bg-gray-50/50"
                   : "border-gray-200 bg-white/60",
               desktopMenuClass,
@@ -266,7 +298,7 @@ export const Navbar = ({ session }: NavbarProps) => {
               <NavbarProfile
                 session={session}
                 isLightVersion={isLightVersion}
-                isScrolled={isScrolled}
+                isScrolled={isCompact}
               />
             ) : (
               <Button
@@ -276,7 +308,7 @@ export const Navbar = ({ session }: NavbarProps) => {
                   "pointer-cursor bg-primary !text-white",
                   isLightVersion &&
                     "bg-contrast hover:bg-contrast/90 border-transparent",
-                  isScrolled && "scale-90",
+                  isCompact && "scale-90",
                 )}
               >
                 Zaloguj
@@ -289,15 +321,16 @@ export const Navbar = ({ session }: NavbarProps) => {
       {/* --- TOGGLE BUTTON (Mobile) --- */}
       <div
         className={cn(
-          "z-[150] w-full pt-4 pointer-events-none transition-all duration-500",
-          isScrolled ? "fixed top-0" : "absolute top-0",
+          "z-[150] w-full pointer-events-none transition-all duration-500",
+          transparent ? "pt-3 sm:pt-4" : "pt-4",
+          isCompact ? "fixed top-0" : "absolute top-0",
           mobileToggleClass,
         )}
       >
         <div
           className={cn(
-            "mx-auto flex h-20 w-full max-w-[1200px] items-center justify-end px-2 transition-all duration-500",
-            isScrolled ? "h-14" : "h-20",
+            "mx-auto flex w-full max-w-[1200px] items-center justify-end px-2 transition-all duration-500",
+            transparent ? "h-16 sm:h-20" : isCompact ? "h-14" : "h-20",
           )}
         >
           <motion.button
@@ -314,8 +347,8 @@ export const Navbar = ({ session }: NavbarProps) => {
             )}
           >
             <svg
-              width={isScrolled ? "32" : "40"}
-              height={isScrolled ? "32" : "40"}
+              width={isCompact ? "32" : "40"}
+              height={isCompact ? "32" : "40"}
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
