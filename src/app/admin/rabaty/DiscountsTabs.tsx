@@ -8,7 +8,12 @@ import { CodesTab } from "./CodesTab";
 import { SalesTab } from "./SalesTab";
 import { EmailDiscountsTab } from "./EmailDiscountsTab";
 import { COLLAPSE, SPRING } from "./_shared";
-import type { DiscountRow, EmailDiscountRow, SaleRow } from "./types";
+import type {
+  DiscountRow,
+  EmailDiscountRow,
+  SaleRow,
+  WaitlistSourceRow,
+} from "./types";
 
 interface DiscountsTabsProps {
   codes: DiscountRow[];
@@ -16,17 +21,29 @@ interface DiscountsTabsProps {
   emailDiscounts: EmailDiscountRow[];
   /** Cena sprzedaży z ustawień — podstawa podglądów w formularzach (grosze). */
   basePrice: number;
+  /** Zakładka z adresu (`?tab=`). Nieznana wartość spada na kody. */
+  initialTab?: string;
+  /** Kampania zapisów, z której robimy zniżkę. `null` = zwykłe wejście. */
+  waitlistSource?: WaitlistSourceRow | null;
 }
 
 type TabKey = "codes" | "sales" | "emails";
+
+const TAB_KEYS: TabKey[] = ["codes", "sales", "emails"];
 
 export const DiscountsTabs = ({
   codes,
   sales,
   emailDiscounts,
   basePrice,
+  initialTab,
+  waitlistSource = null,
 }: DiscountsTabsProps) => {
-  const [tab, setTab] = useState<TabKey>("codes");
+  // `?tab=` przychodzi z paska adresu, więc może być czymkolwiek — bez tego
+  // sprawdzenia literówka w linku dawałaby pustą zawartość zamiast panelu.
+  const [tab, setTab] = useState<TabKey>(
+    TAB_KEYS.includes(initialTab as TabKey) ? (initialTab as TabKey) : "codes",
+  );
 
   const tabs = [
     {
@@ -135,6 +152,7 @@ export const DiscountsTabs = ({
               <EmailDiscountsTab
                 discounts={emailDiscounts}
                 basePrice={basePrice}
+                waitlistSource={waitlistSource}
               />
             )}
           </motion.div>

@@ -17,6 +17,7 @@ import { formatPln } from "@/lib/pricing";
 import { formatDiscountValue, getDiscountStatus } from "@/lib/discounts";
 import {
   addEmailsAction,
+  clearEmailsAction,
   deleteEmailDiscountAction,
   removeEmailAction,
   toggleEmailDiscountAction,
@@ -41,7 +42,7 @@ import {
   inputClass,
   listItemMotion,
 } from "./_shared";
-import type { EmailDiscountRow } from "./types";
+import type { EmailDiscountRow, WaitlistSourceRow } from "./types";
 
 type FormMode =
   | { kind: "closed" }
@@ -53,6 +54,23 @@ const EmailList = ({ row }: { row: EmailDiscountRow }) => {
   const router = useRouter();
   const [raw, setRaw] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [isClearing, startClearing] = useTransition();
+
+  const handleClear = () => {
+    startClearing(async () => {
+      const res = await clearEmailsAction(row.id);
+
+      if (res.error) {
+        toast.error(res.error);
+        return;
+      }
+
+      setConfirmClear(false);
+      toast.success(`Lista wyczyszczona — usuniętych adresów: ${res.removed}.`);
+      router.refresh();
+    });
+  };
 
   const handleAdd = () => {
     if (raw.trim() === "") {
@@ -138,33 +156,76 @@ const EmailList = ({ row }: { row: EmailDiscountRow }) => {
           Lista jest pusta — zniżka nikomu się nie naliczy.
         </p>
       ) : (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          <AnimatePresence initial={false} mode="popLayout">
-            {row.members.map((member) => (
-              <motion.span
-                key={member.id}
-                layout
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                transition={SPRING}
-                className="flex items-center gap-1.5 rounded-full bg-gray-100 py-1 pl-3 pr-1.5 text-xs text-gray-600"
-              >
-                {member.email}
-                <button
-                  type="button"
-                  onClick={() => handleRemove(member.id, member.email)}
-                  disabled={isPending}
-                  aria-label={`Usuń ${member.email} z listy`}
-                  className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-100 hover:text-red-500 disabled:cursor-not-allowed"
-                >
-                  <X size={11} />
-                </button>
-              </motion.span>
-            ))}
-          </AnimatePresence>
-        </div>
+        <>
+          {/* Kasowanie całej listy stoi NAD nią, przy liczniku: pod listą
+              kilkuset adresów nikt by go nie znalazł, a przy okazji trafiałby
+              tam palcem, celując w ostatni krzyżyk. */}
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+              Na liście: {row.members.length}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setConfirmClear(true)}
+              disabled={isPending || isClearing}
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-bold text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Trash2 size={12} />
+              Usuń wszystkie
+            </button>
+          </div>
+
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <AnimatePresence initial={false} mode="popLayout">
+                {row.members.map((member) => (
+                  <motion.span
+                    key={member.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.85 }}
+                    transition={SPRING}
+                    className="flex items-center gap-1.5 rounded-full bg-gray-100 py-1 pl-3 pr-1.5 text-xs text-gray-600"
+                  >
+                    {member.email}
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(member.id, member.email)}
+                      disabled={isPending || isClearing}
+                      aria-label={`Usuń ${member.email} z listy`}
+                      className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-100 hover:text-red-500 disabled:cursor-not-allowed"
+                    >
+                      <X size={11} />
+                    </button>
+                  </motion.span>
+                ))}
+            </AnimatePresence>
+          </div>
+        </>
       )}
+
+      <ConfirmDialog
+        open={confirmClear}
+        onOpenChange={(open) => !open && setConfirmClear(false)}
+        tone="danger"
+        title="Wyczyścić listę adresów?"
+        description={
+          <>
+            Z listy zniknie{" "}
+            <strong>
+              {row.members.length}{" "}
+              {row.members.length === 1 ? "adres" : "adresów"}
+            </strong>
+            , a sama zniżka „{row.name}” zostanie — tylko przestanie się
+            komukolwiek naliczać. Zamówienia zachowają pełną historię. Tej
+            operacji nie da się cofnąć.
+          </>
+        }
+        confirmLabel="Usuń wszystkie adresy"
+        onConfirm={handleClear}
+        isPending={isClearing}
+      />
     </div>
   );
 };
@@ -172,12 +233,22 @@ const EmailList = ({ row }: { row: EmailDiscountRow }) => {
 export const EmailDiscountsTab = ({
   discounts,
   basePrice,
+  waitlistSource = null,
 }: {
   discounts: EmailDiscountRow[];
   basePrice: number;
+  /**
+   * Kampania zapisów, z której admin przyszedł po zniżkę dla zebranej listy.
+   * Otwiera formularz od razu — kliknięcie w menu przy liście adresów było
+   * już decyzją „chcę taką zniżkę", więc drugi klik w „Dodaj zniżkę" byłby
+   * pytaniem o to samo.
+   */
+  waitlistSource?: WaitlistSourceRow | null;
 }) => {
   const router = useRouter();
-  const [form, setForm] = useState<FormMode>({ kind: "closed" });
+  const [form, setForm] = useState<FormMode>(
+    waitlistSource ? { kind: "new" } : { kind: "closed" },
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   // Wiersz czekający na potwierdzenie usunięcia (null = okno zamknięte).
@@ -186,7 +257,17 @@ export const EmailDiscountsTab = ({
   );
   const [isDeleting, startTransition] = useTransition();
 
-  const closeForm = () => setForm({ kind: "closed" });
+  /**
+   * Zamknięcie formularza kasuje też `?zapisy=` z adresu.
+   *
+   * Bez tego odświeżenie strony (albo powrót przyciskiem wstecz) otwierałoby
+   * formularz jeszcze raz i kusiło do zrobienia drugiej takiej samej zniżki —
+   * a lista adresów została już przepisana do pierwszej.
+   */
+  const closeForm = () => {
+    setForm({ kind: "closed" });
+    if (waitlistSource) router.replace("/admin/rabaty?tab=emails");
+  };
 
   const handleSaved = () => {
     closeForm();
@@ -293,6 +374,7 @@ export const EmailDiscountsTab = ({
             <EmailDiscountForm
               editing={null}
               basePrice={basePrice}
+              waitlistSource={waitlistSource}
               onDone={handleSaved}
               onCancel={closeForm}
             />

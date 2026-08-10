@@ -352,3 +352,81 @@ export async function deleteWaitlistPageAction(
     return { error: "Nie udało się usunąć strony." };
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Usuwanie zapisanych osób                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Wykreślenie JEDNEJ osoby z listy.
+ *
+ * Potrzebne nie tylko do sprzątania testów: RODO daje prawo do usunięcia
+ * danych, a bez tego jedyną drogą było skasowanie całej kampanii razem
+ * z pozostałymi zapisanymi.
+ *
+ * Kontakt przekazany wcześniej do MailerLite zostaje tam nietknięty — u nich
+ * jest osobnym rekordem i my go stąd nie ruszamy. Panel mówi o tym wprost
+ * w oknie potwierdzenia, żeby nikt nie uznał sprawy za załatwioną.
+ */
+export async function deleteWaitlistSubscriberAction(subscriberId: string) {
+  const session = await requireAdmin();
+  if (!session) return { error: "Brak uprawnień administratora." };
+
+  try {
+    const subscriber = await prisma.waitlistSubscriber.delete({
+      where: { id: subscriberId },
+      select: { email: true },
+    });
+
+    revalidateWaitlist();
+    return { success: true, email: subscriber.email };
+  } catch (error) {
+    console.error("[WAITLIST_SUBSCRIBER_DELETE_ERROR]", error);
+    return { error: "Nie udało się usunąć tego adresu." };
+  }
+}
+
+/**
+ * Wyczyszczenie CAŁEJ listy zapisanych, bez ruszania samej kampanii.
+ *
+ * Kampania zostaje pod tym samym adresem i dalej zbiera — to jest różnica
+ * wobec `deleteWaitlistPageAction`, które kasuje wszystko razem ze stroną.
+ *
+ * Ta sama blokada co przy usuwaniu kampanii: wymagamy liczby zapisanych
+ * widocznej w panelu i odrzucamy operację, jeśli lista w międzyczasie urosła.
+ * Tu jest to szczególnie potrzebne — link krąży po social mediach, więc między
+ * otwarciem panelu a kliknięciem naprawdę mogą dojść nowe osoby, a ich zapis
+ * zniknąłby przy okazji sprzątania po kimś innym.
+ */
+export async function clearWaitlistSubscribersAction(
+  pageId: string,
+  expectedSubscribers: number,
+) {
+  const session = await requireAdmin();
+  if (!session) return { error: "Brak uprawnień administratora." };
+
+  try {
+    const actual = await prisma.waitlistSubscriber.count({
+      where: { pageId },
+    });
+
+    if (actual !== expectedSubscribers) {
+      return {
+        error:
+          `Lista zmieniła się od czasu wczytania panelu ` +
+          `(teraz ${actual} zamiast ${expectedSubscribers}). Odśwież stronę ` +
+          `i sprawdź, zanim wyczyścisz listę.`,
+      };
+    }
+
+    const result = await prisma.waitlistSubscriber.deleteMany({
+      where: { pageId },
+    });
+
+    revalidateWaitlist();
+    return { success: true, removed: result.count };
+  } catch (error) {
+    console.error("[WAITLIST_SUBSCRIBERS_CLEAR_ERROR]", error);
+    return { error: "Nie udało się wyczyścić listy." };
+  }
+}

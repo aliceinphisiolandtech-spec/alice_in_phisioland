@@ -1,8 +1,14 @@
 "use client";
 
-import React, { useId, useState } from "react";
+import React, { useId, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import {
+  classifyEmailProvider,
+  emailDomain,
+  type EmailProviderVerdict,
+} from "@/lib/google-email";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { ThemeTokens } from "@/lib/waitlist-appearance";
 import { WaitlistFormShell } from "./WaitlistFormShell";
 
@@ -57,16 +63,42 @@ export function WaitlistForm({
     message: successMessage,
   });
 
+  /**
+   * Werdykt adresu, o który właśnie dopytujemy w oknie. `null` = okno zamknięte.
+   *
+   * Trzymamy werdykt, a nie samo „otwarte/zamknięte", bo od niego zależy treść
+   * pytania: przy wp.pl wiemy na pewno, że to nie Google, przy własnej domenie
+   * tylko podejrzewamy.
+   */
+  const [pendingVerdict, setPendingVerdict] =
+    useState<EmailProviderVerdict | null>(null);
+
+  /**
+   * Adres, dla którego pytanie o konto Google już padło i zostało potwierdzone.
+   * Bez tego każde kolejne kliknięcie „Zapisz mnie" (np. po błędzie sieci)
+   * otwierałoby to samo okno raz za razem.
+   */
+  const [confirmedEmail, setConfirmedEmail] = useState<string | null>(null);
+
+  /**
+   * Radix woła `onOpenChange(false)` także wtedy, gdy okno zamyka przycisk
+   * potwierdzenia. Ta flaga odróżnia „zamknięte, bo potwierdzono" od
+   * „zamknięte, bo zrezygnowano" — inaczej po potwierdzeniu wysyłki
+   * pokazywalibyśmy podpowiedź „popraw adres" w trakcie zapisywania.
+   */
+  const confirmedRef = useRef(false);
+
   const fieldId = useId();
   const ids = {
     name: `${fieldId}-name`,
     email: `${fieldId}-email`,
+    emailHint: `${fieldId}-email-hint`,
     consent: `${fieldId}-consent`,
     error: `${fieldId}-error`,
     honeypot: `${fieldId}-website`,
   };
 
-  async function handleSubmit(event: React.FormEvent) {
+  function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (state === "submitting") return;
 
@@ -87,6 +119,23 @@ export function WaitlistForm({
       return;
     }
 
+    // Adres spoza Gmaila zatrzymujemy PYTANIEM, nie odmową. Konto Workspace
+    // na własnej domenie wygląda stąd identycznie jak zwykła poczta, więc
+    // twarda blokada odcinałaby ludzi, dla których wszystko jest w porządku.
+    const normalizedEmail = email.trim().toLowerCase();
+    const verdict = classifyEmailProvider(normalizedEmail);
+
+    if (verdict !== "google" && confirmedEmail !== normalizedEmail) {
+      setError(null);
+      setPendingVerdict(verdict);
+      return;
+    }
+
+    void submit();
+  }
+
+  /** Właściwa wysyłka — po przejściu walidacji i ewentualnym potwierdzeniu. */
+  async function submit() {
     setError(null);
     setState("submitting");
 
@@ -126,31 +175,115 @@ export function WaitlistForm({
     }
   }
 
+  /** „Wyślij ten adres mimo to" — zapamiętujemy zgodę i wysyłamy. */
+  function handleConfirmSend() {
+    confirmedRef.current = true;
+    setConfirmedEmail(email.trim().toLowerCase());
+    setPendingVerdict(null);
+    void submit();
+  }
+
+  function handleConfirmOpenChange(open: boolean) {
+    if (open) return;
+
+    setPendingVerdict(null);
+
+    if (confirmedRef.current) {
+      confirmedRef.current = false;
+      return;
+    }
+
+    // Rezygnacja z wysyłki. Zamiast przestawiać focus (Radix i tak oddaje go
+    // przyciskowi po zamknięciu okna) zostawiamy zdanie przy formularzu —
+    // czytnik ekranu ogłosi je przez `role="alert"`, a wzrokowo ląduje ono
+    // dokładnie tam, gdzie trzeba coś poprawić.
+    setError(
+      "Wpisz adres Google (Gmail) albo kliknij zapis ponownie i potwierdź wysyłkę tego adresu.",
+    );
+  }
+
   if (state === "success") {
     return <SuccessNotice tokens={tokens} {...success} />;
   }
 
   return (
-    <WaitlistFormShell
-      tokens={tokens}
-      collectName={collectName}
-      ctaLabel={ctaLabel}
-      consentText={consentText}
-      footnote={footnote}
-      seats={seats}
-      ids={ids}
-      name={name}
-      email={email}
-      consent={consent}
-      website={website}
-      onName={setName}
-      onEmail={setEmail}
-      onConsent={setConsent}
-      onWebsite={setWebsite}
-      error={error}
-      isSubmitting={state === "submitting"}
-      onSubmit={handleSubmit}
-    />
+    <>
+      <WaitlistFormShell
+        tokens={tokens}
+        collectName={collectName}
+        ctaLabel={ctaLabel}
+        consentText={consentText}
+        footnote={footnote}
+        seats={seats}
+        ids={ids}
+        name={name}
+        email={email}
+        consent={consent}
+        website={website}
+        onName={setName}
+        onEmail={setEmail}
+        onConsent={setConsent}
+        onWebsite={setWebsite}
+        error={error}
+        isSubmitting={state === "submitting"}
+        onSubmit={handleSubmit}
+      />
+
+      <ConfirmDialog
+        open={pendingVerdict !== null}
+        onOpenChange={handleConfirmOpenChange}
+        title="Ten adres nie wygląda na konto Google"
+        description={
+          <GoogleEmailWarning email={email} verdict={pendingVerdict} />
+        }
+        confirmLabel="Wyślij ten adres"
+        cancelLabel="Popraw adres"
+        onConfirm={handleConfirmSend}
+      />
+    </>
+  );
+}
+
+/**
+ * Treść pytania o adres spoza Gmaila.
+ *
+ * Dwa warianty, bo dwie różne sytuacje. Przy znanym dostawcy (wp.pl, onet)
+ * wiemy na pewno, że konta Google tam nie ma, i mówimy to wprost. Przy własnej
+ * domenie tylko podejrzewamy — a że firmowy Workspace wygląda dokładnie tak
+ * samo, komunikat musi zostawić miejsce na „u mnie jest dobrze".
+ */
+function GoogleEmailWarning({
+  email,
+  verdict,
+}: {
+  email: string;
+  verdict: EmailProviderVerdict | null;
+}) {
+  const domain = emailDomain(email);
+
+  return (
+    <>
+      <span className="block">
+        Dostęp do materiałów działa wyłącznie przez logowanie Google. Adres
+        {domain ? (
+          <>
+            {" "}
+            w domenie <strong className="font-semibold">{domain}</strong>
+          </>
+        ) : (
+          ", który podałaś,"
+        )}{" "}
+        {verdict === "foreign"
+          ? "nie jest kontem Google — na takim adresie nie zalogujesz się do konta i nie odbierzesz dostępu."
+          : "nie wygląda na konto Google — jeśli nim nie jest, nie zalogujesz się do konta i nie odbierzesz dostępu."}
+      </span>
+
+      <span className="mt-3 block">
+        {verdict === "foreign"
+          ? "Wpisz adres @gmail.com — to zajmie chwilę, a zaoszczędzi tłumaczenia później."
+          : "Jeśli ta domena jest obsługiwana przez Google Workspace, wszystko gra — wyślij ten adres. W przeciwnym razie wpisz adres @gmail.com."}
+      </span>
+    </>
   );
 }
 

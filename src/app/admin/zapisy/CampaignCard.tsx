@@ -8,7 +8,6 @@ import {
   Check,
   Copy,
   CopyPlus,
-  Download,
   ExternalLink,
   Pencil,
   Trash2,
@@ -22,6 +21,7 @@ import {
   SPRING,
   Switch,
 } from "@/components/admin/ui/primitives";
+import { WaitlistListMenu } from "@/components/admin/waitlist/WaitlistListMenu";
 import {
   describeWaitlistStatus,
   resolveWaitlistPageStatus,
@@ -140,14 +140,15 @@ export function CampaignCard({
           onClick={() => setShowStats((open) => !open)}
         />
 
+        {/* Działania na zebranej liście (CSV, zniżka) siedzą pod trzema
+            kropkami — rząd akcji karty dotyczy samej kampanii i nie ma
+            puchnąć razem z tym, co da się zrobić z adresami. */}
         {row.subscriberCount > 0 && (
-          <a
-            href={`/api/admin/waitlist/${row.id}/export`}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900"
-          >
-            <Download size={13} />
-            Pobierz CSV
-          </a>
+          <WaitlistListMenu
+            pageId={row.id}
+            subscriberCount={row.subscriberCount}
+            triggerClassName="h-[30px] w-[30px] border border-gray-200 hover:border-gray-300"
+          />
         )}
 
         <button

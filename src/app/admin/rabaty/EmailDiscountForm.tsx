@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { MailPlus, X } from "lucide-react";
 import { LoadingButton } from "@/components/ui/LoadingButton";
 import {
   createEmailDiscountAction,
@@ -21,23 +21,40 @@ import {
   inputClass,
   labelClass,
 } from "./_shared";
-import type { EmailDiscountRow } from "./types";
+import type { EmailDiscountRow, WaitlistSourceRow } from "./types";
 
 interface EmailDiscountFormProps {
   editing: EmailDiscountRow | null;
   /** Aktualna cena sprzedaży z cennika — podstawa podglądu (grosze). */
   basePrice: number;
+  /**
+   * Kampania zapisów, której zebrane adresy mają trafić na listę tej zniżki.
+   * Dotyczy wyłącznie NOWEJ zniżki — przy edycji lista już istnieje i zarządza
+   * się nią w karcie.
+   */
+  waitlistSource?: WaitlistSourceRow | null;
   onDone: () => void;
   onCancel: () => void;
+}
+
+/** Nazwa robocza podpowiedziana z kampanii — mieści się w limicie 60 znaków. */
+function suggestName(source: WaitlistSourceRow): string {
+  return `Lista: ${source.name}`.slice(0, 60);
 }
 
 export const EmailDiscountForm = ({
   editing,
   basePrice,
+  waitlistSource = null,
   onDone,
   onCancel,
 }: EmailDiscountFormProps) => {
-  const [name, setName] = useState(editing?.name ?? "");
+  // Adresy dopisujemy tylko przy tworzeniu — patrz opis propa.
+  const source = editing ? null : waitlistSource;
+
+  const [name, setName] = useState(
+    editing?.name ?? (source ? suggestName(source) : ""),
+  );
   const [type, setType] = useState<"percent" | "amount">(
     editing?.type ?? "percent",
   );
@@ -99,18 +116,29 @@ export const EmailDiscountForm = ({
     startSaving(async () => {
       const res = editing
         ? await updateEmailDiscountAction(editing.id, input)
-        : await createEmailDiscountAction(input);
+        : await createEmailDiscountAction(input, source?.id ?? null);
 
       if (res.error) {
         toast.error(res.error);
         return;
       }
 
-      toast.success(
-        editing
-          ? "Zapisano zmiany."
-          : "Zniżka utworzona. Dodaj adresy i włącz ją.",
-      );
+      if (editing) {
+        toast.success("Zapisano zmiany.");
+      } else if (source) {
+        // Liczba z serwera, nie z `source.subscriberCount`: między wejściem
+        // w formularz a zapisem ktoś mógł dojść do listy, a adres już obecny
+        // na innej liście tej samej zniżki nie zostanie dopisany drugi raz.
+        const added =
+          "addedFromWaitlist" in res ? (res.addedFromWaitlist ?? 0) : 0;
+
+        toast.success(
+          `Zniżka utworzona, adresów z listy: ${added}. Sprawdź listę i włącz zniżkę.`,
+        );
+      } else {
+        toast.success("Zniżka utworzona. Dodaj adresy i włącz ją.");
+      }
+
       onDone();
     });
   };
@@ -121,7 +149,9 @@ export const EmailDiscountForm = ({
         <h2 className="font-bold text-[#0c493e]">
           {editing
             ? `Edytuj zniżkę „${editing.name}”`
-            : "Nowa zniżka dla puli osób"}
+            : source
+              ? "Nowa zniżka dla zebranej listy"
+              : "Nowa zniżka dla puli osób"}
         </h2>
         <button
           type="button"
@@ -133,10 +163,30 @@ export const EmailDiscountForm = ({
         </button>
       </div>
 
+      {/* Skąd wzięła się ta zniżka i co się stanie po kliknięciu „Utwórz".
+          Adresów nie da się tu obejrzeć ani odznaczyć — dlatego zamiast
+          pustej obietnicy podajemy konkretną liczbę i nazwę kampanii. */}
+      {source && (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-[#c5e96b]/60 bg-[#c5e96b]/15 p-3.5">
+          <MailPlus size={16} className="mt-0.5 shrink-0 text-[#0c493e]" />
+          <p className="text-xs leading-relaxed text-[#0c493e]">
+            Adresy z kampanii <strong>„{source.name}”</strong> —{" "}
+            <strong>{source.subscriberCount}</strong>{" "}
+            {source.subscriberCount === 1 ? "adres" : "adresów"} — trafią na
+            listę tej zniżki od razu po jej utworzeniu. Zniżka powstanie
+            wyłączona, więc zdążysz sprawdzić listę, zanim zacznie działać.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-col gap-7">
         <FormSection
           title="Co to za zniżka"
-          description="Nazwa widoczna dla klientki w podsumowaniu i wysokość obniżki. Adresy dodasz po zapisaniu."
+          description={
+            source
+              ? "Nazwa widoczna dla klientki w podsumowaniu i wysokość obniżki. Listę adresów dopiszemy sami."
+              : "Nazwa widoczna dla klientki w podsumowaniu i wysokość obniżki. Adresy dodasz po zapisaniu."
+          }
         >
           <div className="flex gap-4 max-[560px]:flex-col">
             <div className="flex-1">

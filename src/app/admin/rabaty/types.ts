@@ -49,6 +49,18 @@ export interface SaleRow {
   totalDiscountGrosze: number;
 }
 
+/**
+ * Kampania zapisów wskazana w adresie (`/admin/rabaty?tab=emails&zapisy=<id>`).
+ *
+ * Panel dostaje ją z serwera, a nie z paska adresu, bo liczba adresów pokazana
+ * w formularzu ma być prawdziwa — a `?zapisy=` niesie samo ID.
+ */
+export interface WaitlistSourceRow {
+  id: string;
+  name: string;
+  subscriberCount: number;
+}
+
 export interface EmailDiscountRow {
   id: string;
   name: string;

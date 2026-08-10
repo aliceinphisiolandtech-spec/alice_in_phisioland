@@ -12,13 +12,45 @@ import type {
   EmailDiscountRow,
   PricingSettingsRow,
   SaleRow,
+  WaitlistSourceRow,
 } from "./types";
 
 // Panel jest w pełni dynamiczny — po przełączeniu promocji admin musi od razu
 // widzieć aktualny stan, a nie wersję z cache.
 export const dynamic = "force-dynamic";
 
-export default async function AdminDiscountsPage() {
+/**
+ * Wejście z panelu „Zapisy" (menu przy zebranej liście adresów):
+ * `?tab=emails&zapisy=<id>` otwiera od razu formularz nowej zniżki dla tej
+ * kampanii. Kampanię wczytujemy tutaj, po ID z adresu — dzięki temu nazwa
+ * i liczba adresów w formularzu są prawdziwe, a nie przepisane z URL-a.
+ */
+async function loadWaitlistSource(
+  pageId: string | undefined,
+): Promise<WaitlistSourceRow | null> {
+  if (!pageId) return null;
+
+  const page = await prisma.waitlistPage.findUnique({
+    where: { id: pageId },
+    select: { id: true, name: true, _count: { select: { subscribers: true } } },
+  });
+
+  if (!page) return null;
+
+  return {
+    id: page.id,
+    name: page.name,
+    subscriberCount: page._count.subscribers,
+  };
+}
+
+export default async function AdminDiscountsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; zapisy?: string }>;
+}) {
+  const { tab, zapisy } = await searchParams;
+  const waitlistSource = await loadWaitlistSource(zapisy);
   const [codes, sales, emailDiscounts, settings] = await Promise.all([
     prisma.discountCode.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.sale.findMany({ orderBy: { createdAt: "desc" } }),
@@ -192,6 +224,11 @@ export default async function AdminDiscountsPage() {
         sales={saleRows}
         emailDiscounts={emailRows}
         basePrice={settingsRow.basePriceGrosze}
+        // Wskazana kampania sama otwiera zakładkę zniżek mailowych — bez tego
+        // po kliknięciu „Utwórz zniżkę dla tej listy" trzeba by szukać
+        // właściwej zakładki ręcznie.
+        initialTab={waitlistSource ? "emails" : tab}
+        waitlistSource={waitlistSource}
       />
     </div>
   );

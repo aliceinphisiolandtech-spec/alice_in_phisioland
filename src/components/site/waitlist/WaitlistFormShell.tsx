@@ -1,6 +1,7 @@
 import React from "react";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { GOOGLE_EMAIL_HINT } from "@/lib/google-email";
 import type { ThemeTokens } from "@/lib/waitlist-appearance";
 
 /**
@@ -43,6 +44,7 @@ export interface WaitlistFormShellProps {
   ids?: {
     name: string;
     email: string;
+    emailHint: string;
     consent: string;
     error: string;
     honeypot: string;
@@ -126,6 +128,18 @@ export function WaitlistFormShell({
         >
           Adres e-mail
         </label>
+
+        {/*
+          Wymóg konta Google stoi NAD polem, nie pod przyciskiem: przeczytany
+          po wpisaniu adresu jest już tylko wyrzutem, a chodzi o to, żeby
+          właściwy adres trafił tam za pierwszym razem. Okno potwierdzenia
+          przy wysyłce (patrz WaitlistForm) jest siatką bezpieczeństwa dla
+          tych, którzy tego nie przeczytali — nie zamiennikiem.
+        */}
+        <p id={ids?.emailHint} className={cn("text-[12px] leading-[150%]", tokens.muted)}>
+          {GOOGLE_EMAIL_HINT}
+        </p>
+
         <input
           id={ids?.email}
           type="email"
@@ -134,9 +148,16 @@ export function WaitlistFormShell({
           value={email}
           onChange={(event) => onEmail?.(event.target.value)}
           disabled={disabled}
-          placeholder="jan@kowalski.pl"
+          placeholder="jan.kowalski@gmail.com"
           aria-invalid={error ? true : undefined}
-          aria-describedby={error ? ids?.error : undefined}
+          // Podpowiedź czytamy ZAWSZE, błąd tylko gdy jest — inaczej osoba
+          // korzystająca z czytnika ekranu dowiedziałaby się o wymogu Google
+          // dopiero po odbiciu się od formularza.
+          aria-describedby={
+            [ids?.emailHint, error ? ids?.error : null]
+              .filter(Boolean)
+              .join(" ") || undefined
+          }
           className={inputClasses}
         />
 
@@ -197,7 +218,11 @@ export function WaitlistFormShell({
         type="submit"
         disabled={disabled}
         className={cn(
-          "group flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[10px] px-6 text-[15px] font-bold transition-transform disabled:pointer-events-none",
+          // `cursor-pointer` jawnie: Tailwind v4 nie daje go już przyciskom
+          // z automatu. W podglądzie kreatora nie przeszkadza — tam przycisk
+          // jest wyłączony, a `disabled:pointer-events-none` i tak odcina mu
+          // kursor razem z resztą zdarzeń.
+          "group flex min-h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] px-6 text-[15px] font-bold transition-transform disabled:pointer-events-none",
           // W podglądzie przycisk nie może wyglądać na wyłączony — ma pokazywać,
           // jak wygląda naprawdę, więc pomijamy wygaszenie i animację najechania.
           preview

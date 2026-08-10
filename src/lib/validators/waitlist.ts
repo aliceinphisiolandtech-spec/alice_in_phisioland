@@ -14,7 +14,9 @@ export const WaitlistEmailSchema = z
   .toLowerCase()
   .min(1, "Podaj swój adres e-mail.")
   .max(254, "Ten adres e-mail jest za długi.")
-  .email("Wpisz poprawny adres e-mail (np. jan@kowalski.pl).");
+  // Przykład celowo z gmail.com — formularz i tak prosi o konto Google, więc
+  // podpowiedź w komunikacie o błędzie nie powinna sugerować czegoś innego.
+  .email("Wpisz poprawny adres e-mail (np. jan.kowalski@gmail.com).");
 
 export const WaitlistNameSchema = z
   .string()

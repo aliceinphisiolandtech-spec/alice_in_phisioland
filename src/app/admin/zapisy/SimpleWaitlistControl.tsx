@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import { motion } from "framer-motion";
 import {
   Check,
@@ -8,10 +8,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
-  Download,
   ExternalLink,
   Loader2,
   Pencil,
+  Trash2,
   TriangleAlert,
   Users,
 } from "lucide-react";
@@ -28,6 +28,8 @@ import {
   labelClass,
   listItemMotion,
 } from "@/components/admin/ui/primitives";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { WaitlistListMenu } from "@/components/admin/waitlist/WaitlistListMenu";
 import {
   describeWaitlistStatus,
   resolveWaitlistPageStatus,
@@ -37,6 +39,7 @@ import {
   slugifyWaitlistName,
 } from "@/lib/validators/waitlist";
 import {
+  deleteWaitlistSubscriberAction,
   toggleWaitlistPageAction,
   updateWaitlistBasicsAction,
 } from "@/app/actions/waitlist";
@@ -396,10 +399,16 @@ const signupDateFormatter = new Intl.DateTimeFormat("pl-PL", {
  * jest osiągalny, a rozmiar odpowiedzi nie rośnie razem z listą.
  */
 function SubscriberList({ row }: { row: WaitlistPageRow }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Osoba czekająca na potwierdzenie usunięcia (null = okno zamknięte).
+  const [pendingDelete, setPendingDelete] =
+    useState<WaitlistSubscriberRow | null>(null);
+  const [isDeleting, startDelete] = useTransition();
 
   /*
    * Dociągnięta strona nadpisuje tę z serwera dopiero wtedy, gdy istnieje.
@@ -447,6 +456,67 @@ function SubscriberList({ row }: { row: WaitlistPageRow }) {
     }
   }
 
+  /**
+   * Przeładowanie widoku po usunięciu wiersza.
+   *
+   * `router.refresh()` odświeża tylko dane, które przyszły z serwerem — czyli
+   * pierwszą stronę. Dla dalszych stron trzeba pobrać je jeszcze raz, a gdy
+   * skasowany wiersz był na niej ostatni, cofnąć się o jedną: inaczej panel
+   * pokazywałby pustą stronę nr 3 przy dwóch istniejących.
+   */
+  async function reloadAfterDelete(targetPage: number) {
+    if (targetPage <= 1) {
+      setFetched(null);
+      setPage(1);
+      router.refresh();
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        `/api/admin/waitlist/${row.id}/subscribers?page=${targetPage}`,
+      );
+
+      if (!response.ok) throw new Error("Nie udało się pobrać listy.");
+
+      const data = await response.json();
+
+      if (data.items.length === 0) {
+        await reloadAfterDelete(targetPage - 1);
+        return;
+      }
+
+      setFetched({ items: data.items, total: data.total });
+      setPage(targetPage);
+    } catch {
+      setLoadError("Nie udało się odświeżyć listy. Odśwież stronę panelu.");
+    } finally {
+      setLoading(false);
+    }
+
+    router.refresh();
+  }
+
+  function handleDelete() {
+    const target = pendingDelete;
+    if (!target) return;
+
+    startDelete(async () => {
+      const result = await deleteWaitlistSubscriberAction(target.id);
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      setPendingDelete(null);
+      toast.success(`Adres ${target.email} usunięty z listy.`);
+      await reloadAfterDelete(page);
+    });
+  }
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
@@ -476,17 +546,22 @@ function SubscriberList({ row }: { row: WaitlistPageRow }) {
         </button>
 
         {/*
-          Eksport jest dostępny zawsze, nie tylko po rozwinięciu: to jedyna
-          droga do pełnego śladu zgody (treść, moment, IP), którego wymaga RODO.
+          Działania na liście są dostępne zawsze, nie tylko po rozwinięciu:
+          eksport to jedyna droga do pełnego śladu zgody (treść, moment, IP),
+          którego wymaga RODO.
         */}
         {total > 0 && (
-          <a
-            href={`/api/admin/waitlist/${row.id}/export`}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#0c493e]"
-          >
-            <Download size={13} />
-            Pobierz CSV
-          </a>
+          <WaitlistListMenu
+            pageId={row.id}
+            subscriberCount={total}
+            // Po wyczyszczeniu listy zejdź do danych z serwera — dotąd
+            // pokazywana strona nr 3 już nie istnieje.
+            onCleared={() => {
+              setFetched(null);
+              setPage(1);
+              setOpen(false);
+            }}
+          />
         )}
       </div>
 
@@ -505,7 +580,12 @@ function SubscriberList({ row }: { row: WaitlistPageRow }) {
               )}
             >
               {items.map((subscriber) => (
-                <SubscriberRow key={subscriber.id} subscriber={subscriber} />
+                <SubscriberRow
+                  key={subscriber.id}
+                  subscriber={subscriber}
+                  onDelete={() => setPendingDelete(subscriber)}
+                  disabled={isDeleting || loading}
+                />
               ))}
             </ul>
 
@@ -551,6 +631,24 @@ function SubscriberList({ row }: { row: WaitlistPageRow }) {
           </div>
         </Collapse>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        tone="danger"
+        title="Usunąć ten adres z listy?"
+        description={
+          <>
+            Z listy zniknie <strong>{pendingDelete?.email}</strong> razem ze
+            śladem zgody (treść, data, IP). Jeśli kontakt trafił wcześniej do
+            MailerLite, zostanie tam nietknięty — trzeba go usunąć osobno. Tej
+            operacji nie da się cofnąć.
+          </>
+        }
+        confirmLabel="Usuń adres"
+        onConfirm={handleDelete}
+        isPending={isDeleting}
+      />
     </div>
   );
 }
@@ -582,11 +680,19 @@ function PageButton({
   );
 }
 
-function SubscriberRow({ subscriber }: { subscriber: WaitlistSubscriberRow }) {
+function SubscriberRow({
+  subscriber,
+  onDelete,
+  disabled,
+}: {
+  subscriber: WaitlistSubscriberRow;
+  onDelete: () => void;
+  disabled: boolean;
+}) {
   const sync = describeSync(subscriber.syncStatus);
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2.5">
+    <li className="group flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2.5">
       <div className="min-w-0">
         <p className="truncate text-sm text-gray-900">{subscriber.email}</p>
         {subscriber.name && (
@@ -609,6 +715,24 @@ function SubscriberRow({ subscriber }: { subscriber: WaitlistSubscriberRow }) {
         <span className="text-xs whitespace-nowrap text-gray-400">
           {signupDateFormatter.format(new Date(subscriber.createdAt))}
         </span>
+
+        {/*
+          Kosz wygaszony do czasu najechania na wiersz — kasowanie pojedynczej
+          osoby to rzadki wyjątek (żądanie z RODO, literówka w adresie), a nie
+          codzienna operacja. Na dotyku nie ma stanu „hover", więc `focus`
+          i pełna widoczność na małych ekranach zostają: `opacity-100` schodzi
+          do `sm:opacity-0`, żeby przycisk nie był tam nieosiągalny.
+        */}
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={disabled}
+          aria-label={`Usuń ${subscriber.email} z listy`}
+          title="Usuń z listy"
+          className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-gray-300 opacity-100 transition-all hover:bg-red-50 hover:text-red-500 focus-visible:opacity-100 disabled:cursor-not-allowed disabled:opacity-40 sm:opacity-0 sm:group-hover:opacity-100"
+        >
+          <Trash2 size={14} />
+        </button>
       </div>
     </li>
   );
