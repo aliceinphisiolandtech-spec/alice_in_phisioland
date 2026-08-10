@@ -1,7 +1,12 @@
 import type { WaitlistPage } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { resolveLayout, resolveTheme } from "@/lib/waitlist-appearance";
-import type { DailySignups, WaitlistPageRow } from "./types";
+import {
+  SUBSCRIBERS_PER_PAGE,
+  type DailySignups,
+  type WaitlistPageRow,
+  type WaitlistSubscriberRow,
+} from "./types";
 
 /**
  * Ładowanie danych panelu kampanii.
@@ -74,7 +79,9 @@ export async function loadWaitlistCampaigns(): Promise<WaitlistPageRow[]> {
     }),
   ]);
 
-  const totalByPage = new Map(totals.map((row) => [row.pageId, row._count._all]));
+  const totalByPage = new Map(
+    totals.map((row) => [row.pageId, row._count._all]),
+  );
   const unsyncedByPage = new Map(
     unsynced.map((row) => [row.pageId, row._count._all]),
   );
@@ -86,14 +93,57 @@ export async function loadWaitlistCampaigns(): Promise<WaitlistPageRow[]> {
     else signupsByPage.set(subscriber.pageId, [subscriber.createdAt]);
   }
 
-  return pages.map((page) =>
+  /*
+   * Zapytanie na kampanię, a nie jedno wspólne: limit „ostatnie N" ma dotyczyć
+   * KAŻDEJ listy z osobna, a `take` w jednym zapytaniu obciąłby wynik globalnie
+   * i przy dwóch kampaniach druga wyszłaby pusta. Kampanii jest kilka, więc
+   * kilka równoległych zapytań jest tańsze niż grupowanie po stronie SQL-a.
+   */
+  const subscribersByPage = await Promise.all(
+    pages.map((page) => loadFirstSubscriberPage(page.id)),
+  );
+
+  return pages.map((page, index) =>
     toRow(page, {
       now,
       signups: signupsByPage.get(page.id) ?? [],
       total: totalByPage.get(page.id) ?? 0,
       unsynced: unsyncedByPage.get(page.id) ?? 0,
+      subscribers: subscribersByPage[index],
     }),
   );
+}
+
+/**
+ * Pierwsza strona zapisanych osób jednej kampanii, od najnowszej.
+ *
+ * Tylko pierwsza, bo tylko ona jest widoczna zaraz po wejściu — kolejne panel
+ * dobiera z `/api/admin/waitlist/[id]/subscribers` dopiero wtedy, gdy ktoś
+ * po nie kliknie. Dzięki temu wielkość odpowiedzi nie zależy od tego, jak
+ * bardzo kampania się udała.
+ */
+async function loadFirstSubscriberPage(
+  pageId: string,
+): Promise<WaitlistSubscriberRow[]> {
+  const rows = await prisma.waitlistSubscriber.findMany({
+    where: { pageId },
+    // Tylko to, co panel pokazuje. Treść zgody, IP i przeglądarka zostają
+    // w bazie — do panelu nie mają po co jechać.
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      createdAt: true,
+      syncStatus: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: SUBSCRIBERS_PER_PAGE,
+  });
+
+  return rows.map((row) => ({
+    ...row,
+    createdAt: row.createdAt.toISOString(),
+  }));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -114,7 +164,7 @@ export async function loadWaitlistCampaign(
   const page = await prisma.waitlistPage.findUnique({ where: { id } });
   if (!page) return null;
 
-  const [total, unsynced, signups] = await Promise.all([
+  const [total, unsynced, signups, subscribers] = await Promise.all([
     prisma.waitlistSubscriber.count({ where: { pageId: id } }),
     prisma.waitlistSubscriber.count({
       where: { pageId: id, syncStatus: { in: ["pending", "failed"] } },
@@ -124,6 +174,7 @@ export async function loadWaitlistCampaign(
       select: { createdAt: true },
       orderBy: { createdAt: "asc" },
     }),
+    loadFirstSubscriberPage(id),
   ]);
 
   return toRow(page, {
@@ -131,6 +182,7 @@ export async function loadWaitlistCampaign(
     signups: signups.map((row) => row.createdAt),
     total,
     unsynced,
+    subscribers,
   });
 }
 
@@ -141,6 +193,7 @@ interface RowStats {
   signups: Date[];
   total: number;
   unsynced: number;
+  subscribers: WaitlistSubscriberRow[];
 }
 
 function toRow(page: WaitlistPage, stats: RowStats): WaitlistPageRow {
@@ -175,6 +228,7 @@ function toRow(page: WaitlistPage, stats: RowStats): WaitlistPageRow {
     closedMessage: page.closedMessage,
     createdAt: page.createdAt.toISOString(),
     subscriberCount: stats.total,
+    subscribers: stats.subscribers,
     recentCount: stats.signups.filter((date) => date >= recentCutoff).length,
     dailySignups: buildDailySeries(stats.signups, stats.now),
     unsyncedCount: stats.unsynced,

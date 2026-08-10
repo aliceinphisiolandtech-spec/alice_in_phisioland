@@ -5,7 +5,9 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import {
+  EditWaitlistBasicsSchema,
   SaveWaitlistPageSchema,
+  type EditWaitlistBasicsInput,
   type SaveWaitlistPageInput,
 } from "@/lib/validators/waitlist";
 
@@ -147,6 +149,58 @@ export async function updateWaitlistPageAction(
 
     console.error("[WAITLIST_UPDATE_ERROR]", error);
     return { error: "Błąd bazy danych podczas zapisywania strony." };
+  }
+}
+
+/**
+ * Zmiana nazwy roboczej i adresu — edycja dostępna bez wchodzenia w kreator.
+ *
+ * Istnieje osobno od `updateWaitlistPageAction`, bo panel w zakresie bez
+ * kreatora nie zna pozostałych pól kampanii. Gdyby wysyłał pełny formularz,
+ * musiałby najpierw wczytać całą treść tylko po to, żeby odesłać ją bez zmian —
+ * a każdy taki obieg to okazja do nadpisania czegoś, czego nikt nie dotykał.
+ */
+export async function updateWaitlistBasicsAction(
+  id: string,
+  input: EditWaitlistBasicsInput,
+) {
+  const session = await requireAdmin();
+  if (!session) return { error: "Brak uprawnień administratora." };
+
+  const validation = EditWaitlistBasicsSchema.safeParse(input);
+  if (!validation.success) {
+    return { error: validation.error.issues[0].message };
+  }
+
+  const { name, slug } = validation.data;
+
+  try {
+    const previous = await prisma.waitlistPage.findUnique({
+      where: { id },
+      select: { slug: true },
+    });
+
+    if (!previous) return { error: "Nie znaleziono tej strony zapisów." };
+
+    const page = await prisma.waitlistPage.update({
+      where: { id },
+      data: { name, slug },
+      select: { slug: true },
+    });
+
+    // Stary adres też do odświeżenia — inaczej zostaje w cache i pod
+    // nieaktualnym linkiem dalej wyświetla się kampania.
+    revalidateWaitlist(page.slug);
+    if (previous.slug !== page.slug) revalidatePath(`/zapisy/${previous.slug}`);
+
+    return { success: true, slug: page.slug };
+  } catch (error) {
+    // Unikalność adresu pilnuje baza, nie wcześniejsze `findUnique` — między
+    // sprawdzeniem a zapisem mogłaby powstać druga strona z tym samym adresem.
+    if (isSlugCollision(error)) return { error: SLUG_TAKEN };
+
+    console.error("[WAITLIST_BASICS_ERROR]", error);
+    return { error: "Nie udało się zapisać zmian." };
   }
 }
 

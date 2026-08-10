@@ -1,7 +1,4 @@
-import type {
-  WaitlistLayout,
-  WaitlistTheme,
-} from "@/lib/waitlist-appearance";
+import type { WaitlistLayout, WaitlistTheme } from "@/lib/waitlist-appearance";
 
 /**
  * Kształt danych przekazywanych z serwera do komponentów klienckich kreatora.
@@ -47,12 +44,47 @@ export interface WaitlistPageRow {
   // --- Statystyki ---
   /** Wszystkie zebrane kontakty. */
   subscriberCount: number;
+  /**
+   * PIERWSZA STRONA zapisanych osób, od najnowszej — tyle, ile mieści
+   * `SUBSCRIBERS_PER_PAGE`. Kolejne strony panel dobiera sam, z trasy
+   * `/api/admin/waitlist/[id]/subscribers`.
+   */
+  subscribers: WaitlistSubscriberRow[];
   /** Kontakty z ostatnich 7 dni — pokazuje, czy kampania jeszcze żyje. */
   recentCount: number;
   /** Liczba zapisów per dzień, ostatnie 30 dni (od najstarszego). */
   dailySignups: DailySignups[];
   /** Ile kontaktów czeka na przekazanie do MailerLite albo się nie udało. */
   unsyncedCount: number;
+}
+
+/**
+ * Ile zapisanych osób mieści jedna strona listy w panelu.
+ *
+ * Stała siedzi TUTAJ, a nie przy zapytaniach: tę samą liczbę musi znać serwer
+ * (żeby wyciąć właściwy zakres) i przeglądarka (żeby policzyć, ile jest stron).
+ * Dwie kopie rozjechałyby się przy pierwszej zmianie i ostatnia strona
+ * wychodziłaby pusta albo niedostępna.
+ */
+export const SUBSCRIBERS_PER_PAGE = 20;
+
+/**
+ * Jedna zapisana osoba na liście w panelu.
+ *
+ * Świadomie BEZ treści zgody, adresu IP i przeglądarki, choć baza je trzyma:
+ * na ekranie te dane nie pomagają w niczym, co panel ma robić, a każde ich
+ * wyświetlenie to kolejne miejsce, w którym mogą wyciec. Komplet wymagany
+ * przy RODO wychodzi eksportem do CSV — świadomą decyzją, a nie samym
+ * otwarciem strony.
+ */
+export interface WaitlistSubscriberRow {
+  id: string;
+  email: string;
+  name: string | null;
+  /** ISO — patrz uwaga o datach na górze pliku. */
+  createdAt: string;
+  /** "pending" | "synced" | "failed" | "skipped" */
+  syncStatus: string;
 }
 
 export interface DailySignups {

@@ -52,7 +52,9 @@ export const SubscribeToWaitlistSchema = z.object({
   website: z.string().max(500).optional(),
 });
 
-export type SubscribeToWaitlistInput = z.infer<typeof SubscribeToWaitlistSchema>;
+export type SubscribeToWaitlistInput = z.infer<
+  typeof SubscribeToWaitlistSchema
+>;
 
 /**
  * Slug kampanii — to jest widoczny fragment linku wklejanego w post, więc
@@ -87,6 +89,53 @@ const RESERVED_SLUGS = new Set([
   "zapisy",
 ]);
 
+/**
+ * Adres, który nie może być slugiem kampanii.
+ *
+ * Wydzielone jako gotowy schemat, bo używa go i kreator (Etap 2), i szybka
+ * edycja z listy (Etap 1). Gdyby każde miejsce miało własną kopię reguły,
+ * jedno z nich prędzej czy później przepuściłoby adres, którego drugie
+ * zabrania — a kolizja wychodzi dopiero jako dziwnie działający link
+ * wklejony już do posta.
+ */
+export const CampaignSlugSchema = WaitlistSlugSchema.refine(
+  (value) => !RESERVED_SLUGS.has(value),
+  "Ten adres jest zarezerwowany — wybierz inny.",
+);
+
+/** Nazwa robocza kampanii — widoczna wyłącznie w panelu. */
+export const CampaignNameSchema = z
+  .string()
+  .trim()
+  .min(3, "Nazwa robocza musi mieć minimum 3 znaki.")
+  .max(120, "Nazwa robocza może mieć maksymalnie 120 znaków.");
+
+/** Nagłówek widoczny na stronie kampanii. */
+export const CampaignHeadlineSchema = z
+  .string()
+  .trim()
+  .min(3, "Nagłówek jest wymagany.")
+  .max(160, "Nagłówek może mieć maksymalnie 160 znaków.");
+
+/* -------------------------------------------------------------------------- */
+/* Szybka edycja z listy                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Nazwa robocza i adres — pola kampanii edytowalne bez kreatora.
+ *
+ * Osobny, wąski schemat zamiast `SaveWaitlistPageSchema` nie jest wygodą, tylko
+ * zabezpieczeniem: akcja przyjmująca to wejście NIE MA JAK zmienić treści
+ * strony, bo tych pól po prostu nie dostaje. Przy pełnym schemacie panel
+ * musiałby odsyłać całą kampanię tylko po to, żeby poprawić jedno słowo.
+ */
+export const EditWaitlistBasicsSchema = z.object({
+  name: CampaignNameSchema,
+  slug: CampaignSlugSchema,
+});
+
+export type EditWaitlistBasicsInput = z.infer<typeof EditWaitlistBasicsSchema>;
+
 /* -------------------------------------------------------------------------- */
 /* Zapis kampanii z kreatora                                                   */
 /* -------------------------------------------------------------------------- */
@@ -117,22 +166,11 @@ const IsoDateSchema = z
 
 export const SaveWaitlistPageSchema = z
   .object({
-    slug: WaitlistSlugSchema.refine(
-      (value) => !RESERVED_SLUGS.has(value),
-      "Ten adres jest zarezerwowany — wybierz inny.",
-    ),
-    name: z
-      .string()
-      .trim()
-      .min(3, "Nazwa robocza musi mieć minimum 3 znaki.")
-      .max(120, "Nazwa robocza może mieć maksymalnie 120 znaków."),
+    slug: CampaignSlugSchema,
+    name: CampaignNameSchema,
 
     // --- Treść ---
-    headline: z
-      .string()
-      .trim()
-      .min(3, "Nagłówek jest wymagany.")
-      .max(160, "Nagłówek może mieć maksymalnie 160 znaków."),
+    headline: CampaignHeadlineSchema,
     highlight: z
       .string()
       .trim()
@@ -255,25 +293,61 @@ export const SaveWaitlistPageSchema = z
 export type SaveWaitlistPageInput = z.infer<typeof SaveWaitlistPageSchema>;
 
 /**
- * Zamienia dowolny tekst na propozycję sluga — kreator podpowiada go z nazwy
- * roboczej, żeby nie zmuszać do wymyślania adresu osobno.
+ * Sprowadza tekst do alfabetu adresu: małe litery, cyfry i myślniki.
  *
  * Polskie znaki rozkładamy przez normalizację NFD i usunięcie znaków
  * diakrytycznych. `ł` tego nie łapie (to osobna litera, nie `l` z ogonkiem),
  * więc podmieniamy je jawnie przed normalizacją.
+ *
+ * Ciąg niedozwolonych znaków schodzi do JEDNEGO myślnika — a że sam myślnik
+ * też do nich należy, „lato -- 2026" wychodzi jako „lato-2026" bez osobnej
+ * reguły. Myślniki na krańcach zostają: co z nimi zrobić, zależy od tego,
+ * czy adres jest właśnie wpisywany, czy już zapisywany.
+ */
+function toSlugAlphabet(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .replace(/ł/g, "l")
+      .normalize("NFD")
+      // Zakres łączących znaków diakrytycznych zapisany kodami, nie dosłownie —
+      // dosłowny zapis to niewidoczne znaki w źródle, które gubią się przy
+      // kopiowaniu pliku i zmianie kodowania.
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+  );
+}
+
+/**
+ * Zamienia dowolny tekst na GOTOWY adres — kreator podpowiada go z nazwy
+ * roboczej, a formularze normalizują nim przy zapisie to, co zostało wpisane.
  */
 export function slugifyWaitlistName(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/ł/g, "l")
-    .normalize("NFD")
-    // Zakres łączących znaków diakrytycznych zapisany kodami, nie dosłownie —
-    // dosłowny zapis to niewidoczne znaki w źródle, które gubią się przy
-    // kopiowaniu pliku i zmianie kodowania.
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60)
-    // Obcięcie do 60 znaków mogło zostawić myślnik na końcu.
-    .replace(/-+$/g, "");
+  return (
+    toSlugAlphabet(value)
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60)
+      // Obcięcie do 60 znaków mogło zostawić myślnik na końcu.
+      .replace(/-+$/g, "")
+  );
+}
+
+/**
+ * Normalizacja adresu W TRAKCIE PISANIA.
+ *
+ * Różni się od `slugifyWaitlistName` jedną rzeczą: nie ucina myślnika z KOŃCA.
+ * Brzmi to jak drobiazg, a przesądza o tym, czy da się w ogóle wpisać adres
+ * z myślnikiem — przy ucinaniu każdy świeżo wpisany „-" (i każda spacja, która
+ * się w niego zamienia) znikał w tej samej chwili, w której powstał, więc
+ * „promocja-lato" kończyło się jako „promocjalato".
+ *
+ * Myślnik z POCZĄTKU ucinamy dalej: adres nie może się od niego zaczynać,
+ * a — w odróżnieniu od końcówki — nie jest to stan przejściowy w drodze do
+ * poprawnej wartości.
+ *
+ * Wynik bywa więc chwilowo niezgodny ze schematem (kończy się myślnikiem),
+ * dlatego przy zapisie przepuszczamy go jeszcze przez `slugifyWaitlistName`.
+ */
+export function slugifyWaitlistInput(value: string): string {
+  return toSlugAlphabet(value).replace(/^-+/, "").slice(0, 60);
 }

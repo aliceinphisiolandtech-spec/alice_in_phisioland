@@ -28,6 +28,7 @@ import {
   WAITLIST_THEMES,
   type WaitlistTheme,
 } from "@/lib/waitlist-appearance";
+import { slugifyWaitlistInput } from "@/lib/validators/waitlist";
 import type { CampaignFormState, GroupsState } from "./types";
 
 /**
@@ -140,7 +141,11 @@ export function CampaignSettings({
               value={form.slug}
               onChange={(event) => {
                 onSlugEdited();
-                set("slug", event.target.value);
+                // Adres normalizujemy od razu, a nie dopiero przy zapisie:
+                // pole ma pokazywać to, co faktycznie wyląduje w linku.
+                // Wariant „w trakcie pisania" zostawia myślnik na końcu — bez
+                // tego nie dałoby się go wpisać ani wstawić spacją.
+                set("slug", slugifyWaitlistInput(event.target.value));
               }}
               placeholder="promocja-lato"
               className={cn(inputClass, "font-mono")}
@@ -227,7 +232,9 @@ export function CampaignSettings({
             <input
               id={`${fieldId}-background`}
               value={form.backgroundImageUrl}
-              onChange={(event) => set("backgroundImageUrl", event.target.value)}
+              onChange={(event) =>
+                set("backgroundImageUrl", event.target.value)
+              }
               placeholder="https://images.unsplash.com/..."
               className={cn(inputClass, "font-mono text-xs")}
             />
@@ -262,8 +269,8 @@ export function CampaignSettings({
               </div>
               <p className="mt-1.5 text-xs text-gray-500">
                 Im wyżej, tym mocniej kolor marki przykrywa zdjęcie. Przy niskim
-                kryciu tekst poza kartą zaczyna ginąć na jaśniejszych zdjęciach —
-                sprawdź efekt na podglądzie obok.
+                kryciu tekst poza kartą zaczyna ginąć na jaśniejszych zdjęciach
+                — sprawdź efekt na podglądzie obok.
               </p>
             </div>
           </Collapse>
