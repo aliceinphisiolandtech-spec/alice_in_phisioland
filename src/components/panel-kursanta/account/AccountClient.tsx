@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
 import OneSignal from "react-onesignal";
+import { toast } from "sonner";
 
 import {
   LogOut,
@@ -14,8 +15,11 @@ import {
   Smartphone,
   CheckCircle2,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 import Image from "next/image";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { deleteMyAccountAction } from "@/app/actions/account";
 
 interface AccountClientProps {
   user: {
@@ -44,6 +48,8 @@ export default function AccountClient({ user }: AccountClientProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, startDelete] = useTransition();
 
   // --- EFEKTY (OneSignal + PWA) ---
   useEffect(() => {
@@ -129,6 +135,24 @@ export default function AccountClient({ user }: AccountClientProps) {
     if (confirm("Czy na pewno chcesz się wylogować?")) {
       signOut({ callbackUrl: "/logowanie" });
     }
+  };
+
+  const handleDeleteAccount = () => {
+    startDelete(async () => {
+      const result = await deleteMyAccountAction();
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      // Wylogowanie MUSI pójść po stronie przeglądarki. Sesja jest oparta na
+      // JWT (patrz auth.ts), więc ciasteczko z tokenem działa dalej, mimo że
+      // w bazie nie ma już ani wpisu Session, ani dostępu — dopiero signOut
+      // je kasuje. Bez tego kroku osoba zostałaby na ekranie panelu, który
+      // przy pierwszym odświeżeniu i tak by ją odrzucił.
+      await signOut({ callbackUrl: "/" });
+    });
   };
 
   return (
@@ -250,6 +274,28 @@ export default function AccountClient({ user }: AccountClientProps) {
               <LogOut size={20} />
               Wyloguj się
             </button>
+
+            {/* 5. USUNIĘCIE KONTA
+                Osobna sekcja pod wylogowaniem, a nie kolejny przycisk w rzędzie:
+                to jedyna operacja na tym ekranie, której nie da się cofnąć,
+                więc nie może wyglądać jak sąsiad „Wyloguj się" ani leżeć na
+                wysokości kciuka przy zwykłym wychodzeniu z aplikacji. */}
+            <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-5">
+              <h3 className="text-sm font-bold text-gray-800">Usuń konto</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-gray-500">
+                Trwale usuwa Twoje konto i wszystkie dane. Dostęp do e-booka
+                przepada bezpowrotnie — tej operacji nie da się cofnąć.
+              </p>
+
+              <button
+                onClick={() => setConfirmDelete(true)}
+                disabled={isDeleting}
+                className="mt-4 flex cursor-pointer items-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-bold text-red-600 transition-all hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Trash2 size={16} />
+                Usuń konto
+              </button>
+            </div>
             <p className="mt-4 text-center text-xs text-gray-400">
               Wersja aplikacji: 1.2.0 • Build: Production
             </p>
@@ -266,6 +312,41 @@ export default function AccountClient({ user }: AccountClientProps) {
           </motion.div>
         </motion.div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={(open) => !open && setConfirmDelete(false)}
+        tone="danger"
+        title="Usunąć konto na stałe?"
+        description={
+          <span className="block space-y-3">
+            <span className="block">
+              Usuniemy <strong>wszystkie Twoje dane</strong>: konto wraz
+              z logowaniem Google, dostęp do e-booka, postęp czytania
+              i wystawione opinie. Tej operacji nie da się cofnąć.
+            </span>
+
+            <span className="block rounded-lg bg-red-50 p-3 text-red-700">
+              <strong>Dostęp do e-booka przepada bezpowrotnie.</strong> Założenie
+              konta na ten sam adres go nie przywróci — żeby wrócić do
+              materiałów, trzeba kupić je ponownie.
+            </span>
+
+            <span className="block text-[13px] text-gray-500">
+              Zachowujemy wyłącznie dane z Twoich zamówień i wystawionych
+              faktur. Wymagają tego przepisy prawa podatkowego i rachunkowego,
+              więc nie możemy ich usunąć nawet na Twoje żądanie — prawo do
+              usunięcia danych nie obejmuje informacji, które musimy
+              przechowywać na podstawie przepisów. Szczegóły w §6 polityki
+              prywatności.
+            </span>
+          </span>
+        }
+        confirmLabel="Usuń konto na stałe"
+        cancelLabel="Zostaję"
+        onConfirm={handleDeleteAccount}
+        isPending={isDeleting}
+      />
     </div>
   );
 }
