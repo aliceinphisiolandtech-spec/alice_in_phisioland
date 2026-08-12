@@ -28,15 +28,26 @@ export default async function DashboardLayout({
   if (!session?.user?.id) {
     redirect("/logowanie");
   }
+
   // 1. TYLKO ODCZYTUJEMY FLAGĘ (Nic nie zmieniamy!)
-  let isFirstLogin = false;
-  if (session?.user?.id) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isFirstLogin: true },
-    });
-    isFirstLogin = !!user?.isFirstLogin;
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { isFirstLogin: true, email: true },
+  });
+
+  // Druga linia obrony obok weryfikacji tokena w callbacku `jwt`. To zapytanie
+  // i tak tutaj było, więc sprawdzenie nic nie kosztuje — a domyka okno, w którym
+  // pamięć podręczna weryfikacji (60 s) trzyma jeszcze nieaktualną odpowiedź.
+  // Wcześniej brak użytkownika dawał po cichu `isFirstLogin = false` i panel
+  // renderował się normalnie danymi z ciasteczka.
+  //
+  // Pusty e-mail to konto usunięte z panelu — `deleteMyAccountAction`
+  // anonimizuje wiersz, zamiast go kasować (zamówienia i numery faktur).
+  if (!user || user.email === null) {
+    redirect("/logowanie");
   }
+
+  const isFirstLogin = user.isFirstLogin;
 
   return (
     <div className="h-screen w-full bg-[#F5F6F8] overflow-hidden flex">

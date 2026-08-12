@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthPageData } from "@/lib/types/landing";
 
@@ -16,6 +17,9 @@ interface LoginPageProps {
 
 export const LoginPage = ({ data }: LoginPageProps) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
+  // Rejestracja jest zablokowana do czasu zaznaczenia — wcześniej checkbox był
+  // wyłącznie ozdobą, więc akceptacja regulaminu nie była realnie zbierana.
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -156,6 +160,7 @@ export const LoginPage = ({ data }: LoginPageProps) => {
                     provider="google"
                     label="Google"
                     icon={GoogleIcon}
+                    disabled={!isLoginMode && !termsAccepted}
                   />
                 </div>
 
@@ -207,15 +212,57 @@ export const LoginPage = ({ data }: LoginPageProps) => {
                 )}
 
                 <div className="mt-8 flex items-center flex-col gap-3 justify-center text-md font-medium text-gray-500 w-full">
-                  <label className="flex items-center gap-2 cursor-pointer hover:text-[#0c493e] transition-colors">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-[#0c493e] focus:ring-[#c5e96b]"
-                    />
-                    {isLoginMode
-                      ? "Zapamiętaj mnie"
-                      : "Akceptuję regulamin serwisu"}
-                  </label>
+                  {isLoginMode ? (
+                    /* Wcześniej stało tu „Zapamiętaj mnie" — checkbox, który
+                       niczego nie robił. Sesja i tak trwa 30 dni niezależnie od
+                       kliknięcia, a NextAuth nie pozwala ustawić jej długości
+                       per użytkownik, więc zamiast udawać wybór, mówimy wprost,
+                       co się dzieje z danymi na urządzeniu. */
+                    <p className="text-sm text-left text-gray-400 leading-relaxed">
+                      Logując się, akceptujesz{" "}
+                      <Link
+                        href="/regulamin"
+                        className="font-semibold text-[#0c493e] hover:underline"
+                      >
+                        regulamin
+                      </Link>{" "}
+                      i{" "}
+                      <Link
+                        href="/polityka-prywatnosci"
+                        className="font-semibold text-[#0c493e] hover:underline"
+                      >
+                        politykę prywatności
+                      </Link>
+                      . Sesja zostanie zapisana w tej przeglądarce na 30 dni —
+                      usuniesz ją przyciskiem „Wyloguj się” w panelu.
+                    </p>
+                  ) : (
+                    <label className="flex items-start gap-2 text-left text-sm cursor-pointer hover:text-[#0c493e] transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                        className="mt-1 shrink-0 rounded border-gray-300 text-[#0c493e] focus:ring-[#c5e96b]"
+                      />
+                      <span>
+                        Akceptuję{" "}
+                        <Link
+                          href="/regulamin"
+                          className="font-semibold text-[#0c493e] hover:underline"
+                        >
+                          regulamin serwisu
+                        </Link>{" "}
+                        oraz{" "}
+                        <Link
+                          href="/polityka-prywatnosci"
+                          className="font-semibold text-[#0c493e] hover:underline"
+                        >
+                          politykę prywatności
+                        </Link>
+                        .
+                      </span>
+                    </label>
+                  )}
 
                   <div className="text-md text-gray-400">
                     {isLoginMode ? "Nie masz konta? " : "Masz już konto? "}

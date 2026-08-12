@@ -144,8 +144,30 @@ export default function TermsOfServicePage() {
                 zgodny z prawem.
               </li>
               <li>
-                Użytkownik może usunąć konto w dowolnym momencie poprzez
-                wysłanie wiadomości e-mail do administratora.
+                Użytkownik może usunąć konto w dowolnym momencie samodzielnie
+                w panelu (zakładka „Profil”) albo wysyłając wiadomość e-mail
+                do administratora.
+              </li>
+              <li>
+                Usunięcie konta kasuje dane osobowe użytkownika, dostęp do
+                zakupionych materiałów oraz zapisany postęp. Zachowywane
+                pozostają wyłącznie dane zamówień w zakresie wymaganym
+                przepisami prawa podatkowego — opisuje to §6 polityki
+                prywatności.
+              </li>
+              <li>
+                Niezależnie od powyższego aplikacja zapisuje sesję logowania
+                w przeglądarce użytkownika. Po usunięciu konta użytkownik
+                powinien wylogować się w każdej przeglądarce, w której się
+                logował. Do tego czasu urządzenie może nadal wyświetlać
+                zapamiętane wcześniej dane konta, mimo że zostały one usunięte
+                po stronie administratora. Zasady przechowywania tych danych
+                opisuje §6a polityki prywatności.
+              </li>
+              <li>
+                Ponowne zalogowanie się kontem Google po usunięciu konta oznacza
+                założenie nowego konta. Nie przywraca ono wcześniejszych
+                zakupów ani postępu w materiałach.
               </li>
             </ol>
           </section>

@@ -1,9 +1,11 @@
 // src/lib/auth.ts
 import { NextAuthOptions } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
+import { verifySessionUser } from "@/lib/session-user";
 
 const IS_DEV = process.env.NODE_ENV !== "production";
 
@@ -186,12 +188,39 @@ export const authOptions: NextAuthOptions = {
 
     // 2. JWT
     async jwt({ token, user }) {
+      // Moment logowania — `user` przychodzi prosto z adaptera, więc token
+      // dopiero powstaje i nie ma czego weryfikować.
       if (user) {
         token.id = user.id;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.role = (user as any).role;
         token.picture = user.image;
+        return token;
       }
+
+      // Każde kolejne żądanie. Token to wyłącznie odszyfrowane ciasteczko
+      // z urządzenia użytkownika — sam z siebie nie wie nic o tym, czy konto
+      // nadal istnieje. Bez tego sprawdzenia usunięty użytkownik zostawał
+      // zalogowany do wygaśnięcia ciasteczka.
+      if (!token.id) return token;
+
+      const state = await verifySessionUser(token.id);
+
+      if (state.status === "deleted") {
+        // NextAuth traktuje `null` jako token nieważny: czyści ciasteczko sesji,
+        // a getServerSession() zwraca null. Typy w v4 tego nie przewidują, choć
+        // core to obsługuje (core/routes/session.ts) — stąd rzutowanie.
+        return null as unknown as JWT;
+      }
+
+      if (state.status === "exists") {
+        // Rola czytana z bazy, a nie zamrożona w tokenie przy logowaniu.
+        // Zmiana uprawnień działa więc w ciągu minuty, bez ponownego logowania.
+        token.role = state.role;
+      }
+
+      // status "unknown" = baza chwilowo nie odpowiada. Zostawiamy token bez
+      // zmian, żeby awaria połączenia nie wylogowała wszystkich naraz.
       return token;
     },
 

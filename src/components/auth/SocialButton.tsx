@@ -4,14 +4,20 @@ export const SocialButton = ({
   icon: Icon,
   label,
   provider,
+  disabled = false,
 }: {
   icon: React.ElementType;
   label: string;
   provider: string;
+  /** Blokuje logowanie do czasu zaznaczenia akceptacji regulaminu. */
+  disabled?: boolean;
 }) => (
   <button
+    type="button"
+    disabled={disabled}
+    aria-disabled={disabled}
     onClick={() => signIn(provider, { callbackUrl: "/admin" })}
-    className="group relative flex w-full items-center justify-start gap-4 cursor-pointer rounded-xl border border-gray-100 bg-gray-50 px-6 py-4 transition-all duration-300 hover:border-[#0c493e]/30 hover:bg-white hover:shadow-lg active:scale-[0.99] max-[980px]:justify-center"
+    className="group relative flex w-full items-center justify-start gap-4 cursor-pointer rounded-xl border border-gray-100 bg-gray-50 px-6 py-4 transition-all duration-300 hover:border-[#0c493e]/30 hover:bg-white hover:shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-gray-100 disabled:hover:bg-gray-50 disabled:hover:shadow-none disabled:active:scale-100 max-[980px]:justify-center"
   >
     <div className="flex h-6 w-6 items-center justify-center">
       <Icon className="h-5 w-5 text-gray-700" />
