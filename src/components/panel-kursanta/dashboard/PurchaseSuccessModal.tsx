@@ -8,6 +8,7 @@ import OneSignal from "react-onesignal";
 import { BellRing, X, CheckCircle2, Download, Smartphone } from "lucide-react";
 import { LoadingButton } from "@/components/ui/LoadingButton";
 import confetti from "canvas-confetti";
+import { initOneSignal } from "@/components/panel-kursanta/OneSignalInit";
 import { markFirstLoginComplete } from "@/app/actions/user";
 
 type ModalStep = "notifications" | "install";
@@ -93,7 +94,15 @@ export const PurchaseSuccessModal = ({
   const handleEnableNotifications = async () => {
     setIsLoading(true);
     try {
-      await OneSignal.Slidedown.promptPush();
+      // SDK startuje dopiero tutaj — kliknięcie w tym kroku jest zgodą.
+      // Bez tego `promptPush` rzucałby błędem na nieuruchomionym OneSignalu
+      // i krok cicho przelatywałby dalej, nie pytając o nic.
+      const ready = await initOneSignal();
+
+      if (ready) {
+        await OneSignal.Slidedown.promptPush();
+      }
+
       setStep("install");
     } catch (error) {
       console.error("OneSignal prompt error:", error);

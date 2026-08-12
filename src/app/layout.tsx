@@ -3,7 +3,6 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
-import { OneSignalInit } from "@/components/panel-kursanta/OneSignalInit";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL, siteConfig } from "@/lib/seo";
 
@@ -92,7 +91,12 @@ export default function RootLayout({
       <body className={`${montserrat.variable} font-montserrat antialiased`}>
         {children}
         <Analytics />
-        <OneSignalInit />
+        {/*
+          OneSignala TU NIE MA celowo. Startował stąd każdemu odwiedzającemu,
+          rejestrując service workera i identyfikatory w przeglądarce, zanim
+          ktokolwiek o cokolwiek zapytał. Teraz uruchamia go dopiero przycisk
+          „Włącz" w profilu kursantki — patrz components/panel-kursanta/OneSignalInit.
+        */}
         <Toaster position="top-right" richColors />
       </body>
     </html>

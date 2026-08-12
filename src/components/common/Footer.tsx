@@ -2,7 +2,6 @@ import React from "react";
 import { Instagram } from "lucide-react";
 import Image from "next/image";
 import { TechFooterSignature } from "./TechFooterSignature";
-import { NewsletterForm } from "../site/footer/NewsLetterForm";
 import Link from "next/link";
 
 export const Footer = () => {
@@ -46,15 +45,21 @@ export const Footer = () => {
         {/* Separator 1 */}
         <div className="h-[1px] w-full bg-white/10"></div>
 
-        {/* --- CZĘŚĆ ŚRODKOWA: NEWSLETTER --- */}
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <h3 className="mb-6 text-[14px] font-bold text-white">
-            Zapisz się na newsletter
-          </h3>
+        {/*
+          Zapis na newsletter został STĄD USUNIĘTY, nie ukryty.
 
-          <NewsletterForm />
-        </div>
-        <div className="flex flex-col gap-2 text-center mb-7">
+          Formularz zbierał adresy bez pola zgody i bez zapisania jej treści,
+          więc lista powstawała bez podstawy prawnej — a z samej tabeli i tak
+          nic nigdy nie wychodziło (żaden kod nie wysyłał na te adresy).
+          Razem z formularzem zniknęła trasa /api/newsletter, żeby nie dało się
+          dopisywać adresów z pominięciem interfejsu.
+
+          Zanim wróci: potrzebny checkbox zgody i ten sam ślad co przy liście
+          oczekujących (treść zgody, moment, IP) — patrz model
+          WaitlistSubscriber w prisma/schema.prisma.
+        */}
+
+        <div className="flex flex-col gap-2 py-12 text-center">
           <Link
             href="/regulamin"
             className="text-[15px] text-white/70 transition-colors hover:text-white"

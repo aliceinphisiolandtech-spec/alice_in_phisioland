@@ -5,6 +5,12 @@ import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
 import OneSignal from "react-onesignal";
 import { toast } from "sonner";
+import {
+  initOneSignal,
+  isPushEnabled,
+  rememberPushChoice,
+  revokeOneSignalConsent,
+} from "@/components/panel-kursanta/OneSignalInit";
 
 import {
   LogOut,
@@ -45,22 +51,24 @@ const itemVariants = {
 export default function AccountClient({ user }: AccountClientProps) {
   // --- STANY ---
   const [pushPermission, setPushPermission] = useState(false);
+  const [pushStarting, setPushStarting] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, startDelete] = useTransition();
 
-  // --- EFEKTY (OneSignal + PWA) ---
+  // --- EFEKTY (status powiadomień + PWA) ---
   useEffect(() => {
-    // 1. Sprawdź status OneSignal
-    if (typeof window !== "undefined") {
-      // Drobne opóźnienie, by OneSignal zdążył się załadować
-      setTimeout(() => {
-        const hasPermission = OneSignal.Notifications?.permission;
-        setPushPermission(!!hasPermission);
-      }, 1000);
-    }
+    // 1. Stan powiadomień czytamy z pozwolenia przeglądarki i z naszej pamięci
+    //    decyzji — bez pytania SDK, więc samo wejście w profil nie budzi
+    //    dostawcy u kogoś, kto powiadomień nie chce.
+    const enabled = isPushEnabled();
+    setPushPermission(enabled);
+
+    // U kogoś, kto powiadomienia ma włączone, SDK musi wstać — inaczej nie
+    // byłoby czego wyłączyć, gdy naciśnie „Wyłącz".
+    if (enabled) void initOneSignal();
 
     // 2. Wykryj iOS
     const isIosDevice = /iphone|ipad|ipod/.test(
@@ -93,20 +101,60 @@ export default function AccountClient({ user }: AccountClientProps) {
   // --- HANDLERY ---
 
   const handlePushToggle = async () => {
+    // --- WYŁĄCZANIE ---
     if (pushPermission) {
-      alert(
-        "Powiadomienia są już aktywne. Możesz je wyłączyć w ustawieniach przeglądarki.",
-      );
+      setPushStarting(true);
+
+      try {
+        await revokeOneSignalConsent();
+        rememberPushChoice(false);
+        setPushPermission(false);
+        toast.success("Powiadomienia wyłączone.");
+      } catch (error) {
+        console.error(error);
+        toast.error("Nie udało się wyłączyć powiadomień.");
+      } finally {
+        setPushStarting(false);
+      }
+
       return;
     }
 
+    // --- WŁĄCZANIE ---
+    setPushStarting(true);
+
     try {
-      const accepted = await OneSignal.Notifications.requestPermission();
-      setPushPermission(accepted);
-      if (accepted) alert("Powiadomienia zostały włączone!");
+      // TU i tylko tu startuje OneSignal. Kliknięcie „Włącz" jest jedynym
+      // momentem, w którym dostawca powiadomień w ogóle dotyka przeglądarki —
+      // wcześniej nie ma ani service workera, ani żadnego identyfikatora.
+      const ready = await initOneSignal();
+
+      if (!ready) {
+        toast.error(
+          "Nie udało się uruchomić powiadomień. Odśwież stronę i spróbuj jeszcze raz.",
+        );
+        return;
+      }
+
+      await OneSignal.Notifications.requestPermission();
+
+      // Wynik czytamy z przeglądarki, nie z wartości zwróconej przez SDK:
+      // przy wcześniej udzielonym pozwoleniu okno w ogóle się nie pokazuje,
+      // a to i tak znaczy „włączone".
+      const granted = isPushEnabled() || Notification.permission === "granted";
+
+      if (granted) {
+        rememberPushChoice(true);
+        setPushPermission(true);
+        toast.success("Powiadomienia włączone.");
+      } else {
+        toast.info("Powiadomienia zostały odrzucone w przeglądarce.");
+      }
     } catch (error) {
       console.error(error);
-      alert("Wystąpił błąd podczas aktywacji powiadomień.");
+      toast.error("Wystąpił błąd podczas włączania powiadomień.");
+    } finally {
+      setPushStarting(false);
     }
   };
 
@@ -207,22 +255,31 @@ export default function AccountClient({ user }: AccountClientProps) {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between bg-gray-50/50 p-6">
+            <div className="flex items-center justify-between gap-4 bg-gray-50/50 p-6">
               <div className="text-sm font-medium text-gray-600">
                 {pushPermission
                   ? "Powiadomienia są włączone"
                   : "Powiadomienia są wyłączone"}
               </div>
+              {/* Jeden przycisk w obie strony. Zgodę trzeba dać się wycofać
+                  równie łatwo, jak się jej udziela — wyłączenie schowane
+                  w ustawieniach przeglądarki tego warunku nie spełnia. */}
               <button
                 onClick={handlePushToggle}
-                disabled={pushPermission}
-                className={`rounded-xl cursor-pointer px-4 py-2 text-sm font-bold transition-all ${
+                disabled={pushStarting}
+                className={`shrink-0 rounded-xl cursor-pointer px-4 py-2 text-sm font-bold transition-all disabled:opacity-70 ${
                   pushPermission
-                    ? "cursor-default bg-green-100 text-green-700"
-                    : "bg-[#103830] text-white hover:bg-[#0a2923] shadow-lg shadow-[#103830]/20"
+                    ? "border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900"
+                    : "bg-[#103830] text-white shadow-lg shadow-[#103830]/20 hover:bg-[#0a2923]"
                 }`}
               >
-                {pushPermission ? "Aktywne" : "Włącz"}
+                {pushStarting
+                  ? pushPermission
+                    ? "Wyłączam…"
+                    : "Włączam…"
+                  : pushPermission
+                    ? "Wyłącz"
+                    : "Włącz"}
               </button>
             </div>
           </motion.div>

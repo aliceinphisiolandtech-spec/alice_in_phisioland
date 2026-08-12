@@ -109,6 +109,7 @@ export default function PrivacyPolicyPage() {
                 (MailerLite Limited, Irlandia / MailerLite UAB, Litwa)
               </li>
               <li>monitorowanie błędów aplikacji — Sentry (region UE)</li>
+              <li>statystyki odwiedzin strony — Vercel Analytics</li>
               <li>powiadomienia push — OneSignal</li>
               <li>logowanie kontem Google — Google</li>
             </ul>
@@ -202,6 +203,42 @@ export default function PrivacyPolicyPage() {
             </ul>
           </section>
 
+          {/*
+            Sekcja o cookies opisuje STAN FAKTYCZNY po przeglądzie z sierpnia
+            2026: na urządzeniu użytkownika nie zapisuje się nic poza tym, co
+            jest niezbędne do działania logowania. Powiadomienia push (OneSignal)
+            zapisują dane dopiero po świadomym włączeniu ich w panelu — dlatego
+            serwis nie wymaga banera zgód. Gdyby doszło cokolwiek zbierającego
+            dane bez pytania (piksel reklamowy, analityka z ciasteczkami),
+            baner staje się konieczny i ten paragraf trzeba napisać od nowa.
+          */}
+          <section>
+            <h3 className="mb-4 text-xl font-bold text-gray-900">
+              §6a Pliki cookies i dane zapisywane na urządzeniu
+            </h3>
+            <p className="mb-2">
+              Serwis zapisuje na urządzeniu wyłącznie dane niezbędne do jego
+              działania:
+            </p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                pliki cookies sesji logowania — bez nich nie da się utrzymać
+                zalogowania i korzystać z panelu
+              </li>
+              <li>
+                dane powiadomień push — zapisywane dopiero po samodzielnym
+                włączeniu powiadomień w panelu, w zakładce Profil, i możliwe do
+                wyłączenia w ustawieniach przeglądarki
+              </li>
+            </ul>
+            <p className="mt-3">
+              Statystyki odwiedzin prowadzone są w sposób, który nie wykorzystuje
+              plików cookies ani trwałych identyfikatorów użytkownika. Serwis nie
+              korzysta z reklamowych plików cookies ani z profilowania na potrzeby
+              reklamy.
+            </p>
+          </section>
+
           <section>
             <h3 className="mb-4 text-xl font-bold text-gray-900">
               §7 Prawa użytkownika
@@ -214,7 +251,16 @@ export default function PrivacyPolicyPage() {
               <li>ograniczenia przetwarzania</li>
               <li>przeniesienia danych</li>
               <li>wniesienia sprzeciwu</li>
+              <li>
+                wniesienia skargi do organu nadzorczego — Prezesa Urzędu Ochrony
+                Danych Osobowych, ul. Stawki 2, 00-193 Warszawa
+              </li>
             </ul>
+            <p className="mt-3">
+              Konto wraz z powiązanymi danymi można usunąć samodzielnie
+              w panelu, w zakładce Profil. Dane z wystawionych faktur pozostają
+              przez okres wymagany przepisami prawa podatkowego.
+            </p>
           </section>
 
           <section>

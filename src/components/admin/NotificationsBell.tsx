@@ -13,7 +13,11 @@ import { pl } from "date-fns/locale";
 import OneSignal from "react-onesignal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
-import { ONESIGNAL_ENABLED } from "@/components/panel-kursanta/OneSignalInit";
+import {
+  ONESIGNAL_ENABLED,
+  hasPushPermission,
+  initOneSignal,
+} from "@/components/panel-kursanta/OneSignalInit";
 import {
   getAdminNotifications,
   markAllNotificationsRead,
@@ -45,35 +49,32 @@ export default function NotificationsBell() {
     }
   }, []);
 
-  // Otaguj urządzenie jako admin (z retry, bo OneSignal init jest async i globalny),
-  // ustaw stan zgody i uruchom polling listy.
+  // Odtworzenie tagu na urządzeniu, które JUŻ ma zgodę, i polling listy.
   useEffect(() => {
-    let cancelled = false;
-    let attempts = 0;
+    const granted = hasPushPermission();
+    setNeedsPermission(!granted);
 
-    const tryTag = async () => {
-      attempts += 1;
-      try {
-        await tagAsAdmin();
-      } catch {
-        if (!cancelled && attempts < 15) setTimeout(tryTag, 1000);
-      }
-    };
-
-    // Poza produkcją OneSignal nie jest inicjalizowany, więc tagowanie tylko
-    // by się 15 razy wywaliło w tle. Lista powiadomień działa niezależnie.
-    if (ONESIGNAL_ENABLED) tryTag();
-
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setNeedsPermission(Notification.permission !== "granted");
+    /*
+     * OneSignal startuje tu wyłącznie wtedy, gdy pozwolenie przeglądarki
+     * zostało wcześniej udzielone — czyli gdy admin sam o to poprosił przy
+     * poprzedniej wizycie. Bez tego warunku samo otwarcie panelu budziłoby
+     * dostawcę u kogoś, kto powiadomień nigdy nie chciał.
+     *
+     * Tag trzeba nakładać przy każdym starcie, bo po wyczyszczeniu danych
+     * przeglądarki subskrypcja odtwarza się bez niego, a to po nim OneSignal
+     * kieruje pushe sprzedażowe.
+     */
+    if (ONESIGNAL_ENABLED && granted) {
+      initOneSignal()
+        .then((ready) => (ready ? tagAsAdmin() : undefined))
+        .catch(() => {
+          /* po cichu — brak tagu nie psuje listy powiadomień w panelu */
+        });
     }
 
     refresh();
     const id = setInterval(refresh, POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
+    return () => clearInterval(id);
   }, [refresh]);
 
   // Zamknięcie dropdownu po kliknięciu poza nim.
@@ -112,6 +113,15 @@ export default function NotificationsBell() {
 
     setEnabling(true);
     try {
+      // SDK budzi się dopiero tutaj — kliknięcie w „włącz powiadomienia" jest
+      // momentem zgody. Wcześniej OneSignal nie dotyka tej przeglądarki.
+      const ready = await initOneSignal();
+
+      if (!ready) {
+        toast.error("Nie udało się uruchomić powiadomień. Odśwież panel.");
+        return;
+      }
+
       await OneSignal.Notifications.requestPermission();
       await tagAsAdmin();
       const granted =
