@@ -9,6 +9,7 @@ import {
   toOrderSnapshot,
 } from "@/lib/checkout-pricing";
 import { CHECKOUT_CURRENCY, formatPln, isTesterEmail } from "@/lib/pricing";
+import { SALES_PAUSED, SALES_PAUSED_MESSAGE } from "@/lib/sales-pause";
 
 const PRODUCT_ID = "ebook-tom-1";
 
@@ -16,6 +17,16 @@ const PRODUCT_ID = "ebook-tom-1";
 const IS_TESTING_WEEK = process.env.IS_TESTING_WEEK === "true";
 
 export async function POST(req: Request) {
+  // --- AWARYJNA BLOKADA SPRZEDAŻY (incydent w Fakturowni) ---
+  // Przed wszystkim innym, także przed wyceną i Stripe: żadna płatność nie
+  // może powstać, niezależnie od tego, co wyśle przeglądarka.
+  if (SALES_PAUSED) {
+    return NextResponse.json(
+      { message: SALES_PAUSED_MESSAGE },
+      { status: 503 },
+    );
+  }
+
   try {
     const session = await getServerSession(authOptions);
 

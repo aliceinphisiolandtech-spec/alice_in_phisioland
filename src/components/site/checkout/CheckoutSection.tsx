@@ -25,6 +25,8 @@ import { COUPON_ERROR_MESSAGES } from "@/lib/validators/coupon";
 import type { PriceResult } from "@/lib/pricing-engine";
 import type { SandboxInfo } from "@/lib/checkout-pricing";
 import type { CouponApplyResult } from "./CouponField";
+import { SalesPausedBanner } from "./SalesPausedBanner";
+import { SALES_PAUSED } from "@/lib/sales-pause";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
@@ -201,7 +203,9 @@ export const CheckoutSection = ({
         <div className="flex flex-col lg:flex-row items-start gap-12">
           {/* LEWA KOLUMNA */}
           <div className="flex-1 w-full space-y-6">
-            {!session ? (
+            {SALES_PAUSED ? (
+              <SalesPausedBanner />
+            ) : !session ? (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                 <LoginPrompt
                   onGoogleLogin={() => signIn("google")}
@@ -376,7 +380,7 @@ export const CheckoutSection = ({
               onCouponApplied={handleCouponApplied}
               onCouponRemoved={handleCouponRemoved}
               // Kod można wpisać tylko wtedy, gdy zakup jest w ogóle możliwy.
-              showCoupon={!!session && !isLockedForNonTesters}
+              showCoupon={!!session && !isLockedForNonTesters && !SALES_PAUSED}
               couponDisabled={isInitializing}
             />
           </div>
