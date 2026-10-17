@@ -95,6 +95,9 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Bez tego Google loguje od razu ostatnim kontem z przeglądarki
+      // i nie da się wybrać innego (np. prywatnego zamiast służbowego).
+      authorization: { params: { prompt: "select_account" } },
     }),
     ...devProviders,
   ],
