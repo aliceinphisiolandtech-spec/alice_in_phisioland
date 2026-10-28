@@ -3,6 +3,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { updateTag } from "next/cache";
+import { REVIEWS_TAG } from "@/lib/cached-content";
 
 /**
  * Samodzielne usunięcie konta przez kursantkę (panel → Profil).
@@ -90,6 +92,10 @@ export async function deleteMyAccountAction() {
         },
       }),
     ]);
+
+    // Opinie (z imieniem i zdjęciem) są w cache strony głównej —
+    // po usunięciu konta muszą zniknąć od razu, nie po wygaśnięciu cache.
+    updateTag(REVIEWS_TAG);
 
     return { success: true };
   } catch (error) {

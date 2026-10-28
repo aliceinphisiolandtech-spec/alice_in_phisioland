@@ -14,21 +14,13 @@ import { PatientZoneHero } from "./PatientZoneHero";
 import { PreparationSection } from "./PreparationSection";
 import { FaqSection } from "./FaqSection";
 
-import { prisma } from "@/lib/prisma";
+import { getCachedSections } from "@/lib/cached-content";
 import { LandingPageData } from "@/lib/types/landing";
 
 export async function getLandingData(): Promise<LandingPageData> {
   try {
-    // 1. Pobierz wszystkie sekcje z bazy
-    const sections = await prisma.section.findMany();
-
-    // 2. Przekształć tablicę [{key: 'hero', content: {...}}, ...]
-    //    na obiekt { hero: {...}, about: {...} }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dbContent = sections.reduce((acc: Record<string, any>, section) => {
-      acc[section.key] = section.content;
-      return acc;
-    }, {});
+    // 1-2. Wszystkie sekcje z CMS jako { hero: {...}, about: {...} } (z cache)
+    const dbContent = await getCachedSections();
 
     // 3. Sprawdzenie bezpieczeństwa (opcjonalne)
     // Jeśli nie ma danych w bazie (np. po czystej instalacji), rzuć błąd lub ostrzeżenie

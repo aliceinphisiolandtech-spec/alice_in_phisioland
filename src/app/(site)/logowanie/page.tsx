@@ -1,15 +1,14 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getCachedSections } from "@/lib/cached-content";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { AuthPageData } from "@/lib/types/landing";
 
 // Funkcja pomocnicza do pobierania danych z CMS (taka jak była wcześniej)
 async function getAuthData(): Promise<AuthPageData> {
-  const section = await prisma.section.findUnique({
-    where: { key: "authPage" },
-  });
+  const sections = await getCachedSections();
+  const section = { content: sections.authPage };
 
   const defaultData: AuthPageData = {
     heroHeadline: "Witaj w Świecie",

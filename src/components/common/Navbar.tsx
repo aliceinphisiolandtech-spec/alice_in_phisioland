@@ -8,7 +8,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "../ui/Button";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOutAndClearOffline } from "@/lib/offline";
 import { Session } from "next-auth";
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 
@@ -452,7 +452,7 @@ export const Navbar = ({ session, transparent, onDark }: NavbarProps) => {
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsMobileMenuOpen(false);
-                        signOut({ callbackUrl: "/" });
+                        signOutAndClearOffline({ callbackUrl: "/" });
                       }}
                       className="inline-block rounded-full bg-contrast px-8 py-4 text-lg font-medium text-primary shadow-2xl transition-transform cursor-pointer  mb-4"
                     >
@@ -556,7 +556,7 @@ const NavbarProfile = ({ session, isLightVersion, isScrolled }: any) => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              signOut({ callbackUrl: "/" });
+              signOutAndClearOffline({ callbackUrl: "/" });
             }}
             className="p-1.5 rounded-md text-red-500 hover:bg-red-50 cursor-pointer"
           >

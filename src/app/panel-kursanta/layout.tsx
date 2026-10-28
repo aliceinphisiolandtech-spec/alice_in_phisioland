@@ -16,6 +16,29 @@ import { MobileMenu } from "@/components/panel-kursanta/MobileMenu";
 import { PurchaseSuccessModal } from "@/components/panel-kursanta/dashboard/PurchaseSuccessModal";
 import { PWAWarning } from "@/components/PWAWarning";
 import { redirect } from "next/navigation";
+import { OfflineSupport } from "@/components/panel-kursanta/OfflineSupport";
+import fs from "fs";
+import path from "path";
+
+/** Strony panelu zapisywane do trybu offline dla każdej kursantki. */
+const PANEL_PAGES = [
+  "/panel-kursanta",
+  "/panel-kursanta/aktualnosci",
+  "/panel-kursanta/kursy",
+  "/panel-kursanta/profil",
+];
+
+/** Spis treści i wszystkie rozdziały — tylko dla osób z dostępem do e-booka. */
+function getReaderUrls(): string[] {
+  const contentDir = path.join(process.cwd(), "content");
+  if (!fs.existsSync(contentDir)) return [];
+  const chapters = fs
+    .readdirSync(contentDir)
+    .filter((f) => f.endsWith(".mdx"))
+    .sort()
+    .map((f) => `/panel-kursanta/czytnik/${f.replace(/\.mdx$/, "")}`);
+  return ["/panel-kursanta/czytnik", ...chapters];
+}
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -38,6 +61,16 @@ export default async function DashboardLayout({
     isFirstLogin = !!user?.isFirstLogin;
   }
 
+  const hasEbook = !!(await prisma.purchase.findUnique({
+    where: {
+      userId_productId: { userId: session.user.id, productId: "ebook-tom-1" },
+    },
+    select: { id: true },
+  }));
+  const offlineUrls = hasEbook
+    ? [...PANEL_PAGES, ...getReaderUrls()]
+    : PANEL_PAGES;
+
   return (
     <div className="h-screen w-full bg-[#F5F6F8] overflow-hidden flex">
       <ClientSidebar session={session} />
@@ -53,6 +86,7 @@ export default async function DashboardLayout({
       </div>
       <PWAWarning />
       <MobileMenu session={session} />
+      <OfflineSupport userId={session.user.id} warmUrls={offlineUrls} />
     </div>
   );
 }

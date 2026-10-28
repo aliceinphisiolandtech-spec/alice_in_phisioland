@@ -4,17 +4,11 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { REVIEWS_TAG } from "@/lib/cached-content";
 
-// Lista maili, których opinie mają być promowane na Landing Page
-const FEATURED_EMAILS = [
-  "dstolarczyk6231@gmail.com",
-  "highland.therapist@gmail.com",
-  "e.kulmaczewska@gmail.com", // znormalizowane do małych liter
-  "orlowska.katarzynaaa@gmail.com",
-  "jangryczka21@gmail.com",
-  "piotr.eher@gmail.com",
-].map((email) => email.toLowerCase().trim());
+// O tym, które opinie trafiają na stronę główną, decyduje admin w panelu
+// /admin/opinie (pole isFeatured). Nowa opinia startuje jako niewyróżniona.
 
 export async function createReviewAction(
   rating: number,
@@ -27,10 +21,6 @@ export async function createReviewAction(
   if (!session?.user || !session.user.id) {
     return { error: "Musisz być zalogowany." };
   }
-
-  // Sprawdzamy, czy użytkownik jest na liście wyróżnionych
-  const userEmail = session.user.email?.toLowerCase().trim();
-  const isFeatured = userEmail ? FEATURED_EMAILS.includes(userEmail) : false;
 
   const hasPurchased = await prisma.purchase.findUnique({
     where: {
@@ -75,7 +65,7 @@ export async function createReviewAction(
           headline,
           text,
           role,
-          isFeatured, // Aktualizujemy flagę na wypadek zmiany listy maili
+          // isFeatured bez zmian — to decyzja admina, nie autorki.
         },
       });
     } else {
@@ -87,12 +77,12 @@ export async function createReviewAction(
           headline,
           text,
           role,
-          isFeatured, // Nadajemy flagę true jeśli mail jest na liście
         },
       });
     }
 
     // Rewalidujemy stronę kursanta oraz stronę główną (landing page), żeby nowa opinia się pojawiła
+    updateTag(REVIEWS_TAG);
     revalidatePath("/panel-kursanta");
     revalidatePath("/");
 

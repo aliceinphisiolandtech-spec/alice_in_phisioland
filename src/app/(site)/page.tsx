@@ -11,6 +11,11 @@ import { PracticalTraining } from "@/features/landing-page/components/PracticalT
 import { SecurePanel } from "@/features/landing-page/components/SecurePanel";
 import { Testimonials } from "@/features/landing-page/components/Testimonials";
 import { prisma } from "@/lib/prisma";
+import {
+  getCachedFeaturedReviews,
+  getCachedSections,
+  getCachedSocialProofAvatars,
+} from "@/lib/cached-content";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
   buildMetadata,
@@ -27,17 +32,8 @@ export const metadata: Metadata = buildMetadata({
 });
 
 async function getLandingData() {
-  const sections = await prisma.section.findMany();
-  const dbContent = sections.reduce(
-    (acc, section) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      acc[section.key] = section.content as any;
-      return acc;
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    {} as Record<string, any>,
-  );
-  return dbContent;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (await getCachedSections()) as Record<string, any>;
 }
 
 async function checkUserAccess(userId?: string) {
@@ -53,71 +49,18 @@ async function checkUserAccess(userId?: string) {
   return !!purchase;
 }
 
-// NOWA FUNKCJA DO POBIERANIA OPINII Z BAZY
-async function getFeaturedReviews() {
-  const reviewsDb = await prisma.review.findMany({
-    where: {
-      isFeatured: true,
-    },
-    take: 5,
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: {
-        select: {
-          name: true,
-          image: true,
-        },
-      },
-    },
-  });
-
-  return reviewsDb.map((review) => ({
-    id: review.id,
-    rating: review.rating,
-    headline: review.headline,
-    text: review.text,
-    role: review.role,
-    name: review.user.name || "Anonim",
-    avatar: review.user.image || "/default-avatar.png",
-  }));
-}
-
-/**
- * Awatary do dowodu społecznego w hero.
- *
- * Świadomie WYŁĄCZNIE autorki opinii, a nie wszyscy kupujący: ich zdjęcia są
- * już publiczne w sekcji opinii, więc hero nie dokłada żadnej nowej ekspozycji
- * danych osobowych. Pokazanie tam wizerunku każdej klientki razem z informacją
- * o zakupie byłoby publikacją danych bez jej zgody.
- *
- * Wyróżnione opinie idą pierwsze, bo są kuratorowane.
- */
-async function getSocialProofAvatars() {
-  const reviews = await prisma.review.findMany({
-    where: { user: { image: { not: null } } },
-    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-    take: 3,
-    select: { user: { select: { name: true, image: true } } },
-  });
-
-  return reviews.map((review) => ({
-    src: review.user.image as string,
-    name: review.user.name ?? "Czytelniczka",
-  }));
-}
-
 export default async function Home() {
   const landingDataPromise = getLandingData();
   const sessionPromise = getServerSession(authOptions);
   // Pobieramy opinie równolegle
-  const featuredReviewsPromise = getFeaturedReviews();
+  const featuredReviewsPromise = getCachedFeaturedReviews();
 
   const [landingData, session, featuredReviews, socialProofAvatars] =
     await Promise.all([
       landingDataPromise,
       sessionPromise,
       featuredReviewsPromise,
-      getSocialProofAvatars(),
+      getCachedSocialProofAvatars(),
     ]);
 
   const hasAccess = await checkUserAccess(session?.user?.id);

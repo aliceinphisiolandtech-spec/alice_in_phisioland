@@ -13,7 +13,7 @@ import {
   LucideIcon, // Import LucideIcon type
 } from "lucide-react";
 import Image from "next/image";
-import { signOut } from "next-auth/react";
+import { signOutAndClearOffline } from "@/lib/offline";
 import { Session } from "next-auth";
 
 interface ClientSidebarProps {
@@ -169,7 +169,7 @@ export default function ClientSidebar({ session }: ClientSidebarProps) {
           </div>
 
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => signOutAndClearOffline({ callbackUrl: "/" })}
             className="flex w-full items-center justify-center cursor-pointer gap-2 rounded-xl bg-white/10 py-2.5 text-xs font-bold hover:bg-white/20 transition-colors pointer-cursor border border-white/5"
           >
             <LogOut className="h-4 w-4" />

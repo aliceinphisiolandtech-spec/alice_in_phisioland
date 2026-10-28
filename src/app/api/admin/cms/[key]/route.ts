@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
+import { CMS_TAG } from "@/lib/cached-content";
 import { prisma } from "@/lib/prisma";
 import { SECTION_SCHEMAS } from "@/lib/validators/landing";
 
@@ -163,6 +165,9 @@ export async function POST(
         content: contentToSave,
       },
     });
+
+    // Strony publiczne trzymają CMS w cache — zmiana ma być widoczna od razu.
+    revalidateTag(CMS_TAG, { expire: 0 });
 
     return NextResponse.json(
       { message: "Zapisano pomyślnie!" },

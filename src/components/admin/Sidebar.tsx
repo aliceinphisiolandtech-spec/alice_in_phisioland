@@ -18,9 +18,10 @@ import {
   X, // <--- IMPORT IKONY ZAMKNIĘCIA (mobile)
   PanelLeftClose, // <--- ZWIJANIE NAWIGACJI DO IKON
   PanelLeftOpen,
+  MessageSquareQuote,
 } from "lucide-react";
 import Image from "next/image";
-import { signOut } from "next-auth/react";
+import { signOutAndClearOffline } from "@/lib/offline";
 import { cn } from "@/lib/utils/cn";
 
 interface AdminSidebarProps {
@@ -54,6 +55,12 @@ const menuItems = [
     locked: false,
   },
   { label: "Zapisy na listę", href: "/admin/zapisy", icon: MailPlus, locked: false },
+  {
+    label: "Opinie",
+    href: "/admin/opinie",
+    icon: MessageSquareQuote,
+    locked: false,
+  },
   { label: "Newsletter", href: "#", icon: MailboxIcon, locked: true },
   // NOWA ZAKŁADKA
   { label: "Kursy Video", href: "#", icon: PlayCircle, locked: true },
@@ -249,7 +256,7 @@ export default function AdminSidebar({
           </p>
 
           <button
-            onClick={() => signOut({ callbackUrl: "/logowanie" })}
+            onClick={() => signOutAndClearOffline({ callbackUrl: "/logowanie" })}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-2 text-sm font-medium hover:bg-white/20 transition-colors pointer-cursor"
           >
             <LogOut className="h-4 w-4" />
@@ -265,7 +272,7 @@ export default function AdminSidebar({
         {collapsed && (
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/logowanie" })}
+            onClick={() => signOutAndClearOffline({ callbackUrl: "/logowanie" })}
             title={`Wyloguj${adminName ? ` (${adminName})` : ""}`}
             aria-label="Wyloguj"
             className="hidden min-[981px]:flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-[#0c493e] text-white transition-colors hover:bg-[#0a3b32]"

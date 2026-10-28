@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { signOut } from "next-auth/react";
+import { signOutAndClearOffline } from "@/lib/offline";
 import { motion } from "framer-motion";
 import OneSignal from "react-onesignal";
 import { toast } from "sonner";
@@ -181,7 +181,7 @@ export default function AccountClient({ user }: AccountClientProps) {
 
   const handleLogout = () => {
     if (confirm("Czy na pewno chcesz się wylogować?")) {
-      signOut({ callbackUrl: "/logowanie" });
+      signOutAndClearOffline({ callbackUrl: "/logowanie" });
     }
   };
 
@@ -199,7 +199,7 @@ export default function AccountClient({ user }: AccountClientProps) {
       // w bazie nie ma już ani wpisu Session, ani dostępu — dopiero signOut
       // je kasuje. Bez tego kroku osoba zostałaby na ekranie panelu, który
       // przy pierwszym odświeżeniu i tak by ją odrzucił.
-      await signOut({ callbackUrl: "/" });
+      await signOutAndClearOffline({ callbackUrl: "/" });
     });
   };
 
