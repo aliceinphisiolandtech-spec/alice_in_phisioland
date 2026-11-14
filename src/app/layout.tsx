@@ -4,6 +4,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 import { Analytics } from "@vercel/analytics/next";
+import { GoogleAnalytics } from "@/components/consent/GoogleAnalytics";
+import { CookieBanner } from "@/components/consent/CookieBanner";
 import { SITE_URL, siteConfig } from "@/lib/seo";
 
 // Konfiguracja czcionki - ładuje się raz dla całej aplikacji
@@ -94,6 +96,9 @@ export default function RootLayout({
       <body className={`${montserrat.variable} font-montserrat antialiased`}>
         {children}
         <Analytics />
+        {/* GA4 ładuje się wyłącznie po zgodzie z banera (lib/consent.ts). */}
+        <GoogleAnalytics />
+        <CookieBanner />
         {/*
           OneSignala TU NIE MA celowo. Startował stąd każdemu odwiedzającemu,
           rejestrując service workera i identyfikatory w przeglądarce, zanim

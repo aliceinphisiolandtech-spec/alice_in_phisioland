@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { formatPln } from "@/lib/pricing";
 import type { PromoBannerData } from "@/lib/promo-banner";
+import { CONSENT_EVENT, isConsentPending } from "@/lib/consent";
 
 /**
  * Popup promocji — wyskakuje 2 s po wejściu na stronę główną.
@@ -328,8 +329,24 @@ export const PromoPopup = ({ data }: { data: PromoBannerData }) => {
     // do podglądu i do sprawdzania zmian bez czyszczenia danych przeglądarki.
     const forced = new URLSearchParams(window.location.search).has("popup");
     if (!forced && wasDismissed(data.saleId)) return;
-    const id = setTimeout(() => setOpen(true), DELAY_MS);
-    return () => clearTimeout(id);
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const schedule = () => {
+      timer = setTimeout(() => setOpen(true), DELAY_MS);
+    };
+
+    // Dwa okna naraz (baner cookies + popup) to chaos — popup czeka, aż
+    // odwiedzający odpowie na baner, i dopiero wtedy odlicza swoje 2 s.
+    if (!isConsentPending()) {
+      schedule();
+      return () => clearTimeout(timer);
+    }
+    const onDecided = () => schedule();
+    window.addEventListener(CONSENT_EVENT, onDecided, { once: true });
+    return () => {
+      window.removeEventListener(CONSENT_EVENT, onDecided);
+      clearTimeout(timer);
+    };
   }, [data.saleId]);
 
   const close = useCallback(() => {

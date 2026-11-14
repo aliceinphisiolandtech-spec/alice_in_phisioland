@@ -3,6 +3,7 @@ import { Instagram } from "lucide-react";
 import Image from "next/image";
 import { TechFooterSignature } from "./TechFooterSignature";
 import Link from "next/link";
+import { CookieSettingsLink } from "@/components/consent/CookieSettingsLink";
 
 export const Footer = () => {
   return (
@@ -78,6 +79,7 @@ export const Footer = () => {
           >
             Regulamin zakupu e-booka
           </Link>
+          <CookieSettingsLink className="cursor-pointer text-[15px] text-white/70 transition-colors hover:text-white" />
         </div>
         {/* Separator 2 */}
         <div className="h-[1px] w-full bg-white/10"></div>
