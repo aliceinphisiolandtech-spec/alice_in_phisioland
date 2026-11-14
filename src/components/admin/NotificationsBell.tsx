@@ -12,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import OneSignal from "react-onesignal";
 import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
 import {
   ONESIGNAL_ENABLED,
@@ -73,8 +74,22 @@ export default function NotificationsBell() {
     }
 
     refresh();
-    const id = setInterval(refresh, POLL_MS);
-    return () => clearInterval(id);
+
+    // Karta w tle nie odpytuje serwera — panel bywa otwarty godzinami
+    // w nieaktywnej karcie, a każde zapytanie to sesja + dwa zapytania do bazy.
+    // Po powrocie do karty odświeżamy od razu, żeby dzwonek nie był nieaktualny.
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
+    }, POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [refresh]);
 
   // Zamknięcie dropdownu po kliknięciu poza nim.
@@ -147,80 +162,110 @@ export default function NotificationsBell() {
         type="button"
         onClick={toggleOpen}
         aria-label="Powiadomienia"
-        className="relative flex h-10 w-10 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+        aria-expanded={open}
+        className={cn(
+          "relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-gray-500 transition-colors duration-200 hover:bg-gray-100 hover:text-[#0c493e] active:scale-95",
+          open && "bg-gray-100 text-[#0c493e]",
+        )}
       >
         <Bell className="h-5 w-5" />
-        {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
-            {unread > 9 ? "9+" : unread}
-          </span>
-        )}
+        <AnimatePresence>
+          {unread > 0 && (
+            <motion.span
+              key="badge"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 28 }}
+              className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white"
+            >
+              {unread > 9 ? "9+" : unread}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </button>
 
       {/* DROPDOWN */}
-      {open && (
-        <div className="absolute right-0 z-50 mt-2 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] max-[980px]:fixed max-[980px]:right-4 max-[980px]:left-4 max-[980px]:w-auto">
-          {/* HEADER */}
-          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h3 className="text-sm font-bold text-[#0c493e]">Powiadomienia</h3>
-            {items.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setUnread(0);
-                  setItems((prev) => prev.map((i) => ({ ...i, read: true })));
-                  markAllNotificationsRead();
-                }}
-                className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-[#0c493e] transition-colors"
-              >
-                <Check className="h-3.5 w-3.5" />
-                Przeczytane
-              </button>
-            )}
-          </div>
-
-          {/* PROŚBA O ZGODĘ (gdy push nieaktywny) */}
-          {needsPermission && (
-            <div className="flex items-center justify-between gap-3 bg-[#0c493e]/5 px-4 py-3">
-              <p className="text-xs text-gray-600">
-                Włącz powiadomienia, aby dostawać alerty o sprzedaży.
-              </p>
-              <button
-                type="button"
-                onClick={enablePush}
-                disabled={enabling}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#0c493e] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#09362e] transition-colors disabled:opacity-60"
-              >
-                {enabling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Włącz
-              </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="dropdown"
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{
+              opacity: 0,
+              y: -6,
+              scale: 0.98,
+              transition: { duration: 0.12 },
+            }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            style={{ transformOrigin: "top right" }}
+            className="absolute right-0 z-50 mt-2 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] max-[980px]:fixed max-[980px]:right-4 max-[980px]:left-4 max-[980px]:w-auto"
+          >
+            {/* HEADER */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+              <h3 className="text-sm font-bold text-[#0c493e]">
+                Powiadomienia
+              </h3>
+              {items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUnread(0);
+                    setItems((prev) => prev.map((i) => ({ ...i, read: true })));
+                    markAllNotificationsRead();
+                  }}
+                  className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-[#0c493e] transition-colors"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  Przeczytane
+                </button>
+              )}
             </div>
-          )}
 
-          {/* LISTA */}
-          <div className="max-h-[420px] overflow-y-auto">
-            {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                  <Bell className="h-5 w-5 text-gray-300" />
-                </div>
-                <p className="text-sm font-medium text-gray-500">
-                  Brak powiadomień
+            {/* PROŚBA O ZGODĘ (gdy push nieaktywny) */}
+            {needsPermission && (
+              <div className="flex items-center justify-between gap-3 bg-[#0c493e]/5 px-4 py-3">
+                <p className="text-xs text-gray-600">
+                  Włącz powiadomienia, aby dostawać alerty o sprzedaży.
                 </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Tu pojawią się alerty o sprzedaży i porzuconych koszykach.
-                </p>
+                <button
+                  type="button"
+                  onClick={enablePush}
+                  disabled={enabling}
+                  className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#0c493e] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#09362e] transition-colors disabled:opacity-60"
+                >
+                  {enabling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Włącz
+                </button>
               </div>
-            ) : (
-              <ul className="divide-y divide-gray-50">
-                {items.map((n) => (
-                  <NotificationRow key={n.id} item={n} />
-                ))}
-              </ul>
             )}
-          </div>
-        </div>
-      )}
+
+            {/* LISTA */}
+            <div className="max-h-[420px] overflow-y-auto">
+              {items.length === 0 ? (
+                <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                    <Bell className="h-5 w-5 text-gray-300" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-500">
+                    Brak powiadomień
+                  </p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    Tu pojawią się alerty o sprzedaży i porzuconych koszykach.
+                  </p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-50">
+                  {items.map((n) => (
+                    <NotificationRow key={n.id} item={n} />
+                  ))}
+                </ul>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -239,7 +284,9 @@ function NotificationRow({ item }: { item: AdminNotificationDTO }) {
       <div
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-          isSale ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700",
+          isSale
+            ? "bg-green-100 text-green-700"
+            : "bg-amber-100 text-amber-700",
         )}
       >
         <Icon className="h-4 w-4" />

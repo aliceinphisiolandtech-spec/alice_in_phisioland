@@ -2,13 +2,15 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { Megaphone, X } from "lucide-react";
 import { LoadingButton } from "@/components/ui/LoadingButton";
 import { createSaleAction, updateSaleAction } from "@/app/actions/sales";
 import { MIN_CHARGE_GROSZE, formatPln } from "@/lib/pricing";
 import { computeDiscount } from "@/lib/discounts";
 import { isoToLocalInput, localInputToIso } from "@/lib/date-input";
 import type { SaveSaleInput } from "@/lib/validators/discounts";
+import { formatPromoRange, resolveBannerText } from "@/lib/promo-banner-format";
+import { PromoBannerBar } from "@/components/site/PromoTopBanner";
 import {
   DateWindowFields,
   FormSection,
@@ -18,12 +20,14 @@ import {
   inputClass,
   labelClass,
 } from "./_shared";
-import type { SaleRow } from "./types";
+import type { SaleRow, WaitlistOptionRow } from "./types";
 
 interface SaleFormProps {
   editing: SaleRow | null;
   /** Aktualna cena sprzedaży z cennika — podstawa podglądu (grosze). */
   basePrice: number;
+  /** Listy zapisów do podpięcia pod formularz „Powiadom mnie” w popupie. */
+  waitlists: WaitlistOptionRow[];
   onDone: () => void;
   onCancel: () => void;
 }
@@ -31,6 +35,7 @@ interface SaleFormProps {
 export const SaleForm = ({
   editing,
   basePrice,
+  waitlists,
   onDone,
   onCancel,
 }: SaleFormProps) => {
@@ -60,7 +65,22 @@ export const SaleForm = ({
     isoToLocalInput(editing?.validUntil ?? null),
   );
 
+  const [showBanner, setShowBanner] = useState(editing?.showBanner ?? false);
+  const [bannerText, setBannerText] = useState(editing?.bannerText ?? "");
+  const [notifyWaitlistId, setNotifyWaitlistId] = useState(
+    editing?.notifyWaitlistId ?? "",
+  );
+
   const [isSaving, startSaving] = useTransition();
+
+  // Podgląd paska liczony z pól formularza, tak samo jak na stronie głównej.
+  const previewFrom = windowEnabled ? localInputToIso(validFrom) : null;
+  const previewUntil = windowEnabled ? localInputToIso(validUntil, true) : null;
+  const bannerDateLabel = formatPromoRange(
+    previewFrom ? new Date(previewFrom) : null,
+    previewUntil ? new Date(previewUntil) : null,
+  );
+  const bannerPreviewText = resolveBannerText(bannerText, name) || "Promocja";
 
   const parsedPercent = Number(percent);
   const parsedPriceGrosze = Math.round(Number(priceZl.replace(",", ".")) * 100);
@@ -92,6 +112,9 @@ export const SaleForm = ({
       usageLimit: limitEnabled && usageLimit !== "" ? Number(usageLimit) : null,
       validFrom: windowEnabled ? localInputToIso(validFrom) : null,
       validUntil: windowEnabled ? localInputToIso(validUntil, true) : null,
+      showBanner,
+      bannerText: bannerText.trim() === "" ? null : bannerText,
+      notifyWaitlistId: notifyWaitlistId === "" ? null : notifyWaitlistId,
     };
 
     startSaving(async () => {
@@ -249,6 +272,81 @@ export const SaleForm = ({
               onFrom={setValidFrom}
               onUntil={setValidUntil}
             />
+          </SwitchRow>
+        </FormSection>
+
+        <FormSection
+          title="Pasek na stronie głównej"
+          description="Czarny pasek z terminem promocji nad menu strony głównej. Zwykły tekst, bez odliczania."
+        >
+          <SwitchRow
+            checked={showBanner}
+            onChange={() => setShowBanner((value) => !value)}
+            icon={<Megaphone size={16} />}
+            tone="warn"
+            title="Pokaż pasek z promocją"
+            description="Pasek pojawi się od razu po włączeniu przeceny na liście — także przed jej startem, jako zapowiedź — i zniknie sam po jej zakończeniu."
+          >
+            <div className="flex flex-col gap-4">
+              <div>
+                <label htmlFor="sf-banner-text" className={labelClass}>
+                  Tekst na pasku
+                </label>
+                <input
+                  id="sf-banner-text"
+                  value={bannerText}
+                  onChange={(e) => setBannerText(e.target.value)}
+                  placeholder={name.trim() || "BLACK FRIDAY"}
+                  maxLength={40}
+                  autoComplete="off"
+                  className={inputClass}
+                />
+                <p className="mt-1.5 text-xs text-gray-500">
+                  Zostaw puste, żeby użyć nazwy promocji. Termin dopisze się sam
+                  z dat powyżej.
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="sf-notify" className={labelClass}>
+                  Popup: zapis „Powiadom mnie”
+                </label>
+                <select
+                  id="sf-notify"
+                  value={notifyWaitlistId}
+                  onChange={(e) => setNotifyWaitlistId(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">Bez formularza — sam przycisk</option>
+                  {waitlists.map((list) => (
+                    <option key={list.id} value={list.id}>
+                      {list.name} (/zapisy/{list.slug})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-xs text-gray-500">
+                  2 s po wejściu na stronę główną wyskakuje popup z licznikiem.
+                  Przed startem promocji można w nim zostawić e-mail — trafia na
+                  wybraną listę (Zapisy na listę → MailerLite).
+                </p>
+              </div>
+
+              <div>
+                <span className={labelClass}>Podgląd</span>
+                <div className="overflow-hidden rounded-lg border border-gray-200">
+                  <PromoBannerBar
+                    text={bannerPreviewText}
+                    dateLabel={bannerDateLabel}
+                  />
+                </div>
+                {!bannerDateLabel && (
+                  <p className="mt-1.5 text-xs text-amber-700">
+                    Bez dat pasek pokaże sam tekst. Żeby był na nim termin,
+                    włącz „Ogranicz czasowo” i wybierz daty.
+                  </p>
+                )}
+              </div>
+            </div>
           </SwitchRow>
         </FormSection>
 

@@ -11,8 +11,11 @@ import {
   GraduationCap,
   Lock,
   Stethoscope,
+  FilePenLine,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
 
 // ZMIANA 1: Importujemy LandingPageData z globalnych typów, a nie z page.tsx
 import { LandingPageData } from "@/lib/types/landing";
@@ -87,29 +90,59 @@ export default function CmsForms({ initialData }: CmsFormsProps) {
   };
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto min-h-screen">
-      {/* TABS */}
-      <div className="mb-8 overflow-x-auto pb-2 scrollbar-hide">
-        <div className="flex gap-2 min-w-max">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex items-center gap-2 px-2 py-1 rounded-full cursor-pointer text-[13px] font-medium transition-all duration-200 border",
-                activeTab === tab.id
-                  ? "bg-[#0c493e] text-white border-[#0c493e]"
-                  : "bg-white text-gray-600 hover:bg-gray-50",
-              )}
-            >
-              <tab.icon size={16} /> {tab.label}
-            </button>
-          ))}
+    <div className="mx-auto min-h-screen w-full max-w-[1200px]">
+      <PageHeader
+        icon={<FilePenLine size={24} />}
+        eyebrow="Treści"
+        title="Treści strony"
+        description="Edytuj teksty sekcji strony głównej, logowania i strefy pacjenta."
+      />
+
+      {/* TABS — aktywna „pigułka” przesuwa się między zakładkami (layoutId). */}
+      <div className="sticky top-[88px] z-30 mb-8 overflow-x-auto rounded-2xl border border-gray-200/70 bg-white/80 p-1.5 shadow-sm backdrop-blur-xl scrollbar-hide max-[980px]:top-[84px]">
+        <div className="flex min-w-max gap-1">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                aria-pressed={isActive}
+                className={cn(
+                  "relative flex cursor-pointer items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-colors duration-200",
+                  isActive
+                    ? "text-white"
+                    : "text-gray-500 hover:bg-gray-100/80 hover:text-[#0c493e]",
+                )}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="cms-tab-active"
+                    transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                    className="absolute inset-0 rounded-xl bg-[#0c493e] shadow-[0_8px_20px_-10px_rgba(12,73,62,0.8)]"
+                  />
+                )}
+                <tab.icon size={16} className="relative" />
+                <span className="relative">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* FORM AREA */}
-      <div className="">{renderContent()}</div>
+      {/* FORM AREA — płynne przejście między sekcjami. */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {renderContent()}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

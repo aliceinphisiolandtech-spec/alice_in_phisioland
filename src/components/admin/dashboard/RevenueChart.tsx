@@ -33,7 +33,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export const RevenueChart = ({ data }: { data: ChartDataPoint[] }) => {
   return (
-    <div className="xl:col-span-2 bg-white rounded-[30px] max-[640px]:rounded-3xl p-8 max-[640px]:p-5 shadow-sm border border-gray-100 flex flex-col h-full">
+    <div className="animate-in fade-in @[1120px]/dash:col-span-2 flex h-full min-h-[420px] flex-col rounded-[30px] border border-gray-100 bg-white p-8 shadow-sm duration-500 max-[640px]:rounded-3xl max-[640px]:p-5">
       <div className="flex items-center justify-between mb-8 max-[640px]:mb-5">
         <div>
           <h2 className="text-xl font-bold text-gray-800">
@@ -43,8 +43,10 @@ export const RevenueChart = ({ data }: { data: ChartDataPoint[] }) => {
         </div>
       </div>
 
-      <div className="flex-1 w-full min-h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
+      {/* Stała wysokość: przy `height="100%"` rodzic miał tylko min-height,
+          więc recharts przy pierwszym pomiarze dostawał -1 i ostrzegał. */}
+      <div className="w-full min-w-0 flex-1">
+        <ResponsiveContainer width="100%" height={320} minWidth={0}>
           <BarChart
             data={data}
             // Zwiększono dolny margines (bottom: 20 zamiast 0), aby etykiety osi X miały miejsce
@@ -72,13 +74,19 @@ export const RevenueChart = ({ data }: { data: ChartDataPoint[] }) => {
               tickFormatter={(value) => `${value}`}
             />
 
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "#F9FAFB" }} />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: "#F3F6F4", radius: 8 }}
+              animationDuration={150}
+            />
 
             <Bar
               dataKey="value"
               radius={[6, 6, 6, 6]}
               barSize={40}
               minPointSize={4}
+              animationDuration={800}
+              animationEasing="ease-out"
             >
               {data.map((entry, index) => (
                 <Cell

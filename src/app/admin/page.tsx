@@ -23,105 +23,108 @@ export default async function AdminDashboardPage() {
   const now = new Date();
   const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const sevenDaysAgo = new Date(now.setDate(now.getDate() - 6)); // Z ostatnich 7 dni
+  // Wykres obejmuje 7 PEŁNYCH dni (dziś + 6 poprzednich) — od północy, a nie
+  // od bieżącej godziny sprzed tygodnia, inaczej najstarszy słupek był ucięty.
+  const sevenDaysAgo = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - 6,
+  );
 
   // Zakupy testowe z piaskownicy nie są sprzedażą — nie mogą podbijać przychodu
   // ani liczby klientów. Dokładamy ten filtr do KAŻDEGO zapytania o zamówienia.
   const REAL = { isSandbox: false } as const;
+  const PAID = { ...REAL, status: "succeeded" } as const;
+  const FAILED = { ...REAL, status: "failed" } as const;
+  const THIS_MONTH = { createdAt: { gte: startOfThisMonth } };
+  const LAST_MONTH = {
+    createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
+  };
 
-  // --- PRZYCHÓD (Suma z Orders w groszach -> konwersja na PLN) ---
-  const totalRevenueData = await prisma.order.aggregate({
-    where: { ...REAL, status: "succeeded" },
-    _sum: { amount: true },
-  });
-
-  const currentMonthRevenue = await prisma.order.aggregate({
-    where: {
-      ...REAL,
-      status: "succeeded",
-      createdAt: { gte: startOfThisMonth },
-    },
-    _sum: { amount: true },
-  });
-
-  const lastMonthRevenue = await prisma.order.aggregate({
-    where: {
-      ...REAL,
-      status: "succeeded",
-      createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
-    },
-    _sum: { amount: true },
-  });
+  // WYDAJNOŚĆ: wszystkie zapytania są od siebie niezależne, więc idą RÓWNOLEGLE.
+  // Wcześniej szły jedno po drugim (~17 rund do bazy), przez co czas wejścia
+  // na dashboard był sumą wszystkich zapytań zamiast czasem najwolniejszego.
+  const [
+    totalRevenueData,
+    currentMonthRevenue,
+    lastMonthRevenue,
+    totalPurchases,
+    currentMonthPurchases,
+    lastMonthPurchases,
+    totalCustomers,
+    currentMonthCustomers,
+    lastMonthCustomers,
+    totalFails,
+    currentMonthFails,
+    lastMonthFails,
+    recentOrdersForChart,
+    totalOrdersCount,
+    rawRecentOrders,
+    retention,
+  ] = await Promise.all([
+    // --- PRZYCHÓD (Suma z Orders w groszach -> konwersja na PLN) ---
+    prisma.order.aggregate({ where: PAID, _sum: { amount: true } }),
+    prisma.order.aggregate({
+      where: { ...PAID, ...THIS_MONTH },
+      _sum: { amount: true },
+    }),
+    prisma.order.aggregate({
+      where: { ...PAID, ...LAST_MONTH },
+      _sum: { amount: true },
+    }),
+    // --- E-BOOKI (Ilość wpisów w Purchase) ---
+    // Dostęp nadany zakupem testowym z piaskownicy nie jest sprzedażą.
+    prisma.purchase.count({ where: REAL }),
+    prisma.purchase.count({ where: { ...REAL, ...THIS_MONTH } }),
+    prisma.purchase.count({ where: { ...REAL, ...LAST_MONTH } }),
+    // --- KLIENCI (Unikalni użytkownicy z opłaconym zamówieniem) ---
+    prisma.order.groupBy({ by: ["userId"], where: PAID }),
+    prisma.order.groupBy({ by: ["userId"], where: { ...PAID, ...THIS_MONTH } }),
+    prisma.order.groupBy({ by: ["userId"], where: { ...PAID, ...LAST_MONTH } }),
+    // --- BŁĘDY / FAILED ORDERS ---
+    prisma.order.count({ where: FAILED }),
+    prisma.order.count({ where: { ...FAILED, ...THIS_MONTH } }),
+    prisma.order.count({ where: { ...FAILED, ...LAST_MONTH } }),
+    // --- WYKRES - Ostatnie 7 dni ---
+    prisma.order.findMany({
+      where: { ...PAID, createdAt: { gte: sevenDaysAgo } },
+      select: { amount: true, createdAt: true },
+    }),
+    // --- OSTATNIE ZAMÓWIENIA TABELA ---
+    prisma.order.count({ where: REAL }),
+    prisma.order.findMany({
+      where: REAL,
+      take: 5, // inicjalne załadowanie, kolejne strony dociąga RecentOrdersTable
+      orderBy: { createdAt: "desc" },
+      // Z użytkownika potrzebne jest wyłącznie imię — bez ciągnięcia całego
+      // rekordu (e-mail, tokeny, zdjęcie) do serwera i dalej.
+      include: { user: { select: { name: true } } },
+    }),
+    // Przypomnienie o okresie przechowywania danych z list zapisów — obietnica
+    // z polityki prywatności musi mieć pokrycie w tym, co widzi administratorka.
+    loadRetentionOverview(),
+  ]);
 
   const totalRevenue = (totalRevenueData._sum.amount || 0) / 100;
   const currentMonthRevPLN = (currentMonthRevenue._sum.amount || 0) / 100;
   const lastMonthRevPLN = (lastMonthRevenue._sum.amount || 0) / 100;
   const revenueTrend = calculateChange(currentMonthRevPLN, lastMonthRevPLN);
 
-  // --- E-BOOKI (Ilość wpisów w Purchase) ---
-  // Ten sam filtr co przy zamówieniach: dostęp nadany zakupem testowym
-  // z piaskownicy nie jest sprzedażą (patrz Purchase.isSandbox).
-  const totalPurchases = await prisma.purchase.count({ where: REAL });
-  const currentMonthPurchases = await prisma.purchase.count({
-    where: { ...REAL, createdAt: { gte: startOfThisMonth } },
-  });
-  const lastMonthPurchases = await prisma.purchase.count({
-    where: {
-      ...REAL,
-      createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
-    },
-  });
   const purchasesTrend = calculateChange(
     currentMonthPurchases,
     lastMonthPurchases,
   );
-
-  // --- KLIENCI (Unikalni użytkownicy z sukcesywnym zamówieniem) ---
-  const totalCustomers = await prisma.order.groupBy({
-    by: ["userId"],
-    where: { ...REAL, status: "succeeded" },
-  });
-  const currentMonthCustomers = await prisma.order.groupBy({
-    by: ["userId"],
-    where: {
-      ...REAL,
-      status: "succeeded",
-      createdAt: { gte: startOfThisMonth },
-    },
-  });
-  const lastMonthCustomers = await prisma.order.groupBy({
-    by: ["userId"],
-    where: {
-      ...REAL,
-      status: "succeeded",
-      createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
-    },
-  });
   const customersTrend = calculateChange(
     currentMonthCustomers.length,
     lastMonthCustomers.length,
   );
-
-  // --- BŁĘDY / FAILED ORDERS ---
-  const totalFails = await prisma.order.count({
-    where: { ...REAL, status: "failed" },
-  });
-  const currentMonthFails = await prisma.order.count({
-    where: { ...REAL, status: "failed", createdAt: { gte: startOfThisMonth } },
-  });
-  const lastMonthFails = await prisma.order.count({
-    where: {
-      ...REAL,
-      status: "failed",
-      createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
-    },
-  });
   const failsTrend = calculateChange(currentMonthFails, lastMonthFails);
 
   // --- BUDOWANIE DANYCH KART ---
   const statsData: StatData[] = [
     {
       title: "Całkowity Przychód",
+      icon: "revenue",
       value: `${formatNumberPl(totalRevenue)} PLN`,
       change: formatChangeText(revenueTrend),
       trend: revenueTrend >= 0 ? "up" : "down",
@@ -133,6 +136,7 @@ export default async function AdminDashboardPage() {
     },
     {
       title: "Sprzedane E-booki",
+      icon: "ebooks",
       value: totalPurchases.toString(),
       change: formatChangeText(purchasesTrend),
       trend: purchasesTrend >= 0 ? "up" : "down",
@@ -144,6 +148,7 @@ export default async function AdminDashboardPage() {
     },
     {
       title: "Klienci (Wszyscy)",
+      icon: "customers",
       value: totalCustomers.length.toString(),
       change: formatChangeText(customersTrend),
       trend: customersTrend >= 0 ? "up" : "down",
@@ -155,6 +160,7 @@ export default async function AdminDashboardPage() {
     },
     {
       title: "Zwroty / Błędy",
+      icon: "fails",
       value: totalFails.toString(),
       change: formatChangeText(failsTrend),
       trend: failsTrend > 0 ? "up" : "down", // Jeśli rosną błędy - strzałka w górę
@@ -165,16 +171,6 @@ export default async function AdminDashboardPage() {
       iconColor: "text-red-500", // Wyróżnijmy na czerwono
     },
   ];
-
-  // --- WYKRES - Ostatnie 7 dni ---
-  const recentOrdersForChart = await prisma.order.findMany({
-    where: {
-      ...REAL,
-      status: "succeeded",
-      createdAt: { gte: sevenDaysAgo },
-    },
-    select: { amount: true, createdAt: true },
-  });
 
   const daysOfWeek = ["Ndz", "Pon", "Wt", "Śr", "Czw", "Pt", "Sob"];
   const chartMap = new Map();
@@ -193,16 +189,6 @@ export default async function AdminDashboardPage() {
   });
 
   const chartData = Array.from(chartMap, ([name, value]) => ({ name, value }));
-
-  // --- OSTATNIE ZAMÓWIENIA TABELA ---
-  const totalOrdersCount = await prisma.order.count({ where: REAL });
-
-  const rawRecentOrders = await prisma.order.findMany({
-    where: REAL,
-    take: 5, // <--- Zostawiamy 5 (inicjalne załadowanie)
-    orderBy: { createdAt: "desc" },
-    include: { user: true },
-  });
 
   const recentOrders = rawRecentOrders.map((order) => {
     // Priorytetyzacja nazwy: billingName -> user.name -> "Nieznany"
@@ -223,10 +209,6 @@ export default async function AdminDashboardPage() {
   // --- CEL SPRZEDAŻY ---
   const GOAL_TARGET = 50000; // Np. 50k PLN
   const goalPercentage = (totalRevenue / GOAL_TARGET) * 100;
-
-  // Przypomnienie o okresie przechowywania danych z list zapisów — obietnica
-  // z polityki prywatności musi mieć pokrycie w tym, co widzi administratorka.
-  const retention = await loadRetentionOverview();
 
   return (
     <DashboardAdmin

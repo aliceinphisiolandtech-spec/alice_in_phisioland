@@ -87,7 +87,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pl" className="scroll-smooth">
+    // suppressHydrationWarning: rozszerzenia przeglądarki dopisują do <html>
+    // własne atrybuty (np. `data-mbtss-nonce`) przed startem Reacta, co dawało
+    // fałszywy błąd hydracji. Działa wyłącznie na atrybuty TEGO jednego tagu.
+    <html lang="pl" className="scroll-smooth" suppressHydrationWarning>
       <body className={`${montserrat.variable} font-montserrat antialiased`}>
         {children}
         <Analytics />

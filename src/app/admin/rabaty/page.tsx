@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { getPricingSettings } from "@/lib/pricing-settings";
 import { resolveCheckoutPricing } from "@/lib/checkout-pricing";
 import { evaluateDiscount } from "@/lib/discounts";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { DiscountsTabs } from "./DiscountsTabs";
 import { LivePriceHeader } from "./LivePriceHeader";
 import type {
@@ -50,21 +51,28 @@ export default async function AdminDiscountsPage({
   searchParams: Promise<{ tab?: string; zapisy?: string }>;
 }) {
   const { tab, zapisy } = await searchParams;
-  const waitlistSource = await loadWaitlistSource(zapisy);
-  const [codes, sales, emailDiscounts, settings] = await Promise.all([
-    prisma.discountCode.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.sale.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.emailDiscount.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        members: {
-          orderBy: { createdAt: "asc" },
-          select: { id: true, email: true },
+  // Kampania z adresu nie zależy od rabatów — pobieramy ją w tej samej rundzie.
+  const [waitlistSource, codes, sales, emailDiscounts, settings, waitlists] =
+    await Promise.all([
+      loadWaitlistSource(zapisy),
+      prisma.discountCode.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.sale.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.emailDiscount.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          members: {
+            orderBy: { createdAt: "asc" },
+            select: { id: true, email: true },
+          },
         },
-      },
-    }),
-    getPricingSettings(),
-  ]);
+      }),
+      getPricingSettings(),
+      // Listy zapisów do wyboru w popupie przeceny („Powiadom mnie”).
+      prisma.waitlistPage.findMany({
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, slug: true },
+      }),
+    ]);
 
   // Statystyki liczone z zamówień, nie z liczników — pokazują realny koszt akcji.
   // Zakupy testowe z piaskownicy są wykluczone, żeby nie zawyżały kwot rabatów.
@@ -139,6 +147,9 @@ export default async function AdminDiscountsPage({
       validFrom: sale.validFrom?.toISOString() ?? null,
       validUntil: sale.validUntil?.toISOString() ?? null,
       isSandbox: sale.isSandbox,
+      showBanner: sale.showBanner,
+      bannerText: sale.bannerText,
+      notifyWaitlistId: sale.notifyWaitlistId,
       ordersCount: stats?.count ?? 0,
       totalDiscountGrosze: stats?.sum ?? 0,
     };
@@ -197,17 +208,12 @@ export default async function AdminDiscountsPage({
 
   return (
     <div className="w-full max-w-5xl">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="rounded-xl bg-[#0c493e] p-2.5 text-white">
-          <TicketPercent size={20} />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Rabaty</h1>
-          <p className="text-sm text-gray-500">
-            Kody, przeceny i zniżki dla wybranych osób.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<TicketPercent size={24} />}
+        eyebrow="Sprzedaż"
+        title="Rabaty"
+        description="Kody, przeceny, zniżki dla wybranych osób i pasek promocji na stronie głównej."
+      />
 
       <LivePriceHeader
         pricing={customerView.pricing}
@@ -224,6 +230,7 @@ export default async function AdminDiscountsPage({
         sales={saleRows}
         emailDiscounts={emailRows}
         basePrice={settingsRow.basePriceGrosze}
+        waitlists={waitlists}
         // Wskazana kampania sama otwiera zakładkę zniżek mailowych — bez tego
         // po kliknięciu „Utwórz zniżkę dla tej listy" trzeba by szukać
         // właściwej zakładki ręcznie.

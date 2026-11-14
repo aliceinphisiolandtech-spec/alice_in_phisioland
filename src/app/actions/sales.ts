@@ -39,6 +39,10 @@ function toDbData(input: SaveSaleInput) {
     usageLimit: input.usageLimit,
     validFrom: input.validFrom ? new Date(input.validFrom) : null,
     validUntil: input.validUntil ? new Date(input.validUntil) : null,
+    showBanner: input.showBanner,
+    // Pusty tekst = nazwa przeceny (patrz resolveBannerText).
+    bannerText: input.bannerText ? input.bannerText : null,
+    notifyWaitlistId: input.notifyWaitlistId,
   };
 }
 
@@ -61,6 +65,7 @@ export async function createSaleAction(input: SaveSaleInput) {
     });
 
     revalidatePath("/admin/rabaty");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Sale create error:", error);
@@ -101,6 +106,7 @@ export async function updateSaleAction(id: string, input: SaveSaleInput) {
 
     revalidatePath("/admin/rabaty");
     revalidatePath("/zakup");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Sale update error:", error);
@@ -122,6 +128,7 @@ export async function toggleSaleAction(id: string, isActive: boolean) {
 
     revalidatePath("/admin/rabaty");
     revalidatePath("/zakup");
+    revalidatePath("/");
     return { success: true, isActive };
   } catch (error) {
     console.error("Sale toggle error:", error);
@@ -141,6 +148,7 @@ export async function deleteSaleAction(id: string) {
     await prisma.sale.delete({ where: { id } });
 
     revalidatePath("/admin/rabaty");
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     console.error("Sale delete error:", error);

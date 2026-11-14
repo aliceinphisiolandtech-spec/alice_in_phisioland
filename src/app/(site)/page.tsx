@@ -17,6 +17,8 @@ import {
   getCachedSocialProofAvatars,
 } from "@/lib/cached-content";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { PromoPopup } from "@/components/site/PromoPopup";
+import { getPromoBanner } from "@/lib/promo-banner";
 import {
   buildMetadata,
   ebookSchema,
@@ -63,7 +65,15 @@ export default async function Home() {
       getCachedSocialProofAvatars(),
     ]);
 
-  const hasAccess = await checkUserAccess(session?.user?.id);
+  // Dostęp i promocja nie zależą od siebie — idą równolegle. Promocja jest
+  // deduplikowana przez `cache`, więc layout (pasek) nie pyta bazy drugi raz.
+  const [hasAccess, promo] = await Promise.all([
+    checkUserAccess(session?.user?.id),
+    getPromoBanner({
+      isAdmin: session?.user?.role === "admin",
+      email: session?.user?.email,
+    }),
+  ]);
 
   // Tworzymy połączony obiekt danych dla sekcji Testimonials
   // Bierzemy nagłówki z CMS (landingData), ale recenzje z naszej tabeli Review (featuredReviews)
@@ -75,6 +85,11 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <JsonLd data={[organizationSchema(), websiteSchema(), ebookSchema()]} />
+      {/* Kto już ma e-book, nie dostaje popupu sprzedażowego — poza adminem,
+          który musi móc go podejrzeć ze swojego konta. */}
+      {promo && (!hasAccess || session?.user?.role === "admin") && (
+        <PromoPopup data={promo} />
+      )}
       <main className="flex-grow">
         <Hero
           data={landingData.hero}

@@ -64,7 +64,9 @@ export const RecentOrdersTable = ({ initialOrders, totalOrders }: Props) => {
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      <div
+        className={`overflow-x-auto transition-opacity duration-200 ${isLoading ? "opacity-50" : "opacity-100"}`}
+      >
         <table className="w-full">
           {/* ... Nagłówki thead bez zmian ... */}
           <thead className="text-left">
@@ -80,16 +82,21 @@ export const RecentOrdersTable = ({ initialOrders, totalOrders }: Props) => {
               </th>
             </tr>
           </thead>
-          <tbody className="text-sm font-medium text-gray-700">
+          {/* `key` = strona: po zmianie strony wiersze wjeżdżają od nowa
+              (tw-animate-css, czysty CSS — bez dodatkowego JS). */}
+          <tbody
+            key={currentPage}
+            className="animate-in fade-in slide-in-from-bottom-1 text-sm font-medium text-gray-700 duration-300"
+          >
             {/* Iterujemy po naszym stanie `orders` */}
             {orders.map((order) => (
               <tr
                 key={order.id}
-                className="group hover:bg-gray-50 transition-colors"
+                className="group transition-colors duration-150 hover:bg-gray-50/80"
               >
                 <td className="py-4 pl-4 rounded-l-xl">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-[#0c493e] font-bold text-xs uppercase">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#c5e96b]/25 text-xs font-bold uppercase text-[#0c493e] transition-transform duration-200 group-hover:scale-105">
                       {order.avatar}
                     </div>
                     <span className="font-bold text-gray-800">
@@ -138,8 +145,9 @@ export const RecentOrdersTable = ({ initialOrders, totalOrders }: Props) => {
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrevPage}
+              aria-label="Poprzednia strona"
               disabled={currentPage === 1 || isLoading}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-all duration-150 hover:border-[#0c493e]/30 hover:bg-gray-50 hover:text-[#0c493e] active:scale-95 disabled:pointer-events-none disabled:opacity-50"
             >
               <ChevronLeft size={16} />
             </button>
@@ -148,8 +156,9 @@ export const RecentOrdersTable = ({ initialOrders, totalOrders }: Props) => {
             </span>
             <button
               onClick={handleNextPage}
+              aria-label="Następna strona"
               disabled={currentPage === totalPages || isLoading}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-all duration-150 hover:border-[#0c493e]/30 hover:bg-gray-50 hover:text-[#0c493e] active:scale-95 disabled:pointer-events-none disabled:opacity-50"
             >
               <ChevronRight size={16} />
             </button>

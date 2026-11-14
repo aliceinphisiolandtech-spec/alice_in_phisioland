@@ -1,5 +1,9 @@
+export type StatIcon = "revenue" | "ebooks" | "customers" | "fails";
+
 export interface StatData {
   title: string;
+  /** Ikona karty — wcześniej każda karta miała ten sam wykres w górę. */
+  icon?: StatIcon;
   value: string;
   change: string;
   trend: "up" | "down" | "neutral";

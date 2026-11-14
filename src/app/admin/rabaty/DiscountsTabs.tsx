@@ -12,6 +12,7 @@ import type {
   DiscountRow,
   EmailDiscountRow,
   SaleRow,
+  WaitlistOptionRow,
   WaitlistSourceRow,
 } from "./types";
 
@@ -21,6 +22,8 @@ interface DiscountsTabsProps {
   emailDiscounts: EmailDiscountRow[];
   /** Cena sprzedaży z ustawień — podstawa podglądów w formularzach (grosze). */
   basePrice: number;
+  /** Listy zapisów do podpięcia pod popup przeceny. */
+  waitlists: WaitlistOptionRow[];
   /** Zakładka z adresu (`?tab=`). Nieznana wartość spada na kody. */
   initialTab?: string;
   /** Kampania zapisów, z której robimy zniżkę. `null` = zwykłe wejście. */
@@ -36,6 +39,7 @@ export const DiscountsTabs = ({
   sales,
   emailDiscounts,
   basePrice,
+  waitlists,
   initialTab,
   waitlistSource = null,
 }: DiscountsTabsProps) => {
@@ -146,7 +150,11 @@ export const DiscountsTabs = ({
               <CodesTab codes={codes} basePrice={basePrice} />
             )}
             {tab === "sales" && (
-              <SalesTab sales={sales} basePrice={basePrice} />
+              <SalesTab
+                sales={sales}
+                basePrice={basePrice}
+                waitlists={waitlists}
+              />
             )}
             {tab === "emails" && (
               <EmailDiscountsTab

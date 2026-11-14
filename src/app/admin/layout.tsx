@@ -25,7 +25,7 @@ export default async function AdminLayout({
   const user = session.user;
 
   return (
-    <div className="min-h-screen w-full bg-[#F5F6F8] font-montserrat text-[#0c493e]">
+    <div className="admin-canvas min-h-screen w-full font-montserrat text-[#0c493e]">
       {/* Cała interaktywna powłoka (Sidebar + Topbar + drawer mobilny) */}
       <AdminShell
         adminName={user.name}

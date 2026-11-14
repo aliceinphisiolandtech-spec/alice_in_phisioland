@@ -30,7 +30,7 @@ export const SPRING: Transition = {
 export const COLLAPSE: Transition = { duration: 0.24, ease: [0.4, 0, 0.2, 1] };
 
 export const inputClass =
-  "w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-[#0c493e] focus:ring-1 focus:ring-[#0c493e] outline-none transition-all placeholder:text-gray-400";
+  "w-full px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white outline-none placeholder:text-gray-400 transition-[border-color,box-shadow] duration-200 hover:border-gray-300 focus:border-[#0c493e] focus:ring-4 focus:ring-[#0c493e]/10";
 
 export const labelClass =
   "block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 whitespace-nowrap";
@@ -285,7 +285,7 @@ export const AddButton = ({
     onClick={onClick}
     whileTap={{ scale: 0.97 }}
     transition={SPRING}
-    className="flex shrink-0 cursor-pointer items-center gap-2 rounded-xl bg-[#0c493e] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-colors hover:bg-[#0a3b32]"
+    className="flex shrink-0 cursor-pointer items-center gap-2 rounded-xl bg-[#0c493e] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-[background-color,box-shadow] duration-200 hover:bg-[#0a3b32] hover:shadow-[0_8px_20px_-8px_rgba(12,73,62,0.6)]"
   >
     <Plus size={16} />
     {label}
@@ -339,10 +339,12 @@ export const ListCard = ({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 pl-6 shadow-sm transition-all duration-200",
+        "relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 pl-6 shadow-sm transition-[transform,box-shadow,border-color,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
         "before:absolute before:inset-y-0 before:left-0 before:w-1 before:transition-colors before:duration-300",
         accent,
-        busy ? "opacity-60" : "hover:border-gray-300 hover:shadow-md",
+        busy
+          ? "opacity-60"
+          : "hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-[0_12px_30px_-14px_rgba(15,23,42,0.25)]",
       )}
     >
       {children}

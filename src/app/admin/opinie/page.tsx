@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { MessageSquareQuote } from "lucide-react";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { HeaderStat } from "@/components/admin/ui/HeaderStat";
 import { ReviewsList } from "./ReviewsList";
 import { FEATURED_REVIEWS_LIMIT } from "@/lib/reviews";
 
@@ -17,20 +19,19 @@ export default async function AdminReviewsPage() {
   const featuredCount = reviews.filter((r) => r.isFeatured).length;
 
   return (
-    <div className="p-8 max-[768px]:p-0 max-w-6xl mx-auto">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-[#0c493e] rounded-xl text-white">
-          <MessageSquareQuote size={24} />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Zarządzanie Opiniami
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Wybierz, które opinie kursantek pojawią się na stronie głównej.
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        icon={<MessageSquareQuote size={24} />}
+        eyebrow="Treści"
+        title="Zarządzanie opiniami"
+        description="Wybierz, które opinie kursantek pojawią się na stronie głównej."
+        actions={
+          <div className="flex gap-3">
+            <HeaderStat value={reviews.length} label="wszystkich" />
+            <HeaderStat value={featuredCount} label="wyróżnionych" accent />
+          </div>
+        }
+      />
 
       <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-4 text-sm text-gray-600 shadow-sm">
         Na stronie głównej:{" "}

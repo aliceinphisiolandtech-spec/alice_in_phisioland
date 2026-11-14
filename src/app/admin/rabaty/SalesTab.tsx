@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, Trash2, Tag, CalendarRange } from "lucide-react";
+import { Pencil, Trash2, Tag, CalendarRange, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { formatPln } from "@/lib/pricing";
 import { getDiscountStatus } from "@/lib/discounts";
@@ -26,7 +26,7 @@ import {
   formatWindow,
   listItemMotion,
 } from "./_shared";
-import type { SaleRow } from "./types";
+import type { SaleRow, WaitlistOptionRow } from "./types";
 
 type FormMode =
   | { kind: "closed" }
@@ -43,9 +43,11 @@ function saleLabel(row: SaleRow): string {
 export const SalesTab = ({
   sales,
   basePrice,
+  waitlists,
 }: {
   sales: SaleRow[];
   basePrice: number;
+  waitlists: WaitlistOptionRow[];
 }) => {
   const router = useRouter();
   const [form, setForm] = useState<FormMode>({ kind: "closed" });
@@ -80,7 +82,9 @@ export const SalesTab = ({
 
       toast.success(
         res.isActive
-          ? `Przecena „${row.name}” włączona.`
+          ? row.showBanner
+            ? `Przecena „${row.name}” włączona — pasek widoczny na stronie głównej.`
+            : `Przecena „${row.name}” włączona.`
           : `Przecena „${row.name}” wyłączona.`,
       );
       router.refresh();
@@ -168,6 +172,7 @@ export const SalesTab = ({
             <SaleForm
               editing={null}
               basePrice={basePrice}
+              waitlists={waitlists}
               onDone={handleSaved}
               onCancel={closeForm}
             />
@@ -212,6 +217,15 @@ export const SalesTab = ({
                           </span>
                           <StatusBadge status={status} />
                           {row.isSandbox && <SandboxBadge />}
+                          {row.showBanner && (
+                            <span
+                              title="Ta przecena wyświetla pasek z terminem na stronie głównej (gdy jest włączona)."
+                              className="flex items-center gap-1 rounded-full bg-black px-2 py-0.5 text-[10px] font-bold text-white"
+                            >
+                              <Megaphone size={10} />
+                              Pasek na stronie
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
@@ -292,6 +306,7 @@ export const SalesTab = ({
                         <SaleForm
                           editing={row}
                           basePrice={basePrice}
+                          waitlists={waitlists}
                           onDone={handleSaved}
                           onCancel={closeForm}
                         />

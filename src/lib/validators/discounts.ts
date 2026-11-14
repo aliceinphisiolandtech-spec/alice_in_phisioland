@@ -51,6 +51,13 @@ export const SaveSaleSchema = windowRefine(
       usageLimit: UsageLimitSchema.nullable(),
       validFrom: IsoDateSchema,
       validUntil: IsoDateSchema,
+      showBanner: z.boolean(),
+      bannerText: z
+        .string()
+        .trim()
+        .max(40, "Tekst paska może mieć maksymalnie 40 znaków.")
+        .nullable(),
+      notifyWaitlistId: z.string().trim().min(1).nullable(),
     })
     .refine(
       (data) => (data.type === "percent" ? data.percentOff !== null : true),

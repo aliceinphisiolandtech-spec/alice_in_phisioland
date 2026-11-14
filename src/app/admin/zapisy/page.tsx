@@ -1,5 +1,6 @@
 import { MailPlus } from "lucide-react";
 import { SITE_URL } from "@/lib/seo";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { isWaitlistBuilderEnabled } from "@/lib/waitlist-features";
 import { loadWaitlistCampaigns } from "./data";
 import { SimpleWaitlistControl } from "./SimpleWaitlistControl";
@@ -24,19 +25,16 @@ export default async function AdminWaitlistPage() {
 
   return (
     <div className="w-full max-w-5xl">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="rounded-xl bg-[#0c493e] p-2.5 text-white">
-          <MailPlus size={20} />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Zapisy na listę</h1>
-          <p className="text-sm text-gray-500">
-            {builderEnabled
-              ? "Twórz strony zbierające adresy e-mail i wysyłaj je do MailerLite."
-              : "Podgląd strony zbierającej adresy e-mail do MailerLite."}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<MailPlus size={24} />}
+        eyebrow="Sprzedaż"
+        title="Zapisy na listę"
+        description={
+          builderEnabled
+            ? "Twórz strony zbierające adresy e-mail i wysyłaj je do MailerLite."
+            : "Podgląd strony zbierającej adresy e-mail do MailerLite."
+        }
+      />
 
       {builderEnabled ? (
         <WaitlistManager pages={pages} siteUrl={SITE_URL} />

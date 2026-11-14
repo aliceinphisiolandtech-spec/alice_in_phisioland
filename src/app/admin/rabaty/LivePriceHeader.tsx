@@ -399,10 +399,9 @@ export const LivePriceHeader = ({
                 // nie widać ich w koszyku. Bez tej informacji zniknęłyby
                 // z pola widzenia razem z wyłączonym trybem.
                 <>
-                  Wyłączona. W środku czeka{" "}
-                  <strong>{sandboxItemCount}</strong> niepublikowana zmiana(-y)
-                  — klientki jej nie widzą. Włącz tryb, żeby do niej wrócić albo
-                  ją opublikować.
+                  Wyłączona. W środku czeka <strong>{sandboxItemCount}</strong>{" "}
+                  niepublikowana zmiana(-y) — klientki jej nie widzą. Włącz
+                  tryb, żeby do niej wrócić albo ją opublikować.
                 </>
               ) : (
                 <>

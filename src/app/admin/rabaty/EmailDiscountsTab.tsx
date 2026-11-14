@@ -178,28 +178,28 @@ const EmailList = ({ row }: { row: EmailDiscountRow }) => {
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             <AnimatePresence initial={false} mode="popLayout">
-                {row.members.map((member) => (
-                  <motion.span
-                    key={member.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.85 }}
-                    transition={SPRING}
-                    className="flex items-center gap-1.5 rounded-full bg-gray-100 py-1 pl-3 pr-1.5 text-xs text-gray-600"
+              {row.members.map((member) => (
+                <motion.span
+                  key={member.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={SPRING}
+                  className="flex items-center gap-1.5 rounded-full bg-gray-100 py-1 pl-3 pr-1.5 text-xs text-gray-600"
+                >
+                  {member.email}
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(member.id, member.email)}
+                    disabled={isPending || isClearing}
+                    aria-label={`Usuń ${member.email} z listy`}
+                    className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-100 hover:text-red-500 disabled:cursor-not-allowed"
                   >
-                    {member.email}
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(member.id, member.email)}
-                      disabled={isPending || isClearing}
-                      aria-label={`Usuń ${member.email} z listy`}
-                      className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-100 hover:text-red-500 disabled:cursor-not-allowed"
-                    >
-                      <X size={11} />
-                    </button>
-                  </motion.span>
-                ))}
+                    <X size={11} />
+                  </button>
+                </motion.span>
+              ))}
             </AnimatePresence>
           </div>
         </>

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
 import { BellRing } from "lucide-react";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { HeaderStat } from "@/components/admin/ui/HeaderStat";
 import { NewsForm } from "./NewsForm";
 import { NewsList } from "./NewsList";
 
@@ -11,26 +13,20 @@ export default async function AdminNewsPage() {
   });
 
   return (
-    <div className="p-8 max-[768px]:p-0 max-w-6xl mx-auto">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="p-3 bg-[#0c493e] rounded-xl text-white">
-          <BellRing size={24} />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Zarządzanie Aktualnościami
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Dodawaj powiadomienia widoczne dla kursantów.
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-6xl">
+      <PageHeader
+        icon={<BellRing size={24} />}
+        eyebrow="Treści"
+        title="Zarządzanie aktualnościami"
+        description="Dodawaj powiadomienia widoczne dla kursantów w ich panelu."
+        actions={<HeaderStat value={news.length} label="opublikowanych" />}
+      />
 
       <div className="flex flex-col gap-12">
         {/* LEWA KOLUMNA: Formularz */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-8">
-            <h2 className="font-bold text-lg mb-4 text-[#0c493e]">
+            <h2 className="mb-4 text-lg font-bold text-[#0c493e]">
               Dodaj nową
             </h2>
             <NewsForm />

@@ -6,7 +6,6 @@ import { getServerSession } from "next-auth";
 
 export async function getOrdersPage(page: number, itemsPerPage: number = 5) {
   const session = await getServerSession(authOptions);
-  console.log(session);
 
   // 2. BEZPIECZEŃSTWO: Weryfikacja
   if (!session || !session.user) {
@@ -28,7 +27,7 @@ export async function getOrdersPage(page: number, itemsPerPage: number = 5) {
     skip,
     take: itemsPerPage,
     orderBy: { createdAt: "desc" },
-    include: { user: true },
+    include: { user: { select: { name: true } } },
   });
 
   return rawOrders.map((order) => {

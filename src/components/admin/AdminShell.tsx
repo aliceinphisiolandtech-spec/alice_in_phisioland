@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
 import AdminSidebar from "./Sidebar";
 import AdminTopbar from "./Topbar";
@@ -56,9 +57,12 @@ export default function AdminShell({
   }, [mobileOpen]);
 
   return (
-    <>
+    // `reducedMotion="user"`: osoby z włączonym „ogranicz ruch” w systemie
+    // dostają przejścia bez przesunięć i sprężyn — tylko zmianę przezroczystości.
+    <MotionConfig reducedMotion="user">
       <AdminSidebar
         adminName={adminName}
+        adminImage={adminImage}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
         collapsed={navCollapsed}
@@ -66,13 +70,20 @@ export default function AdminShell({
       />
 
       {/* Przyciemnione tło (tylko mobile, gdy drawer otwarty) */}
-      {mobileOpen && (
-        <div
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm min-[981px]:hidden"
-        />
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm min-[981px]:hidden"
+          />
+        )}
+      </AnimatePresence>
 
       {/*
         Odstęp podajemy WYŁĄCZNIE klasami z zakresami medialnymi, bez wartości
@@ -82,8 +93,8 @@ export default function AdminShell({
       */}
       <div
         className={cn(
-          "w-full flex flex-col min-h-screen transition-[padding] duration-300 max-[980px]:pl-0",
-          navCollapsed ? "min-[981px]:pl-[76px]" : "min-[981px]:pl-[280px]",
+          "w-full flex flex-col min-h-screen transition-[padding] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] max-[980px]:pl-0",
+          navCollapsed ? "min-[981px]:pl-[84px]" : "min-[981px]:pl-[280px]",
         )}
       >
         <AdminTopbar
@@ -93,10 +104,10 @@ export default function AdminShell({
           onMenuClick={() => setMobileOpen(true)}
         />
 
-        <main className="flex-1 p-8 max-[980px]:p-4 overflow-x-hidden">
+        <main className="flex-1 overflow-x-hidden px-8 pb-10 pt-6 max-[980px]:px-4 max-[980px]:pt-4">
           {children}
         </main>
       </div>
-    </>
+    </MotionConfig>
   );
 }

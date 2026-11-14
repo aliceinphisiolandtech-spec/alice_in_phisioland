@@ -295,6 +295,18 @@ model Sale {
   usedCount           Int       @default(0)
   exhaustedNotifiedAt DateTime?
 
+  // --- PASEK NA STRONIE GŁÓWNEJ ---
+  // Zapowiedź promocji nad nawigacją. Pokazuje się tylko przy włączonej
+  // przecenie, od teraz (także przed startem) do końca jej okna.
+  showBanner Boolean @default(false)
+  /// Tekst paska, np. "BLACK FRIDAY". null = nazwa przeceny.
+  bannerText String?
+  /// Lista zapisów, do której trafia e-mail z popupu („Powiadom mnie”).
+  /// null = popup bez formularza. Zapis idzie istniejącą ścieżką /api/waitlist
+  /// (zgoda RODO, MailerLite, limit prób), więc nie dublujemy logiki.
+  notifyWaitlistId String?
+  notifyWaitlist   WaitlistPage? @relation(fields: [notifyWaitlistId], references: [id], onDelete: SetNull)
+
   /// Patrz DiscountCode.isSandbox.
   isSandbox Boolean @default(false)
 
@@ -550,6 +562,8 @@ model WaitlistPage {
   consentText String @db.Text
 
   subscribers WaitlistSubscriber[]
+  /// Przeceny, których popup zbiera adresy na tę listę.
+  notifySales Sale[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

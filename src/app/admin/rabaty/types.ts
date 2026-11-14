@@ -45,8 +45,21 @@ export interface SaleRow {
   validUntil: string | null;
   /** Utworzone lub zmienione w piaskownicy — niewidoczne dla klientek. */
   isSandbox: boolean;
+  /** Pasek z terminem promocji nad nawigacją strony głównej. */
+  showBanner: boolean;
+  /** Tekst paska; null = nazwa przeceny. */
+  bannerText: string | null;
+  /** Lista zapisów formularza „Powiadom mnie” w popupie (null = bez formularza). */
+  notifyWaitlistId: string | null;
   ordersCount: number;
   totalDiscountGrosze: number;
+}
+
+/** Lista zapisów do wyboru w formularzu przeceny (popup „Powiadom mnie”). */
+export interface WaitlistOptionRow {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 /**
