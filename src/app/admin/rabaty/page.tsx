@@ -150,6 +150,7 @@ export default async function AdminDiscountsPage({
       showBanner: sale.showBanner,
       bannerText: sale.bannerText,
       notifyWaitlistId: sale.notifyWaitlistId,
+      lowestPrice30dGrosze: sale.lowestPrice30dGrosze,
       ordersCount: stats?.count ?? 0,
       totalDiscountGrosze: stats?.sum ?? 0,
     };

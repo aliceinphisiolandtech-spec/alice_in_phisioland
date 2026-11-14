@@ -43,6 +43,7 @@ function toDbData(input: SaveSaleInput) {
     // Pusty tekst = nazwa przeceny (patrz resolveBannerText).
     bannerText: input.bannerText ? input.bannerText : null,
     notifyWaitlistId: input.notifyWaitlistId,
+    lowestPrice30dGrosze: input.lowestPrice30d,
   };
 }
 

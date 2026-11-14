@@ -42,12 +42,15 @@ interface CheckoutSectionProps {
   /** Wycena bez kodu (przecena + zniżka mailowa), policzona na serwerze. */
   initialPricing: PriceResult;
   sandbox: SandboxInfo;
+  /** Omnibus: ID przeceny -> najniższa cena z 30 dni przed obniżką (grosze). */
+  omnibusLowestPrices: Record<string, number>;
 }
 
 export const CheckoutSection = ({
   session,
   initialPricing,
   sandbox,
+  omnibusLowestPrices,
 }: CheckoutSectionProps) => {
   const [clientSecret, setClientSecret] = useState("");
   const [isInitializing, setIsInitializing] = useState(false);
@@ -371,6 +374,7 @@ export const CheckoutSection = ({
             {/* Poprawione wywołanie z przekazaniem maila */}
             <OrderSummary
               pricing={pricing}
+              omnibusLowestPrices={omnibusLowestPrices}
               appliedCode={appliedCode}
               outrankedCode={outrankedCode}
               onCouponApplied={handleCouponApplied}

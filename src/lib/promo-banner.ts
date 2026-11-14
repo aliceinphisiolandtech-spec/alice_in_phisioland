@@ -39,6 +39,8 @@ export interface PromoBannerData {
   /** Cena w promocji i bez niej (grosze) — tym samym silnikiem co koszyk. */
   promoPrice: number;
   regularPrice: number;
+  /** Omnibus: najniższa cena z 30 dni przed obniżką (grosze) albo null. */
+  lowestPrice30d: number | null;
   /** Granice okna (ISO) — popup odlicza do startu, a w trakcie do końca. */
   startsAt: string | null;
   endsAt: string | null;
@@ -126,6 +128,7 @@ async function loadPromoBanner(
           : null,
       promoPrice: priced.finalAmount,
       regularPrice: priced.baseAmount,
+      lowestPrice30d: sale.lowestPrice30dGrosze,
       startsAt: sale.validFrom?.toISOString() ?? null,
       endsAt: sale.validUntil?.toISOString() ?? null,
       notify:

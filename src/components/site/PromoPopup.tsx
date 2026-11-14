@@ -481,6 +481,17 @@ export const PromoPopup = ({ data }: { data: PromoBannerData }) => {
                   </span>
                 </motion.p>
               )}
+              {hasDiscount && data.lowestPrice30d !== null && (
+                <motion.p
+                  variants={piece}
+                  className="mt-1 text-[11px] text-white/45"
+                >
+                  Najniższa cena z 30 dni przed obniżką:{" "}
+                  <span className="font-semibold tabular-nums text-white/70">
+                    {formatPln(data.lowestPrice30d)}
+                  </span>
+                </motion.p>
+              )}
 
               <motion.div variants={piece} className="mt-6">
                 {isLive ? (

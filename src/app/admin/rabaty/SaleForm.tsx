@@ -67,6 +67,11 @@ export const SaleForm = ({
 
   const [showBanner, setShowBanner] = useState(editing?.showBanner ?? false);
   const [bannerText, setBannerText] = useState(editing?.bannerText ?? "");
+  const [lowestZl, setLowestZl] = useState(
+    editing?.lowestPrice30dGrosze != null
+      ? String(editing.lowestPrice30dGrosze / 100).replace(".", ",")
+      : "",
+  );
   const [notifyWaitlistId, setNotifyWaitlistId] = useState(
     editing?.notifyWaitlistId ?? "",
   );
@@ -115,6 +120,10 @@ export const SaleForm = ({
       showBanner,
       bannerText: bannerText.trim() === "" ? null : bannerText,
       notifyWaitlistId: notifyWaitlistId === "" ? null : notifyWaitlistId,
+      lowestPrice30d:
+        lowestZl.trim() === ""
+          ? null
+          : Math.round(Number(lowestZl.replace(",", ".")) * 100),
     };
 
     startSaving(async () => {
@@ -223,6 +232,26 @@ export const SaleForm = ({
                 />
               </>
             )}
+          </div>
+
+          <div className="w-72 max-[560px]:w-full">
+            <label htmlFor="sf-lowest" className={labelClass}>
+              Najniższa cena z 30 dni przed promocją (zł)
+            </label>
+            <input
+              id="sf-lowest"
+              value={lowestZl}
+              onChange={(e) =>
+                setLowestZl(e.target.value.replace(/[^\d.,]/g, "").slice(0, 7))
+              }
+              inputMode="decimal"
+              placeholder="np. 99"
+              className={inputClass}
+            />
+            <p className="mt-1.5 text-xs text-gray-500">
+              Wymóg Omnibus — pokaże się przy każdej przekreślonej cenie tej
+              promocji (popup, koszyk).
+            </p>
           </div>
 
           <PricePreview

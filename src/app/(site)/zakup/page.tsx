@@ -24,10 +24,11 @@ const page = async () => {
 
   // Wycena startowa: przecena i zniżka dla puli maili naliczają się same,
   // więc klientka widzi właściwą kwotę już przy wejściu, bez klikania.
-  const { pricing, sandbox } = await resolveCheckoutPricing({
-    email: session?.user?.email,
-    isAdmin: session?.user?.role === "admin",
-  });
+  const { pricing, sandbox, omnibusLowestPrices } =
+    await resolveCheckoutPricing({
+      email: session?.user?.email,
+      isAdmin: session?.user?.role === "admin",
+    });
 
   return (
     <>
@@ -35,6 +36,7 @@ const page = async () => {
         session={session}
         initialPricing={pricing}
         sandbox={sandbox}
+        omnibusLowestPrices={omnibusLowestPrices}
       />
       <PWAWarning />
     </>

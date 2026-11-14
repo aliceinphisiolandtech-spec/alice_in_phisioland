@@ -11,6 +11,8 @@ const STATIC_PRODUCT_IMAGE = "/landing-assets/E-book-presentation.webp";
 interface OrderSummaryProps {
   /** Pełne rozbicie ceny policzone po stronie serwera. */
   pricing: PriceResult;
+  /** Omnibus: ID przeceny -> najniższa cena z 30 dni przed obniżką (grosze). */
+  omnibusLowestPrices?: Record<string, number>;
   appliedCode: string | null;
   outrankedCode: string | null;
   onCouponApplied: (result: CouponApplyResult) => void;
@@ -22,6 +24,7 @@ interface OrderSummaryProps {
 
 export const OrderSummary = ({
   pricing,
+  omnibusLowestPrices = {},
   appliedCode,
   outrankedCode,
   onCouponApplied,
@@ -36,6 +39,14 @@ export const OrderSummary = ({
   // rabat, którego nie ma.
   const showStrikeThrough =
     hasDiscount && pricing.baseAmount > pricing.finalAmount;
+
+  // Omnibus: przy przekreślonej cenie z przeceny musi stać najniższa cena
+  // z 30 dni przed obniżką. Bierzemy ją z przeceny, która faktycznie weszła
+  // do wyliczenia (kod rabatowy mógł ją przebić — wtedy linii przeceny nie ma).
+  const saleLine = pricing.lines.find((line) => line.kind === "sale");
+  const lowestPrice30d = saleLine
+    ? (omnibusLowestPrices[saleLine.sourceId] ?? null)
+    : null;
 
   return (
     <div className="w-[380px] shrink-0 max-[1024px]:w-full">
@@ -70,6 +81,14 @@ export const OrderSummary = ({
                 </span>
               )}
             </div>
+            {showStrikeThrough && lowestPrice30d !== null && (
+              <p className="mt-1 text-xs text-gray-500">
+                Najniższa cena z 30 dni przed obniżką:{" "}
+                <span className="font-semibold">
+                  {formatPln(lowestPrice30d)}
+                </span>
+              </p>
+            )}
           </div>
         </div>
 

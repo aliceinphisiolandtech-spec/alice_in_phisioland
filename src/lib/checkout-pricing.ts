@@ -43,6 +43,12 @@ export interface CheckoutPricing {
   /** Powód odrzucenia kodu — kod nie istnieje, wygasł, wyczerpany itd. */
   couponRejected: CouponRejectionReason | null;
   sandbox: SandboxInfo;
+  /**
+   * Omnibus: najniższa cena z 30 dni przed obniżką dla każdej czynnej przeceny
+   * (ID przeceny -> grosze). Podsumowanie pokazuje ją przy przekreślonej cenie,
+   * gdy w wyliczeniu bierze udział dana przecena.
+   */
+  omnibusLowestPrices: Record<string, number>;
 }
 
 export interface ResolveCheckoutPricingArgs {
@@ -166,6 +172,11 @@ export async function resolveCheckoutPricing({
       active: sandboxActive,
       usesSandboxPrice,
     },
+    omnibusLowestPrices: Object.fromEntries(
+      activeSales
+        .filter((sale) => sale.lowestPrice30dGrosze !== null)
+        .map((sale) => [sale.id, sale.lowestPrice30dGrosze as number]),
+    ),
   };
 }
 

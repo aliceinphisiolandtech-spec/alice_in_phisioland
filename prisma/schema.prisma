@@ -301,6 +301,10 @@ model Sale {
   showBanner Boolean @default(false)
   /// Tekst paska, np. "BLACK FRIDAY". null = nazwa przeceny.
   bannerText String?
+  /// Najniższa cena z 30 dni PRZED tą obniżką (grosze) — dyrektywa Omnibus
+  /// (art. 4 ust. 2 ustawy o informowaniu o cenach). Pokazywana wszędzie, gdzie
+  /// klientka widzi przekreśloną cenę z tej przeceny. null = brak dopisku.
+  lowestPrice30dGrosze Int?
   /// Lista zapisów, do której trafia e-mail z popupu („Powiadom mnie”).
   /// null = popup bez formularza. Zapis idzie istniejącą ścieżką /api/waitlist
   /// (zgoda RODO, MailerLite, limit prób), więc nie dublujemy logiki.

@@ -51,6 +51,8 @@ export interface SaleRow {
   bannerText: string | null;
   /** Lista zapisów formularza „Powiadom mnie” w popupie (null = bez formularza). */
   notifyWaitlistId: string | null;
+  /** Najniższa cena z 30 dni przed obniżką (grosze, Omnibus). */
+  lowestPrice30dGrosze: number | null;
   ordersCount: number;
   totalDiscountGrosze: number;
 }
