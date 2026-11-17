@@ -52,6 +52,97 @@ export interface PromoBannerData {
   notify: { slug: string; consentText: string } | null;
 }
 
+const NOTIFY_LIST_SELECT = {
+  slug: true,
+  consentText: true,
+  isActive: true,
+  opensAt: true,
+  closesAt: true,
+  maxSignups: true,
+  _count: { select: { subscribers: true } },
+} as const;
+
+type SaleWithList = Awaited<ReturnType<typeof findBannerSales>>[number];
+
+function findBannerSales(where: Record<string, unknown>) {
+  return prisma.sale.findMany({
+    where: { isActive: true, showBanner: true, ...where },
+    orderBy: { validFrom: "asc" },
+    include: { notifyWaitlist: { select: NOTIFY_LIST_SELECT } },
+  });
+}
+
+/** Trwająca przecena ma pierwszeństwo przed zaplanowaną; wygasłe odpadają. */
+function pickSale(sales: SaleWithList[]) {
+  const candidates = sales.filter((sale) => {
+    const result = evaluateDiscount(sale);
+    return result.usable || result.reason === "not_started";
+  });
+  const live = candidates.find((s) => evaluateDiscount(s).usable);
+  const sale = live ?? candidates[0];
+  return sale ? { sale, isLive: Boolean(live) } : null;
+}
+
+/**
+ * Składa dane dla paska / popupu / strony zapisów z jednej przeceny.
+ *
+ * `priceVisible = false` ukrywa wszystko, co mówi o cenie (rabat, kwoty,
+ * Omnibus). Używa tego strona zapisów, gdy przecena jest jeszcze w piaskownicy,
+ * a ogląda ją ktoś spoza niej: wygląd i termin zostają, ceny nie wyciekają
+ * przed publikacją.
+ */
+function buildPromoData(
+  sale: SaleWithList,
+  isLive: boolean,
+  basePrice: number,
+  priceVisible: boolean,
+): PromoBannerData {
+  // Cena liczona jak w koszyku, ale „na niby” z tą jedną przeceną — przed
+  // startem pokazuje, ile e-book BĘDZIE kosztował w promocji.
+  const priced = calculatePrice({
+    baseAmount: basePrice,
+    sales: [
+      {
+        id: sale.id,
+        name: sale.name,
+        type: sale.type,
+        percentOff: sale.percentOff,
+        fixedPrice: sale.fixedPrice,
+      },
+    ],
+  });
+
+  const list = sale.notifyWaitlist;
+  const notifyOpen =
+    list !== null &&
+    resolveWaitlistPageStatus({
+      ...list,
+      signupCount: list._count.subscribers,
+    }) === "open";
+
+  return {
+    saleId: sale.id,
+    text: resolveBannerText(sale.bannerText, sale.name),
+    dateLabel: formatPromoRange(sale.validFrom, sale.validUntil),
+    status: isLive ? "live" : "upcoming",
+    discountLabel:
+      priceVisible && sale.type === "percent" && sale.percentOff
+        ? `−${sale.percentOff}%`
+        : null,
+    // Bez widocznej ceny: promo = regularna, więc widoki uznają, że nie ma
+    // czego pokazywać (hasDiscount = false).
+    promoPrice: priceVisible ? priced.finalAmount : priced.baseAmount,
+    regularPrice: priced.baseAmount,
+    lowestPrice30d: priceVisible ? sale.lowestPrice30dGrosze : null,
+    startsAt: sale.validFrom?.toISOString() ?? null,
+    endsAt: sale.validUntil?.toISOString() ?? null,
+    notify:
+      notifyOpen && list
+        ? { slug: list.slug, consentText: list.consentText }
+        : null,
+  };
+}
+
 async function loadPromoBanner(
   isAdmin: boolean,
   email: string | null,
@@ -62,84 +153,49 @@ async function loadPromoBanner(
       ? isSandboxActiveFor(settings, { isAdmin, email })
       : false;
 
-    const sales = await prisma.sale.findMany({
-      where: {
-        isActive: true,
-        showBanner: true,
-        ...(sandboxActive ? {} : { isSandbox: false }),
-      },
-      orderBy: { validFrom: "asc" },
-      include: {
-        notifyWaitlist: {
-          select: {
-            slug: true,
-            consentText: true,
-            isActive: true,
-            opensAt: true,
-            closesAt: true,
-            maxSignups: true,
-            _count: { select: { subscribers: true } },
-          },
-        },
-      },
-    });
+    const sales = await findBannerSales(
+      sandboxActive ? {} : { isSandbox: false },
+    );
+    const picked = pickSale(sales);
+    if (!picked) return null;
 
-    // Trwająca przecena ma pierwszeństwo przed zaplanowaną.
-    const candidates = sales.filter((sale) => {
-      const result = evaluateDiscount(sale);
-      return result.usable || result.reason === "not_started";
-    });
-    const live = candidates.find((s) => evaluateDiscount(s).usable);
-    const sale = live ?? candidates[0];
-    if (!sale) return null;
-
-    // Cena liczona jak w koszyku, ale „na niby” z tą jedną przeceną — przed
-    // startem pokazuje, ile e-book BĘDZIE kosztował w promocji.
     const { basePrice } = resolveSettingsBasePrice(settings, sandboxActive);
-    const priced = calculatePrice({
-      baseAmount: basePrice,
-      sales: [
-        {
-          id: sale.id,
-          name: sale.name,
-          type: sale.type,
-          percentOff: sale.percentOff,
-          fixedPrice: sale.fixedPrice,
-        },
-      ],
-    });
-
-    const list = sale.notifyWaitlist;
-    const notifyOpen =
-      list !== null &&
-      resolveWaitlistPageStatus({
-        ...list,
-        signupCount: list._count.subscribers,
-      }) === "open";
-
-    return {
-      saleId: sale.id,
-      text: resolveBannerText(sale.bannerText, sale.name),
-      dateLabel: formatPromoRange(sale.validFrom, sale.validUntil),
-      status: live ? "live" : "upcoming",
-      discountLabel:
-        sale.type === "percent" && sale.percentOff
-          ? `−${sale.percentOff}%`
-          : null,
-      promoPrice: priced.finalAmount,
-      regularPrice: priced.baseAmount,
-      lowestPrice30d: sale.lowestPrice30dGrosze,
-      startsAt: sale.validFrom?.toISOString() ?? null,
-      endsAt: sale.validUntil?.toISOString() ?? null,
-      notify:
-        notifyOpen && list
-          ? { slug: list.slug, consentText: list.consentText }
-          : null,
-    };
+    return buildPromoData(picked.sale, picked.isLive, basePrice, true);
   } catch (error) {
     // Woła to layout całej części publicznej — błąd bazy ma zgasić pasek
     // i popup, a nie wywrócić każdą stronę.
     console.error("Promo banner query error:", error);
+    return null;
+  }
+}
+
+/**
+ * Promocja podpięta pod konkretną listę zapisów — dla strony /zapisy/<slug>.
+ *
+ * Strona listy dostaje wygląd promocji (jak popup), gdy jakaś przecena
+ * z paskiem wskazuje tę listę w „Popup: zapis »Powiadom mnie«”. Wygląd
+ * i termin widać zawsze; ceny tylko wtedy, gdy przecena jest opublikowana
+ * albo ogląda ją admin w piaskownicy (ta sama zasada co w koszyku).
+ */
+export async function getPromoForWaitlistPage(
+  pageId: string,
+  viewer: { isAdmin: boolean; email?: string | null },
+): Promise<PromoBannerData | null> {
+  try {
+    const settings = await getPricingSettings();
+    const sandboxActive = viewer.isAdmin
+      ? isSandboxActiveFor(settings, viewer)
+      : false;
+
+    const sales = await findBannerSales({ notifyWaitlistId: pageId });
+    const picked = pickSale(sales);
+    if (!picked) return null;
+
+    const priceVisible = !picked.sale.isSandbox || sandboxActive;
+    const { basePrice } = resolveSettingsBasePrice(settings, sandboxActive);
+    return buildPromoData(picked.sale, picked.isLive, basePrice, priceVisible);
+  } catch (error) {
+    console.error("Promo waitlist query error:", error);
     return null;
   }
 }

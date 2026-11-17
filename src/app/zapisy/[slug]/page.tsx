@@ -24,6 +24,8 @@ import {
 import { ClosedNotice } from "@/components/site/waitlist/ClosedNotice";
 import { SeatsMeter } from "@/components/site/waitlist/SeatsMeter";
 import { WaitlistForm } from "@/components/site/waitlist/WaitlistForm";
+import { PromoCampaignSurface } from "@/components/site/promo/PromoCampaignSurface";
+import { getPromoForWaitlistPage } from "@/lib/promo-banner";
 
 /**
  * Publiczna strona zapisów: /zapisy/<slug>.
@@ -84,6 +86,24 @@ export default async function WaitlistCampaignPage({ params }: PageProps) {
 
   // Navbar potrzebuje sesji, żeby pokazać „Panel" zamiast „Zaloguj się".
   const session = await getServerSession(authOptions);
+
+  // Lista podpięta pod przecenę z paskiem (np. Black Week) dostaje wygląd
+  // promocji — tę samą kartę co popup na stronie głównej, z licznikiem
+  // i formularzem „Powiadom mnie”. Pozostałe kampanie zostają w swoim motywie.
+  const promo = await getPromoForWaitlistPage(page.id, {
+    isAdmin: session?.user?.role === "admin",
+    email: session?.user?.email,
+  });
+
+  if (promo) {
+    return (
+      <PromoCampaignSurface
+        promo={promo}
+        intro={page.description}
+        navbar={<Navbar session={session} transparent onDark />}
+      />
+    );
+  }
 
   return (
     <CampaignSurface

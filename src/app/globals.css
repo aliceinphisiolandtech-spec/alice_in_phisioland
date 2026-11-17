@@ -420,3 +420,29 @@ html {
     display: none;
   }
 }
+
+/* --- SPIS TREŚCI: pływające etykiety przy okładce (transform, GPU) --- */
+@keyframes toc-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+.toc-float {
+  animation: toc-float 6s ease-in-out infinite;
+}
+
+.toc-float-delayed {
+  animation: toc-float 7s ease-in-out 1.2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toc-float,
+  .toc-float-delayed {
+    animation: none;
+  }
+}

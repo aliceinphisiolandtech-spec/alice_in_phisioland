@@ -14,12 +14,14 @@ import {
   PatientPreparationData,
   PatientFaqData,
   FaqItem,
+  TableOfContentsData,
 } from "@/lib/validators/landing";
 
 // =========================================================
 // 1. RE-EKSPORTY (Żeby inne pliki mogły importować stąd)
 // =========================================================
 export type {
+  TableOfContentsData,
   HeroSectionData,
   EbookFeaturesSectionData,
   ContentPreviewSectionData,
@@ -67,4 +69,7 @@ export interface LandingPageData {
   patientReviews: PatientReviewsData;
   patientPreparation: PatientPreparationData;
   patientFaq: PatientFaqData;
+
+  // --- SPIS TREŚCI E-BOOKA (sekcja „O e-booku”) ---
+  tableOfContents: TableOfContentsData;
 }

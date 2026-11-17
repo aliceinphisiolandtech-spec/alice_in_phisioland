@@ -222,6 +222,31 @@ export const patientFaqSchema = z.object({
   items: z.array(faqQuestionSchema).min(1, "Dodaj przynajmniej jedno pytanie"),
 });
 
+// --- SPIS TREŚCI E-BOOKA ---
+// Rozdziały numeruje strona (cyfry rzymskie liczone z kolejności), więc
+// w bazie nie trzymamy numerów — przestawienie rozdziałów nie wymaga
+// ręcznego przenumerowania. `numbered: false` = pozycja bez numeru
+// (np. „Bibliografia”).
+const tocChapterSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(2, "Tytuł rozdziału musi mieć minimum 2 znaki")
+    .max(160, "Tytuł rozdziału może mieć maksymalnie 160 znaków"),
+  numbered: z.boolean(),
+});
+
+export const tableOfContentsSchema = z.object({
+  badge: z.string().trim().max(40, "Maksymalnie 40 znaków"),
+  headline: z.string().trim().min(1, "Nagłówek jest wymagany"),
+  highlight: z.string().trim().optional(),
+  description: z.string().trim().max(400, "Maksymalnie 400 znaków"),
+  chapters: z
+    .array(tocChapterSchema)
+    .min(1, "Dodaj przynajmniej jeden rozdział")
+    .max(30, "Maksymalnie 30 pozycji"),
+});
+
 // =========================================================
 // 2. REJESTR GŁÓWNY SCHEMATÓW (DO API)
 // =========================================================
@@ -239,6 +264,7 @@ export const SECTION_SCHEMAS: Record<string, z.ZodType<any>> = {
   patientReviews: patientReviewsSchema,
   patientPreparation: patientPreparationSchema,
   patientFaq: patientFaqSchema,
+  tableOfContents: tableOfContentsSchema,
 };
 
 // =========================================================
@@ -262,3 +288,4 @@ export type PatientHeroData = z.infer<typeof patientHeroSchema>;
 export type PatientReviewsData = z.infer<typeof patientReviewsSchema>;
 export type PatientPreparationData = z.infer<typeof patientPreparationSchema>;
 export type PatientFaqData = z.infer<typeof patientFaqSchema>;
+export type TableOfContentsData = z.infer<typeof tableOfContentsSchema>;

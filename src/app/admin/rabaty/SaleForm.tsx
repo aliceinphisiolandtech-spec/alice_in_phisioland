@@ -325,7 +325,7 @@ export const SaleForm = ({
                   id="sf-banner-text"
                   value={bannerText}
                   onChange={(e) => setBannerText(e.target.value)}
-                  placeholder={name.trim() || "BLACK FRIDAY"}
+                  placeholder={name.trim() || "BLACK WEEK"}
                   maxLength={40}
                   autoComplete="off"
                   className={inputClass}

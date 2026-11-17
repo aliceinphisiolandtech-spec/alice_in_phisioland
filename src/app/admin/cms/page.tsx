@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 // Importujemy typy (Upewnij się, że zaktualizowałeś ten plik o nowe typy PatientZone!)
 import { LandingPageData } from "@/lib/types/landing";
+import { TABLE_OF_CONTENTS_DEFAULT } from "@/lib/table-of-contents";
 
 // --- DEFINICJA DANYCH DOMYŚLNYCH (FALLBACK) ---
 const FALLBACK_DATA: LandingPageData = {
@@ -82,6 +83,7 @@ const FALLBACK_DATA: LandingPageData = {
       { icon: "FileText", step: "01", title: "Dokumenty", desc: "Weź dowód" },
     ],
   } as any,
+  tableOfContents: TABLE_OF_CONTENTS_DEFAULT,
   patientFaq: {
     badge: "FAQ",
     title: "Pytania",
@@ -122,6 +124,8 @@ async function getLandingData(): Promise<LandingPageData> {
     patientPreparation:
       (dbContent.patientPreparation as any) || FALLBACK_DATA.patientPreparation,
     patientFaq: (dbContent.patientFaq as any) || FALLBACK_DATA.patientFaq,
+    tableOfContents:
+      (dbContent.tableOfContents as any) || TABLE_OF_CONTENTS_DEFAULT,
   };
 }
 

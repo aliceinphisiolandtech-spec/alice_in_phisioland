@@ -25,7 +25,7 @@ const piece: Variants = {
  * Sam wygląd paska. Używa go strona główna i podgląd w formularzu przeceny —
  * admin widzi dokładnie to, co zobaczą klientki.
  *
- * Styl Black Friday: czarne tło, tekst wersalikami, termin w kolorze akcentu.
+ * Styl promocyjny (Black Week): czarne tło, tekst wersalikami, termin w kolorze akcentu.
  * Zwykły tekst, bez odliczania — tak ustalone z klientką.
  *
  * ANIMACJA: sam pasek stoi od pierwszej klatki w pełnej wysokości (żadnego

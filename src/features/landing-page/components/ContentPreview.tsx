@@ -88,20 +88,28 @@ export const ContentPreview = ({ data }: ContentPreviewProps) => {
                 {data.description}
               </motion.p>
 
+              {/*
+                Lista na mobile: wyśrodkowana KARTA, ale tekst w niej zawsze
+                do lewej. Wcześniej tekst dziedziczył text-center z kolumny,
+                a położenie ratowały wcięcia pl-15/32/24/16 dobrane pod
+                konkretne szerokości ekranu — każda pozycja zawijała się
+                inaczej i lista wyglądała na krzywą.
+              */}
               <motion.div
                 variants={staggerFast}
-                className="flex flex-wrap gap-y-4 max-[1024px]:max-w-[500px] max-[1024px]:mx-auto max-[1024px]:pl-15  max-[500px]:pl-32 max-[450px]:pl-24  max-[380px]:pl-16"
+                className="grid grid-cols-2 gap-x-6 gap-y-4 text-left max-[1024px]:mx-auto max-[1024px]:w-full max-[1024px]:max-w-[560px] max-[1024px]:rounded-2xl max-[1024px]:bg-[#F6F8F7] max-[1024px]:p-6 max-[560px]:grid-cols-1 max-[560px]:gap-y-3.5 max-[560px]:p-5"
               >
                 {data.checklist.map((item, index) => (
                   <motion.div
                     variants={fadeUpSm}
                     key={index}
-                    className="flex w-1/2 items-center gap-3 max-[500px]:w-full max-[1024px]:justify-start"
+                    className="flex items-start gap-3"
                   >
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#103830] text-white">
+                    {/* mt-px: ikona równo z PIERWSZĄ linią przy zawijaniu. */}
+                    <div className="mt-px flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#103830] text-white">
                       <Check size={14} strokeWidth={3} />
                     </div>
-                    <span className="text-[15px] font-medium text-gray-700">
+                    <span className="text-[15px] font-medium leading-6 text-gray-700">
                       {item}
                     </span>
                   </motion.div>

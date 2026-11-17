@@ -12,6 +12,7 @@ import {
   Lock,
   Stethoscope,
   FilePenLine,
+  ListOrdered,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
@@ -29,6 +30,7 @@ import { AboutForm } from "./forms/AboutForm";
 import { PracticalTrainingForm } from "./forms/PracticalTrainingForm";
 import { AuthPageForm } from "./forms/AuthPageForm";
 import { PatientZoneForm } from "./forms/PatientZoneForm";
+import { TableOfContentsForm } from "./forms/TableOfContentsForm";
 
 // ZMIANA 2: Używamy poprawnego typu w Propsach
 interface CmsFormsProps {
@@ -39,6 +41,7 @@ const TABS = [
   { id: "hero", label: "Hero", icon: LayoutTemplate },
   { id: "ebookFeatures", label: "Cechy E-booka", icon: BookOpen },
   { id: "contentPreview", label: "Co jest w środku?", icon: FileText },
+  { id: "tableOfContents", label: "Spis treści", icon: ListOrdered },
   { id: "testimonials", label: "Opinie", icon: MessageSquareQuote },
   { id: "securePanel", label: "Bezpieczeństwo", icon: ShieldCheck },
   { id: "practicalTraining", label: "Szkolenie", icon: GraduationCap },
@@ -68,6 +71,8 @@ export default function CmsForms({ initialData }: CmsFormsProps) {
         return <AboutForm data={initialData.about} />;
       case "authPage":
         return <AuthPageForm data={initialData.authPage} />;
+      case "tableOfContents":
+        return <TableOfContentsForm data={initialData.tableOfContents} />;
       case "patientZone":
         // Przekazujemy zbiorczy obiekt data
         return (

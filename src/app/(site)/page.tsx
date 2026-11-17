@@ -10,6 +10,8 @@ import { Hero } from "@/features/landing-page/components/Hero";
 import { PracticalTraining } from "@/features/landing-page/components/PracticalTraining";
 import { SecurePanel } from "@/features/landing-page/components/SecurePanel";
 import { Testimonials } from "@/features/landing-page/components/Testimonials";
+import { TableOfContents } from "@/features/landing-page/components/TableOfContents";
+import { TABLE_OF_CONTENTS_DEFAULT } from "@/lib/table-of-contents";
 import { prisma } from "@/lib/prisma";
 import {
   getCachedFeaturedReviews,
@@ -103,6 +105,10 @@ export default async function Home() {
             hasAccess={hasAccess}
           />
           <ContentPreview data={landingData.contentPreview} />
+          {/* Spis treści z CMS; bez zapisanej wersji — treść startowa. */}
+          <TableOfContents
+            data={landingData.tableOfContents ?? TABLE_OF_CONTENTS_DEFAULT}
+          />
         </div>
         {/* Przekazujemy połączone dane z CMS i bazy SQL */}
         <Testimonials data={testimonialsProps} />
