@@ -129,7 +129,8 @@ export const TableOfContents = ({ data }: { data: TableOfContentsData }) => {
               </motion.p>
             )}
 
-            {/* Okładka z poświatą i pływającymi „szklanymi” etykietami. */}
+            {/* Okładka z poświatą i pływającą etykietą z liczbą rozdziałów —
+                jedyną informacją obok okładki (ustalone z klientką). */}
             <motion.div
               variants={fadeUp}
               className="relative mt-8 w-fit self-center max-[1024px]:mt-4"
@@ -153,9 +154,6 @@ export const TableOfContents = ({ data }: { data: TableOfContentsData }) => {
                   {numberedCount}
                 </span>
                 <span className="text-xs text-gray-300">{chapterWord}</span>
-              </span>
-              <span className="toc-float-delayed absolute -left-12 bottom-14 max-[640px]:bottom-2 rounded-2xl border border-white/10 bg-[#103830]/70 px-4 py-2.5 text-xs font-semibold text-white shadow-xl backdrop-blur-md max-[640px]:-left-4">
-                Testy kliniczne <span className="text-[#D4F0C8]">EBM</span>
               </span>
             </motion.div>
           </motion.div>

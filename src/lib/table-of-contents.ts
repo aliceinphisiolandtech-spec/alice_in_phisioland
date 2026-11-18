@@ -13,7 +13,7 @@ export const TABLE_OF_CONTENTS_DEFAULT: TableOfContentsData = {
   headline: "Spis treści",
   highlight: "treści",
   description:
-    "Dziewięć rozdziałów — od fundamentów diagnostyki różnicowej, przez ból i centralne uwrażliwienie, po czerwone flagi i testy kliniczne według EBM.",
+    "Dziewięć rozdziałów — od fundamentów diagnostyki różnicowej, przez ból i centralne uwrażliwienie, po czerwone flagi i charakterystykę testów klinicznych wg EBM.",
   chapters: [
     {
       title: "Wstęp do fizjoterapeutycznej diagnostyki różnicowej",
@@ -29,7 +29,7 @@ export const TABLE_OF_CONTENTS_DEFAULT: TableOfContentsData = {
     },
     { title: "Czerwone flagi", numbered: true },
     { title: "Dekalog diagnostyczny", numbered: true },
-    { title: "Testy kliniczne według EBM", numbered: true },
+    { title: "Charakterystyka testów klinicznych wg EBM", numbered: true },
     {
       title:
         "Diagnostyka różnicowa jako fundament współczesnej praktyki fizjoterapeutycznej",
